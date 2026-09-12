@@ -1,0 +1,60 @@
+# Mewra PreFlight — Testing Strategy
+
+## 1. Quality goals
+
+Testing must protect:
+
+- diff computation correctness (git output parsing);
+- check runner execution lifecycle (pending → running → pass/fail/skipped);
+- graceful degradation when tools are missing (`not-configured`);
+- universal pack pattern detection (no-console-log, no-debugger, no-env-leak);
+- Webview protocol safety (Zod message validation);
+- PR URL construction from remote URLs and branches.
+
+## 2. Test layers
+
+### Unit tests (Vitest)
+
+Pure modules testable without VS Code:
+
+- `git-diff.ts` — name-status parsing logic;
+- `runner.ts` — execution lifecycle, parallel scheduling, error recovery;
+- `detect-ecosystem.ts` — file presence detection;
+- `pr-launcher.ts` — remote URL → HTTPS conversion, PR URL construction;
+- `packs/universal/` — pattern matching in diff patches;
+- `packs/js-ts/` — pack factory shape and check properties;
+- `messages.ts` — Zod schema validation for both directions.
+
+### Extension tests (@vscode/test-electron)
+
+- activation and command registration;
+- `PreFlightPanel` creation and disposal;
+- keybinding registration.
+
+### Manual verification
+
+Live tool invocation and Webview rendering cannot be fully automated.
+
+Manual checklist:
+
+- [ ] `Alt+Shift+P` → pipeline starts and dashboard opens
+- [ ] Dashboard shows `running` spinner while checks execute
+- [ ] All checks reflect correct pass/fail/not-configured after run
+- [ ] Click a finding → opens file at correct line
+- [ ] "Open Pull Request" button opens correct URL in browser
+- [ ] Button is blocked (greyed out) when any error check fails
+- [ ] Tool missing (e.g., no Prettier) shows `not-configured`, not `fail`
+
+## 3. Running tests
+
+```bash
+pnpm test
+```
+
+## 4. Full quality gate
+
+```bash
+pnpm validate
+```
+
+Expected: format check → TypeScript check → unit tests → build.

@@ -1,0 +1,48 @@
+import { z } from "zod";
+import { PreFlightSnapshotSchema, CheckFindingSchema } from "./types.js";
+
+export const ExtensionMessageSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("snapshot"),
+    payload: PreFlightSnapshotSchema,
+  }),
+  z.object({
+    type: z.literal("running"),
+    checkId: z.string(),
+  }),
+  z.object({
+    type: z.literal("error"),
+    message: z.string(),
+  }),
+  z.object({
+    type: z.literal("findings"),
+    checkId: z.string(),
+    findings: z.array(CheckFindingSchema),
+  }),
+]);
+
+export type ExtensionMessage = z.infer<typeof ExtensionMessageSchema>;
+
+export const WebviewMessageSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("runPipeline"),
+  }),
+  z.object({
+    type: z.literal("launchPR"),
+  }),
+  z.object({
+    type: z.literal("openFile"),
+    path: z.string(),
+    line: z.number().int().nonnegative(),
+  }),
+  z.object({
+    type: z.literal("markManualCheck"),
+    checkId: z.string(),
+    done: z.boolean(),
+  }),
+  z.object({
+    type: z.literal("ready"),
+  }),
+]);
+
+export type WebviewMessage = z.infer<typeof WebviewMessageSchema>;

@@ -1,0 +1,334 @@
+:root {
+  --pf-bg: var(--vscode-editor-background);
+  --pf-fg: var(--vscode-editor-foreground);
+  --pf-border: var(--vscode-panel-border, var(--vscode-editorGroup-border));
+  --pf-surface: var(
+    --vscode-sideBar-background,
+    var(--vscode-editor-background)
+  );
+  --pf-muted: var(--vscode-descriptionForeground);
+  --pf-accent: var(--vscode-button-background);
+  --pf-accent-fg: var(--vscode-button-foreground);
+  --pf-accent-hover: var(--vscode-button-hoverBackground);
+  --pf-error: var(--vscode-errorForeground, #f38ba8);
+  --pf-warning: var(--vscode-editorWarning-foreground, #f9e2af);
+  --pf-pass: var(--vscode-testing-iconPassed, #a6e3a1);
+  --pf-radius: 4px;
+  --pf-gap: 8px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--pf-fg);
+  background: var(--pf-bg);
+  line-height: 1.5;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 12px;
+  gap: 12px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--pf-gap);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--pf-border);
+  flex-wrap: wrap;
+}
+
+.header__title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  flex: 1;
+}
+
+.status-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--pf-radius);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-badge--pass {
+  background: var(--pf-pass);
+  color: #000;
+}
+.status-badge--fail {
+  background: var(--pf-error);
+  color: #fff;
+}
+.status-badge--warning {
+  background: var(--pf-warning);
+  color: #000;
+}
+.status-badge--running,
+.status-badge--pending {
+  background: var(--pf-border);
+  color: var(--pf-fg);
+}
+.status-badge--not-configured,
+.status-badge--skipped {
+  background: transparent;
+  color: var(--pf-muted);
+  border: 1px solid var(--pf-border);
+}
+
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--pf-border);
+  border-top-color: var(--pf-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.run-button {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  background: var(--pf-accent);
+  color: var(--pf-accent-fg);
+  border: none;
+  border-radius: var(--pf-radius);
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.run-button:hover:not(:disabled) {
+  background: var(--pf-accent-hover);
+}
+.run-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.run-button--header {
+  margin-left: auto;
+}
+
+.diff-summary {
+  font-size: 11px;
+  color: var(--pf-muted);
+}
+
+.diff-summary code {
+  font-family: var(--vscode-editor-font-family);
+  background: var(--pf-border);
+  padding: 0 3px;
+  border-radius: 2px;
+}
+
+.checks {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.check-row {
+  border-radius: var(--pf-radius);
+  border: 1px solid var(--pf-border);
+  overflow: hidden;
+}
+
+.check-row--fail {
+  border-color: var(--pf-error);
+}
+.check-row--warning {
+  border-color: var(--pf-warning);
+}
+.check-row--pass {
+  border-color: var(--pf-pass);
+}
+
+.check-row__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--pf-surface);
+}
+
+.check-row__label {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.check-row__duration {
+  font-size: 11px;
+  color: var(--pf-muted);
+}
+
+.check-row__message {
+  font-size: 11px;
+  color: var(--pf-muted);
+  padding: 4px 8px 6px;
+}
+
+.status-icon {
+  font-size: 12px;
+  width: 14px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.status-icon.status-pass {
+  color: var(--pf-pass);
+}
+.status-icon.status-fail {
+  color: var(--pf-error);
+}
+.status-icon.status-warning {
+  color: var(--pf-warning);
+}
+.status-icon.status-running {
+  color: var(--pf-accent);
+}
+.status-icon.status-skipped,
+.status-icon.status-not-configured,
+.status-icon.status-pending {
+  color: var(--pf-muted);
+}
+
+.check-row__findings {
+  list-style: none;
+  border-top: 1px solid var(--pf-border);
+}
+
+.finding {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: background 0.1s;
+}
+
+.finding:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.finding__location {
+  font-family: var(--vscode-editor-font-family);
+  color: var(--pf-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.finding__message {
+  color: var(--pf-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finding--more {
+  color: var(--pf-muted);
+  cursor: default;
+  font-style: italic;
+}
+
+.finding--more:hover {
+  background: transparent;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px 0;
+}
+
+.empty-state__text {
+  color: var(--pf-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.empty-state .run-button {
+  padding: 6px 16px;
+}
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 0;
+}
+
+.error-state__icon {
+  font-size: 24px;
+  color: var(--pf-warning);
+}
+
+.error-state__message {
+  font-size: 12px;
+  color: var(--pf-muted);
+  text-align: center;
+}
+
+.footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--pf-border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pr-button {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  border: none;
+  border-radius: var(--pf-radius);
+  padding: 6px 14px;
+  cursor: pointer;
+  font-weight: 600;
+  transition:
+    background 0.12s,
+    opacity 0.12s;
+}
+
+.pr-button--ready {
+  background: var(--pf-pass);
+  color: #000;
+}
+
+.pr-button--ready:hover {
+  opacity: 0.88;
+}
+
+.pr-button--blocked {
+  background: var(--pf-border);
+  color: var(--pf-muted);
+  cursor: not-allowed;
+}

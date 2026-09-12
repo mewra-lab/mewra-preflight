@@ -1,0 +1,157 @@
+{
+  "name": "mewra-preflight",
+  "displayName": "Mewra PreFlight — Pre-Push Sanity Pipeline",
+  "description": "Run diff-scoped checks before every push. One dashboard. One button to open your PR.",
+  "version": "0.1.0",
+  "publisher": "mewra",
+  "license": "MIT",
+  "pricing": "Free",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mewra-lab/mewra-preflight.git"
+  },
+  "homepage": "https://preflight.mewra.app",
+  "bugs": {
+    "url": "https://github.com/mewra-lab/mewra-preflight/issues"
+  },
+  "packageManager": "pnpm@12.3.4",
+  "engines": {
+    "vscode": "^1.101.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Other"
+  ],
+  "keywords": [
+    "pre-push",
+    "preflight",
+    "git",
+    "lint",
+    "type check",
+    "code quality",
+    "pipeline",
+    "mewra"
+  ],
+  "icon": "assets/brand/icon.png",
+  "main": "./dist/extension.cjs",
+  "contributes": {
+    "commands": [
+      {
+        "command": "mewra-preflight.runPipeline",
+        "title": "Run Pipeline",
+        "category": "Mewra PreFlight"
+      },
+      {
+        "command": "mewra-preflight.openDashboard",
+        "title": "Open Dashboard",
+        "category": "Mewra PreFlight"
+      },
+      {
+        "command": "mewra-preflight.launchPR",
+        "title": "Launch Pull Request",
+        "category": "Mewra PreFlight"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "mewra-preflight.runPipeline",
+        "key": "alt+shift+p",
+        "when": "workspaceFolderCount >= 1"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "mewra-preflight.runPipeline",
+          "when": "workspaceFolderCount >= 1"
+        },
+        {
+          "command": "mewra-preflight.launchPR",
+          "when": "workspaceFolderCount >= 1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Mewra PreFlight",
+      "properties": {
+        "mewraPreflight.targetBranch": {
+          "type": "string",
+          "default": "main",
+          "description": "Target branch to diff against when computing the pipeline scope."
+        },
+        "mewraPreflight.enabledPacks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "universal",
+              "js-ts"
+            ]
+          },
+          "default": [
+            "universal",
+            "js-ts"
+          ],
+          "description": "Ecosystem packs to activate."
+        },
+        "mewraPreflight.blockingOnWarnings": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, warnings block the PR launch button in addition to errors."
+        },
+        "mewraPreflight.gitHost": {
+          "type": "string",
+          "enum": [
+            "github",
+            "gitlab"
+          ],
+          "default": "github",
+          "description": "Git hosting platform for PR URL construction."
+        }
+      }
+    },
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "mewra-preflight",
+        "label": "Mewra PreFlight"
+      }
+    ]
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,json,css,md}": "prettier --write"
+  },
+  "scripts": {
+    "clean": "node scripts/clean.mjs",
+    "check": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "copy:assets": "node scripts/copy-assets.mjs",
+    "build:extension": "esbuild src/extension/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.cjs --sourcemap",
+    "build:webview": "esbuild src/webview/index.tsx --bundle --platform=browser --format=iife --outfile=dist/webview/index.js --sourcemap --loader:.css=css",
+    "build": "pnpm clean && pnpm copy:assets && pnpm build:extension && pnpm build:webview",
+    "test": "vitest run",
+    "prepare": "husky",
+    "validate": "pnpm format:check && pnpm check && pnpm test && pnpm build",
+    "vscode:prepublish": "pnpm build",
+    "package": "vsce package --no-dependencies",
+    "publish:marketplace": "vsce publish --no-dependencies"
+  },
+  "dependencies": {
+    "preact": "^10.29.8",
+    "zod": "^4.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.4",
+    "@types/vscode": "^1.101.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^3.9.2",
+    "esbuild": "^0.28.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.0",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
+  }
+}

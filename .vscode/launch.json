@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Mewra PreFlight (Extension Development Host)",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js",
+        "${workspaceFolder}/dist/**/*.cjs"
+      ],
+      "preLaunchTask": "Mewra PreFlight: Build"
+    }
+  ]
+}
