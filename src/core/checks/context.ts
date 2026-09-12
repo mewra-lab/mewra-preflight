@@ -1,4 +1,4 @@
-import { access, constants } from "node:fs/promises";
+import { access, constants, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -46,6 +46,68 @@ export function createPreFlightContext(
         const parent = resolve(currentDir, "..");
         if (parent === currentDir) break;
         currentDir = parent;
+      }
+
+      const commonSubCandidates = [
+        resolve(workspaceRoot, "apps", "web", "node_modules", ".bin", binName),
+        resolve(
+          workspaceRoot,
+          "apps",
+          "frontend",
+          "node_modules",
+          ".bin",
+          binName,
+        ),
+        resolve(
+          workspaceRoot,
+          "apps",
+          "client",
+          "node_modules",
+          ".bin",
+          binName,
+        ),
+        resolve(workspaceRoot, "web", "node_modules", ".bin", binName),
+        resolve(workspaceRoot, "frontend", "node_modules", ".bin", binName),
+        resolve(workspaceRoot, "client", "node_modules", ".bin", binName),
+        resolve(workspaceRoot, "backend", ".venv", "bin", binName),
+        resolve(workspaceRoot, "api", ".venv", "bin", binName),
+        resolve(workspaceRoot, "server", ".venv", "bin", binName),
+        resolve(workspaceRoot, "backend", "vendor", "bin", binName),
+      ];
+      for (const candidate of commonSubCandidates) {
+        if (await isExecutable(candidate)) {
+          return candidate;
+        }
+      }
+
+      for (const parentSub of ["apps", "packages", "services", "modules"]) {
+        try {
+          const parentPath = resolve(workspaceRoot, parentSub);
+          const entries = await readdir(parentPath, { withFileTypes: true });
+          for (const entry of entries) {
+            if (!entry.isDirectory()) continue;
+            const nestedNodeBin = resolve(
+              parentPath,
+              entry.name,
+              "node_modules",
+              ".bin",
+              binName,
+            );
+            if (await isExecutable(nestedNodeBin)) {
+              return nestedNodeBin;
+            }
+            const nestedVenvBin = resolve(
+              parentPath,
+              entry.name,
+              ".venv",
+              "bin",
+              binName,
+            );
+            if (await isExecutable(nestedVenvBin)) {
+              return nestedVenvBin;
+            }
+          }
+        } catch {}
       }
 
       const home = process.env.HOME ?? "";

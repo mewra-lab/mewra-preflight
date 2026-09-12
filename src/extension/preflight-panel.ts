@@ -319,7 +319,7 @@ export class PreFlightPanel {
       this._manualCheckStates,
     );
 
-    const activeEcosystems = await detectActiveEcosystems(root);
+    const activeEcosystems = await detectActiveEcosystems(root, diff);
 
     const isPackActive = (
       packId: "js-ts" | "go" | "python" | "php",

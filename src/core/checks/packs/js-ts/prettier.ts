@@ -61,9 +61,23 @@ export const prettierCheck: CheckRunner = {
           Array.from(fileSet).some((f) => l.endsWith(f) || f.endsWith(l)),
       );
 
+    const matchedFiles =
+      unformatted.length > 0
+        ? unformatted
+        : files.filter((f) => {
+            const norm = f.replace(/\\/g, "/");
+            const base = norm.split("/").pop() ?? "";
+            return (
+              combinedOutput.includes(norm) ||
+              (base.length > 0 && combinedOutput.includes(base))
+            );
+          });
+
+    const finalFiles = matchedFiles.length > 0 ? matchedFiles : files;
+
     return {
       status: "fail",
-      findings: unformatted.map((file) => ({
+      findings: finalFiles.map((file) => ({
         file,
         line: 1,
         message: "File is not formatted by Prettier.",

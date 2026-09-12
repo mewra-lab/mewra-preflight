@@ -443,6 +443,50 @@ export function App() {
             />
           ))}
 
+        {snapshot.checks.some((snap) => snap.result.status === "skipped") && (
+          <details class="skipped-section">
+            <summary class="skipped-section__summary">
+              <svg
+                class="skipped-section__chevron"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+              <span class="skipped-section__title">
+                {
+                  snapshot.checks.filter(
+                    (snap) => snap.result.status === "skipped",
+                  ).length
+                }{" "}
+                skipped
+              </span>
+              <span class="skipped-section__reason">
+                (no matching files in diff)
+              </span>
+            </summary>
+            <div class="skipped-section__list">
+              {snapshot.checks
+                .filter((snap) => snap.result.status === "skipped")
+                .map((snap) => (
+                  <div key={snap.definition.id} class="skipped-row">
+                    <span class="skipped-row__dot" />
+                    <span class="skipped-row__label">
+                      {snap.definition.label}
+                    </span>
+                    <span class="skipped-row__tag">{snap.definition.pack}</span>
+                  </div>
+                ))}
+            </div>
+          </details>
+        )}
+
         <ManualChecklist
           items={snapshot.manualChecks ?? []}
           onToggle={handleToggleManualCheck}

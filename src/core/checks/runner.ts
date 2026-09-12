@@ -92,7 +92,11 @@ export async function runChecks(
       if (!snapshot) return;
 
       if (!check.appliesTo(diff)) {
-        snapshot.result = { status: "skipped", findings: [] };
+        snapshot.result = {
+          status: "skipped",
+          findings: [],
+          message: "Skipped (no matching files in diff)",
+        };
         emit();
         return;
       }
