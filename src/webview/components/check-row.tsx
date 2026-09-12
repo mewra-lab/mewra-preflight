@@ -6,6 +6,7 @@ import type { CheckSnapshot, CheckStatus } from "../../shared/types.js";
 type CheckRowProps = {
   snapshot: CheckSnapshot;
   onOpenFinding?: (path: string, line: number) => void;
+  onQuickFix?: (checkId: string, file?: string) => void;
 };
 
 // MARK: - Status Icon Component
@@ -105,10 +106,16 @@ function StatusIcon({ status }: { status: CheckStatus }) {
 
 // MARK: - CheckRow Component
 
-export function CheckRow({ snapshot, onOpenFinding }: CheckRowProps) {
+export function CheckRow({
+  snapshot,
+  onOpenFinding,
+  onQuickFix,
+}: CheckRowProps) {
   const { definition, result } = snapshot;
   const hasFindings = result.findings.length > 0;
   const [expanded, setExpanded] = useState(hasFindings);
+  const isFixable =
+    definition.id === "js-ts:prettier" || definition.id === "js-ts:eslint";
 
   const toggleExpanded = () => {
     if (hasFindings) {
@@ -140,6 +147,19 @@ export function CheckRow({ snapshot, onOpenFinding }: CheckRowProps) {
         )}
 
         <div class="check-row__meta">
+          {hasFindings && isFixable && (
+            <button
+              class="quick-fix-btn quick-fix-btn--header"
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuickFix?.(definition.id);
+              }}
+              title={`Auto-fix all issues with ${definition.label}`}
+            >
+              Fix All
+            </button>
+          )}
+
           {result.durationMs !== undefined && (
             <span class="check-row__duration">
               {result.durationMs < 1000
@@ -209,6 +229,19 @@ export function CheckRow({ snapshot, onOpenFinding }: CheckRowProps) {
                 </span>
               </span>
               <span class="finding__message">{f.message}</span>
+
+              {isFixable && (
+                <button
+                  class="quick-fix-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onQuickFix?.(definition.id, f.file);
+                  }}
+                  title={`Fix ${f.file}`}
+                >
+                  Fix
+                </button>
+              )}
             </li>
           ))}
         </ul>

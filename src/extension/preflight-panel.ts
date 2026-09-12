@@ -131,6 +131,8 @@ export class PreFlightPanel {
     } else if (msg.type === "changeDiffScope") {
       this._selectedScope = msg.scope;
       await this._runPipeline();
+    } else if (msg.type === "quickFix") {
+      await this._handleQuickFix(msg.checkId, msg.file);
     } else if (msg.type === "launchPR") {
       await this._launchPR();
     } else if (msg.type === "openFile") {
@@ -207,6 +209,42 @@ export class PreFlightPanel {
       this._onStatusChange?.(overall);
     } else {
       this._onStatusChange?.("idle");
+    }
+  }
+
+  private async _handleQuickFix(checkId: string, file?: string): Promise<void> {
+    const root = this._workspaceRoot();
+    if (!root) return;
+
+    const context = createPreFlightContext(root);
+
+    if (checkId === "js-ts:prettier") {
+      const tool = await context.resolveTool("prettier");
+      if (!tool) {
+        await vscode.window.showErrorMessage("Prettier is not installed.");
+        return;
+      }
+
+      const args = file ? ["--write", file] : ["--write", "."];
+      const res = await context.runCommand(tool, args);
+      if (res.code === 0) {
+        await vscode.window.showInformationMessage(
+          file
+            ? `Formatted ${file} with Prettier.`
+            : "Formatted files with Prettier.",
+        );
+      }
+      await this._runPipeline();
+    } else if (checkId === "js-ts:eslint") {
+      const tool = await context.resolveTool("eslint");
+      if (!tool) {
+        await vscode.window.showErrorMessage("ESLint is not installed.");
+        return;
+      }
+
+      const args = file ? ["--fix", file] : ["--fix", "."];
+      await context.runCommand(tool, args);
+      await this._runPipeline();
     }
   }
 

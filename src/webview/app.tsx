@@ -99,6 +99,10 @@ export function App() {
     post({ type: "changeDiffScope", scope });
   }, []);
 
+  const handleQuickFix = useCallback((checkId: string, file?: string) => {
+    post({ type: "quickFix", checkId, file });
+  }, []);
+
   if (state.phase === "idle") {
     return (
       <div class="glass-shell">
@@ -297,6 +301,7 @@ export function App() {
             key={snap.definition.id}
             snapshot={snap}
             onOpenFinding={handleOpenFinding}
+            onQuickFix={handleQuickFix}
           />
         ))}
       </main>

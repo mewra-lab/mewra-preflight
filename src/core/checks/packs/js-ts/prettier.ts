@@ -48,17 +48,24 @@ export const prettierCheck: CheckRunner = {
     }
 
     const combinedOutput = `${stdout}\n${stderr}`;
+    const fileSet = new Set(files.map((f) => f.replace(/\\/g, "/")));
+
     const unformatted = combinedOutput
       .split("\n")
       .filter((l) => l.includes("[warn]"))
       .map((l) => l.replace("[warn]", "").trim())
-      .filter((l) => l.length > 0);
+      .filter(
+        (l) =>
+          l.length > 0 &&
+          !l.includes("Code style issues found") &&
+          Array.from(fileSet).some((f) => l.endsWith(f) || f.endsWith(l)),
+      );
 
     return {
       status: "fail",
       findings: unformatted.map((file) => ({
         file,
-        line: 0,
+        line: 1,
         message: "File is not formatted by Prettier.",
         rule: "prettier",
       })),

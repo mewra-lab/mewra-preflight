@@ -445,12 +445,14 @@ body {
 .finding {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   padding: 6px 12px 6px 36px;
   cursor: pointer;
   font-size: 11px;
   transition: all 0.12s ease;
   user-select: none;
+  min-width: 0;
+  width: 100%;
 }
 
 .finding:hover {
@@ -470,7 +472,15 @@ body {
   border-radius: var(--pf-radius-sm);
   white-space: nowrap;
   flex-shrink: 0;
+  max-width: min(320px, 50%);
+  overflow: hidden;
   transition: all 0.15s ease;
+}
+
+.finding__badge-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .finding:hover .finding__badge {
@@ -503,8 +513,42 @@ body {
 
 .finding__message {
   color: var(--pf-fg);
-  word-break: break-word;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   transition: color 0.12s ease;
+}
+
+.quick-fix-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #60a5fa;
+  font-family: var(--pf-font);
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: var(--pf-radius-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: auto;
+  transition: all 0.15s ease;
+}
+
+.quick-fix-btn:hover {
+  background: rgba(59, 130, 246, 0.22);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: #93c5fd;
+}
+
+.quick-fix-btn--header {
+  font-size: 10px;
+  padding: 1px 7px;
+  margin-left: 0;
 }
 
 .finding:hover .finding__message {

@@ -33,6 +33,11 @@ export const WebviewMessageSchema = z.discriminatedUnion("type", [
     scope: z.enum(["branch", "staged", "working"]),
   }),
   z.object({
+    type: z.literal("quickFix"),
+    checkId: z.string(),
+    file: z.string().optional(),
+  }),
+  z.object({
     type: z.literal("launchPR"),
   }),
   z.object({

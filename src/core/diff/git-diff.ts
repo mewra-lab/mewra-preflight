@@ -176,8 +176,7 @@ export async function computeGitDiff(
           runGit(workspaceRoot, ["diff", "--name-status", "HEAD~1..HEAD"]),
           runGit(workspaceRoot, ["diff", "HEAD~1..HEAD"]),
         ]);
-      } catch {
-      }
+      } catch {}
     }
 
     const changedFiles = parseNameStatus(nameStatus);
@@ -247,8 +246,7 @@ export async function computeGitDiff(
           runGit(workspaceRoot, ["diff", "--name-status", "HEAD~1..HEAD"]),
           runGit(workspaceRoot, ["diff", "HEAD~1..HEAD"]),
         ]);
-      } catch {
-      }
+      } catch {}
     }
   }
 
