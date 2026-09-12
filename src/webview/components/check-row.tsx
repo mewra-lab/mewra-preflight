@@ -7,6 +7,8 @@ type CheckRowProps = {
   snapshot: CheckSnapshot;
   onOpenFinding?: (path: string, line: number) => void;
   onQuickFix?: (checkId: string, file?: string) => void;
+  onInstallTool?: (tool: string, pack?: string) => void;
+  fixingTarget?: string | null;
 };
 
 // MARK: - Status Icon Component
@@ -110,12 +112,15 @@ export function CheckRow({
   snapshot,
   onOpenFinding,
   onQuickFix,
+  onInstallTool,
+  fixingTarget,
 }: CheckRowProps) {
   const { definition, result } = snapshot;
   const hasFindings = result.findings.length > 0;
   const [expanded, setExpanded] = useState(hasFindings);
   const isFixable =
     definition.id === "js-ts:prettier" || definition.id === "js-ts:eslint";
+  const isFixingAll = fixingTarget === definition.id;
 
   const toggleExpanded = () => {
     if (hasFindings) {
@@ -140,23 +145,62 @@ export function CheckRow({
         }}
       >
         <StatusIcon status={result.status} />
-        <span class="check-row__label">{definition.label}</span>
+        <span class="check-row__label" title={definition.label}>
+          {definition.label}
+        </span>
 
         {result.message && !hasFindings && (
-          <span class="check-row__short-message">{result.message}</span>
+          <span class="check-row__short-message" title={result.message}>
+            {result.message}
+          </span>
         )}
 
         <div class="check-row__meta">
-          {hasFindings && isFixable && (
+          {result.status === "not-configured" && onInstallTool && (
             <button
-              class="quick-fix-btn quick-fix-btn--header"
+              class="quick-fix-btn quick-fix-btn--install"
               onClick={(e) => {
                 e.stopPropagation();
-                onQuickFix?.(definition.id);
+                const tool = definition.id.includes(":")
+                  ? (definition.id.split(":")[1] ?? definition.id)
+                  : definition.id;
+                onInstallTool(tool, definition.pack);
               }}
+              title={`Install ${definition.label}`}
+            >
+              Install
+            </button>
+          )}
+
+          {hasFindings && isFixable && (
+            <button
+              class={`quick-fix-btn quick-fix-btn--header ${isFixingAll ? "quick-fix-btn--loading" : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isFixingAll) onQuickFix?.(definition.id);
+              }}
+              disabled={isFixingAll}
               title={`Auto-fix all issues with ${definition.label}`}
             >
-              Fix All
+              {isFixingAll ? (
+                <>
+                  <svg
+                    class="spinner-svg"
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                  >
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
+                  <span>Fixing...</span>
+                </>
+              ) : (
+                "Fix All"
+              )}
             </button>
           )}
 
@@ -230,18 +274,43 @@ export function CheckRow({
               </span>
               <span class="finding__message">{f.message}</span>
 
-              {isFixable && (
-                <button
-                  class="quick-fix-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onQuickFix?.(definition.id, f.file);
-                  }}
-                  title={`Fix ${f.file}`}
-                >
-                  Fix
-                </button>
-              )}
+              {isFixable &&
+                (() => {
+                  const isFixingFile =
+                    fixingTarget === `${definition.id}:${f.file}`;
+                  const isDisabled = isFixingFile || isFixingAll;
+                  return (
+                    <button
+                      class={`quick-fix-btn ${isFixingFile ? "quick-fix-btn--loading" : ""}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isDisabled) onQuickFix?.(definition.id, f.file);
+                      }}
+                      disabled={isDisabled}
+                      title={`Fix ${f.file}`}
+                    >
+                      {isFixingFile ? (
+                        <>
+                          <svg
+                            class="spinner-svg"
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="3"
+                            stroke-linecap="round"
+                          >
+                            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                          </svg>
+                          <span>Fixing...</span>
+                        </>
+                      ) : (
+                        "Fix"
+                      )}
+                    </button>
+                  );
+                })()}
             </li>
           ))}
         </ul>

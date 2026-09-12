@@ -32,4 +32,16 @@ describe("createPreFlightContext — runCommand", () => {
     const res = await context.runCommand("node", ["-e", "process.exit(2)"]);
     expect(res.code).toBe(2);
   });
+
+  it("handles command timeout cleanly", async () => {
+    const context = createPreFlightContext(process.cwd());
+    const res = await context.runCommand(
+      "node",
+      ["-e", "setTimeout(() => {}, 200)"],
+      undefined,
+      50,
+    );
+    expect(res.code).toBe(1);
+    expect(res.stderr).toContain("Command timed out.");
+  });
 });

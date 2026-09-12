@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import type { PreFlightConfig } from "../../shared/types.js";
+import type { PreFlightConfig, PreFlightSnapshot } from "../../shared/types.js";
 
 // MARK: - Helpers
 
@@ -32,18 +32,84 @@ async function getCurrentBranch(cwd: string): Promise<string | null> {
   }
 }
 
-function remoteToHttps(remoteUrl: string): string {
+async function getGitCommits(
+  cwd: string,
+  targetBranch: string,
+): Promise<string[]> {
+  try {
+    const { stdout } = await execFileAsync(
+      "git",
+      ["log", "--oneline", "-n", "20", `${targetBranch}..HEAD`],
+      { cwd },
+    );
+    return stdout.trim().split("\n").filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+export function remoteToHttps(remoteUrl: string): string {
   return remoteUrl
     .replace(/^git@([^:]+):/, "https://$1/")
     .replace(/\.git$/, "");
 }
 
-function formatBranchTitle(branch: string): string {
+export function formatBranchTitle(branch: string): string {
   if (branch.includes("/")) {
     const [prefix, ...rest] = branch.split("/");
     return `${prefix}: ${rest.join("/").replace(/[-_]/g, " ")}`;
   }
   return branch.replace(/[-_]/g, " ");
+}
+
+export function formatPRBody(
+  branch: string,
+  targetBranch: string,
+  commits: string[],
+  snapshot?: PreFlightSnapshot,
+): string {
+  const sections: string[] = [
+    "## Summary",
+    "Automated PR draft created by Mewra PreFlight.",
+    "",
+    `- Source branch: \`${branch}\``,
+    `- Target branch: \`${targetBranch}\``,
+  ];
+
+  if (commits.length > 0) {
+    sections.push("", "## Commits", ...commits.map((c) => `- ${c}`));
+  }
+
+  if (snapshot) {
+    sections.push(
+      "",
+      "## PreFlight Sanity Checks",
+      `- Overall Status: **${snapshot.overallStatus.toUpperCase()}**`,
+    );
+
+    const checksWithFindings = snapshot.checks.filter(
+      (c) => c.result.findings && c.result.findings.length > 0,
+    );
+
+    if (checksWithFindings.length > 0) {
+      sections.push(
+        "",
+        "<details>",
+        "<summary>Check Findings Details</summary>",
+        "",
+      );
+      for (const check of checksWithFindings) {
+        sections.push(`### ${check.definition.label} (${check.result.status})`);
+        for (const f of check.result.findings) {
+          const loc = f.line ? `:${f.line}` : "";
+          sections.push(`- \`${f.file}${loc}\`: ${f.message}`);
+        }
+      }
+      sections.push("</details>");
+    }
+  }
+
+  return sections.join("\n") + "\n";
 }
 
 // MARK: - Types
@@ -60,6 +126,7 @@ export type PRUrl = {
 export async function buildPRUrl(
   workspaceRoot: string,
   config: PreFlightConfig,
+  snapshot?: PreFlightSnapshot,
 ): Promise<PRUrl | null> {
   const [remoteUrl, branch] = await Promise.all([
     getRemoteUrl(workspaceRoot),
@@ -69,10 +136,11 @@ export async function buildPRUrl(
   if (!remoteUrl || !branch) return null;
   if (branch === "HEAD" || branch === config.targetBranch) return null;
 
+  const commits = await getGitCommits(workspaceRoot, config.targetBranch);
   const base = remoteToHttps(remoteUrl);
   const encoded = encodeURIComponent(branch);
   const title = formatBranchTitle(branch);
-  const body = `## Summary\n\nAutomated PR draft created by Mewra PreFlight.\n\n- Source branch: \`${branch}\`\n- Target branch: \`${config.targetBranch}\`\n`;
+  const body = formatPRBody(branch, config.targetBranch, commits, snapshot);
 
   if (config.gitHost === "gitlab") {
     return {
@@ -84,7 +152,7 @@ export async function buildPRUrl(
   }
 
   return {
-    url: `${base}/compare/${encodeURIComponent(config.targetBranch)}...${encoded}?expand=1&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`,
+    url: `${base}/compare/${encodeURIComponent(config.targetBranch)}...${encoded}?quick_pull=1&expand=1&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`,
     branch,
     title,
     body,

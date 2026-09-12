@@ -15,7 +15,12 @@ export type CommandResult = {
 export type PreFlightContext = {
   workspaceRoot: string;
   resolveTool(binName: string): Promise<string | null>;
-  runCommand(cmd: string, args: string[], cwd?: string): Promise<CommandResult>;
+  runCommand(
+    cmd: string,
+    args: string[],
+    cwd?: string,
+    timeoutMs?: number,
+  ): Promise<CommandResult>;
 };
 
 export type CheckRunner = {

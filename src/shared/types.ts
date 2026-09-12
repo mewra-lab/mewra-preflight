@@ -66,6 +66,23 @@ export const GitDiffSchema = z.object({
 
 export type GitDiff = z.infer<typeof GitDiffSchema>;
 
+export const ManualCheckConditionSchema = z.object({
+  modifiedFilesMatch: z.string().optional(),
+});
+
+export type ManualCheckCondition = z.infer<typeof ManualCheckConditionSchema>;
+
+export const ManualCheckItemSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  severity: CheckSeveritySchema.default("error"),
+  checked: z.boolean().default(false),
+  condition: ManualCheckConditionSchema.optional(),
+  triggered: z.boolean().default(true),
+});
+
+export type ManualCheckItem = z.infer<typeof ManualCheckItemSchema>;
+
 export const CheckSnapshotSchema = z.object({
   definition: CheckDefinitionSchema,
   result: CheckResultSchema,
@@ -79,10 +96,36 @@ export const PreFlightSnapshotSchema = z.object({
   finishedAt: z.number().optional(),
   diff: GitDiffSchema.optional(),
   checks: z.array(CheckSnapshotSchema),
+  manualChecks: z.array(ManualCheckItemSchema).default([]),
   overallStatus: CheckStatusSchema,
 });
 
 export type PreFlightSnapshot = z.infer<typeof PreFlightSnapshotSchema>;
+
+export type ManualCheckConfig = {
+  id: string;
+  label: string;
+  severity?: "error" | "warning";
+  condition?: {
+    modifiedFilesMatch?: string;
+  };
+};
+
+export type PreFlightConfigFile = {
+  targetBranch?: string;
+  ecosystems?: Record<string, { enabled?: boolean; [key: string]: unknown }>;
+  universalChecks?: {
+    noDebugStatements?: "error" | "warning" | "off";
+    noSecrets?: "error" | "warning" | "off";
+    noLocalhostUrls?: "error" | "warning" | "off";
+    largeFileThresholdMb?: number;
+  };
+  contributedChecks?: Record<
+    string,
+    { enabled?: boolean; severity?: "error" | "warning" }
+  >;
+  manualChecklist?: ManualCheckConfig[];
+};
 
 export type PreFlightConfig = {
   targetBranch: string;
@@ -90,4 +133,6 @@ export type PreFlightConfig = {
   blockingOnWarnings: boolean;
   gitHost: "github" | "gitlab";
   diffScope: DiffScope;
+  manualChecklist?: ManualCheckConfig[];
+  largeFileThresholdMb?: number;
 };

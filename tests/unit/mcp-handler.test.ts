@@ -63,6 +63,7 @@ describe("PreFlightMcpHandler — tools", () => {
           },
         },
       ],
+      manualChecks: [],
       overallStatus: "fail",
     };
 
@@ -96,6 +97,7 @@ describe("PreFlightMcpHandler — tools", () => {
           },
         },
       ],
+      manualChecks: [],
       overallStatus: "fail",
     };
     handler.updateSnapshot(snapshot);

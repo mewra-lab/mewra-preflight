@@ -68,21 +68,32 @@ export function createPreFlightContext(
       cmd: string,
       args: string[],
       cwd?: string,
+      timeoutMs = 30_000,
     ): Promise<CommandResult> {
       try {
         const { stdout, stderr } = await execFileAsync(cmd, args, {
           cwd: cwd ?? workspaceRoot,
+          timeout: timeoutMs,
         });
         return { stdout, stderr, code: 0 };
       } catch (err: unknown) {
         const error = err as {
           stdout?: string;
           stderr?: string;
-          code?: number;
+          code?: number | string;
+          killed?: boolean;
+          signal?: string;
         };
+
+        const isTimeout =
+          error.killed ||
+          error.code === "ETIMEDOUT" ||
+          error.signal === "SIGTERM";
+        const stderr = isTimeout ? "Command timed out." : (error.stderr ?? "");
+
         return {
           stdout: error.stdout ?? "",
-          stderr: error.stderr ?? "",
+          stderr,
           code: typeof error.code === "number" ? error.code : 1,
         };
       }

@@ -18,23 +18,29 @@
 ## 3. Check row anatomy
 
 ```
-[icon] Label                                    duration
-       ├ finding: src/foo.ts:42 — message
+[icon] Label                               [Install] [Fix All] duration
+       ├ finding: src/foo.ts:42 — message        [Fix]
        └ +N more findings
 ```
 
 - Status icon: ✓ pass, ✗ fail, ⚠ warning, — not-configured, ⊘ skipped, ⟳ running, ○ pending.
 - Click a finding to jump to that file and line.
-- Max 8 findings shown per check; overflow shows "+N more findings".
+- When status is `not-configured`, an `[ Install ]` button is shown to install the tool into project devDependencies via integrated terminal.
+- QuickFix buttons (`[Fix All]` and `[Fix]`) trigger linter/formatter auto-fix with spinner feedback.
 
-## 4. PR launch button
+## 4. Manual checklist & PR launch button
 
 ```
-[ ↗ Open Pull Request ]
+MANUAL CHECKS
+[ ] Applied DB migration to dev cluster
+    (Triggered: prisma/migrations/** was modified)
+
+[ 🚀 Push & Create PR (2 blockers remaining) ]
 ```
 
-- **Ready** (green): all error-severity checks pass.
-- **Blocked** (muted): one or more error checks fail.
+- Triggered manual checks display condition trigger note and toggleable checkbox.
+- **Ready** (green): all error-severity checks pass and error manual checks are checked.
+- **Blocked** (muted): one or more error checks or manual checklist items remain unresolved, with live blocker count badge.
 - If `blockingOnWarnings` is `true`, warning-severity failures also block.
 
 ## 5. Commands and keybindings

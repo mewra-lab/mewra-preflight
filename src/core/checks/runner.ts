@@ -4,15 +4,37 @@ import type {
   CheckSnapshot,
   CheckStatus,
   PreFlightSnapshot,
+  ManualCheckItem,
 } from "../../shared/types.js";
 
 // MARK: - Helpers
 
-function deriveOverallStatus(checks: CheckSnapshot[]): CheckStatus {
-  const statuses = checks.map((c) => c.result.status);
-  if (statuses.some((s) => s === "fail")) return "fail";
-  if (statuses.some((s) => s === "running")) return "running";
-  if (statuses.some((s) => s === "warning")) return "warning";
+export function deriveOverallStatus(
+  checks: CheckSnapshot[],
+  manualChecks: ManualCheckItem[] = [],
+): CheckStatus {
+  if (checks.some((c) => c.result.status === "running")) return "running";
+
+  const hasFailingCheck = checks.some(
+    (c) => c.result.status === "fail" && c.definition.severity === "error",
+  );
+  const hasUncheckedBlockingManual = manualChecks.some(
+    (m) => m.triggered && !m.checked && m.severity === "error",
+  );
+
+  if (hasFailingCheck || hasUncheckedBlockingManual) return "fail";
+
+  const hasWarning =
+    checks.some(
+      (c) =>
+        c.result.status === "warning" ||
+        (c.result.status === "fail" && c.definition.severity === "warning"),
+    ) ||
+    manualChecks.some(
+      (m) => m.triggered && !m.checked && m.severity === "warning",
+    );
+
+  if (hasWarning) return "warning";
   return "pass";
 }
 
@@ -31,6 +53,7 @@ export async function runChecks(
   diff: GitDiff,
   context: PreFlightContext,
   onProgress?: RunnerProgressCallback,
+  manualChecks: ManualCheckItem[] = [],
 ): Promise<PreFlightSnapshot> {
   const runId = crypto.randomUUID();
   const startedAt = Date.now();
@@ -52,7 +75,8 @@ export async function runChecks(
       ...(finishedAt !== undefined ? { finishedAt } : {}),
       diff,
       checks: snapshots,
-      overallStatus: deriveOverallStatus(snapshots),
+      manualChecks,
+      overallStatus: deriveOverallStatus(snapshots, manualChecks),
     };
     if (onProgress) {
       onProgress(cloneSnapshot(current));
@@ -101,7 +125,8 @@ export async function runChecks(
     finishedAt,
     diff,
     checks: snapshots,
-    overallStatus: deriveOverallStatus(snapshots),
+    manualChecks,
+    overallStatus: deriveOverallStatus(snapshots, manualChecks),
   };
 
   return cloneSnapshot(final);

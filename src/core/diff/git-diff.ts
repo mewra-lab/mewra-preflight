@@ -43,11 +43,36 @@ async function resolveBaseRef(
   cwd: string,
   baseBranch: string,
 ): Promise<string> {
+  let detectedDefault: string | null = null;
+  if (baseBranch === "main") {
+    try {
+      const symRef = await runGit(cwd, [
+        "symbolic-ref",
+        "--short",
+        "refs/remotes/origin/HEAD",
+      ]);
+      if (symRef) {
+        detectedDefault = symRef.replace(/^origin\//, "");
+      }
+    } catch {}
+  }
+
   const candidates = [
     baseBranch,
     `origin/${baseBranch}`,
-    baseBranch === "main" ? "master" : "main",
-    baseBranch === "main" ? "origin/master" : "origin/main",
+    ...(detectedDefault && detectedDefault !== baseBranch
+      ? [detectedDefault, `origin/${detectedDefault}`]
+      : []),
+    ...(baseBranch === "main"
+      ? [
+          "develop",
+          "origin/develop",
+          "dev",
+          "origin/dev",
+          "master",
+          "origin/master",
+        ]
+      : []),
   ];
 
   for (const c of candidates) {
@@ -60,6 +85,28 @@ async function resolveBaseRef(
   }
 
   return "HEAD";
+}
+
+export async function listGitBranches(cwd: string): Promise<string[]> {
+  try {
+    const raw = await runGit(cwd, [
+      "branch",
+      "-a",
+      "--format=%(refname:short)",
+    ]);
+    const seen = new Set<string>();
+    for (const line of raw.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.includes("HEAD")) continue;
+      const normalized = trimmed.startsWith("origin/")
+        ? trimmed.replace(/^origin\//, "")
+        : trimmed;
+      seen.add(normalized);
+    }
+    return Array.from(seen);
+  } catch {
+    return [];
+  }
 }
 
 function parseNameStatus(raw: string): ChangedFile[] {

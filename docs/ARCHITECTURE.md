@@ -67,11 +67,15 @@ mewra-preflight/
 │   │   └── security/nonce.ts
 │   ├── core/
 │   │   ├── diff/git-diff.ts
+│   │   ├── config/workspace-config.ts
 │   │   ├── checks/
 │   │   │   ├── check-contract.ts
+│   │   │   ├── context.ts
 │   │   │   ├── runner.ts
+│   │   │   ├── manual-evaluator.ts
 │   │   │   └── packs/{universal,js-ts}/
 │   │   ├── ecosystem/detect-ecosystem.ts
+│   │   ├── mcp/handler.ts
 │   │   └── pr/pr-launcher.ts
 │   ├── shared/
 │   │   ├── types.ts
@@ -79,7 +83,7 @@ mewra-preflight/
 │   └── webview/
 │       ├── index.tsx
 │       ├── app.tsx
-│       ├── components/{check-row.tsx,pr-button.tsx}
+│       ├── components/{check-row.tsx,manual-checklist.tsx,pr-button.tsx}
 │       └── styles.css
 ├── tests/unit/
 ├── SPEC.md

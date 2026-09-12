@@ -19,6 +19,16 @@ export const ExtensionMessageSchema = z.discriminatedUnion("type", [
     checkId: z.string(),
     findings: z.array(CheckFindingSchema),
   }),
+  z.object({
+    type: z.literal("quickFixFailed"),
+    checkId: z.string(),
+    file: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal("quickFixDone"),
+    checkId: z.string(),
+    file: z.string().optional(),
+  }),
 ]);
 
 export type ExtensionMessage = z.infer<typeof ExtensionMessageSchema>;
@@ -38,6 +48,9 @@ export const WebviewMessageSchema = z.discriminatedUnion("type", [
     file: z.string().optional(),
   }),
   z.object({
+    type: z.literal("selectTargetBranch"),
+  }),
+  z.object({
     type: z.literal("launchPR"),
   }),
   z.object({
@@ -49,6 +62,11 @@ export const WebviewMessageSchema = z.discriminatedUnion("type", [
     type: z.literal("markManualCheck"),
     checkId: z.string(),
     done: z.boolean(),
+  }),
+  z.object({
+    type: z.literal("installTool"),
+    tool: z.string(),
+    pack: z.string().optional(),
   }),
   z.object({
     type: z.literal("ready"),

@@ -2,12 +2,23 @@
 
 type PrButtonProps = {
   blocked: boolean;
+  blockerCount?: number;
   onLaunch: () => void;
 };
 
 // MARK: - Component
 
-export function PrButton({ blocked, onLaunch }: PrButtonProps) {
+export function PrButton({
+  blocked,
+  blockerCount = 0,
+  onLaunch,
+}: PrButtonProps) {
+  const label = blocked
+    ? blockerCount > 0
+      ? `Push & Create PR (${blockerCount} ${blockerCount === 1 ? "blocker" : "blockers"} remaining)`
+      : "Resolve Errors to Open PR"
+    : "Push & Create PR";
+
   return (
     <button
       class={`pr-button ${blocked ? "pr-button--blocked" : "pr-button--ready"}`}
@@ -50,7 +61,7 @@ export function PrButton({ blocked, onLaunch }: PrButtonProps) {
           </svg>
         )}
       </span>
-      <span>{blocked ? "Resolve Errors to Open PR" : "Open Pull Request"}</span>
+      <span>{label}</span>
     </button>
   );
 }

@@ -31,7 +31,10 @@ describe("parseNameStatus (internal helper via module boundary)", () => {
   });
 });
 
-import { computeGitDiff } from "../../src/core/diff/git-diff.js";
+import {
+  computeGitDiff,
+  listGitBranches,
+} from "../../src/core/diff/git-diff.js";
 
 describe("computeGitDiff scopes", () => {
   it("computes diff with branch scope", async () => {
@@ -53,5 +56,11 @@ describe("computeGitDiff scopes", () => {
     expect(diff.scope).toBe("working");
     expect(Array.isArray(diff.changedFiles)).toBe(true);
     expect(typeof diff.rawPatch).toBe("string");
+  });
+
+  it("lists repository git branches", async () => {
+    const branches = await listGitBranches(process.cwd());
+    expect(Array.isArray(branches)).toBe(true);
+    expect(branches.length).toBeGreaterThan(0);
   });
 });

@@ -104,4 +104,51 @@ describe("runChecks", () => {
 
     expect(progress).toHaveBeenCalled();
   });
+
+  it("sets overallStatus to fail if an error manual check is unchecked", async () => {
+    const check = makeCheck({ id: "c1" });
+    const manualChecks = [
+      {
+        id: "m1",
+        label: "Migration",
+        severity: "error" as const,
+        checked: false,
+        triggered: true,
+      },
+    ];
+
+    const snapshot = await runChecks(
+      [check],
+      MOCK_DIFF,
+      CONTEXT,
+      undefined,
+      manualChecks,
+    );
+
+    expect(snapshot.overallStatus).toBe("fail");
+    expect(snapshot.manualChecks).toHaveLength(1);
+  });
+
+  it("sets overallStatus to pass when all manual checks are checked", async () => {
+    const check = makeCheck({ id: "c1" });
+    const manualChecks = [
+      {
+        id: "m1",
+        label: "Migration",
+        severity: "error" as const,
+        checked: true,
+        triggered: true,
+      },
+    ];
+
+    const snapshot = await runChecks(
+      [check],
+      MOCK_DIFF,
+      CONTEXT,
+      undefined,
+      manualChecks,
+    );
+
+    expect(snapshot.overallStatus).toBe("pass");
+  });
 });
