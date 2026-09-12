@@ -1,7 +1,11 @@
+// MARK: - Types
+
 type PrButtonProps = {
   blocked: boolean;
   onLaunch: () => void;
 };
+
+// MARK: - Component
 
 export function PrButton({ blocked, onLaunch }: PrButtonProps) {
   return (
@@ -10,10 +14,13 @@ export function PrButton({ blocked, onLaunch }: PrButtonProps) {
       disabled={blocked}
       onClick={onLaunch}
       title={
-        blocked ? "Fix all errors before opening a PR." : "Open PR in browser"
+        blocked
+          ? "Fix all failing checks before creating a pull request."
+          : "Create Pull Request in browser"
       }
     >
-      {blocked ? "Fix errors first" : "↗ Open Pull Request"}
+      <span class="pr-button__icon">{blocked ? "🔒" : "↗"}</span>
+      <span>{blocked ? "Resolve Errors to Open PR" : "Open Pull Request"}</span>
     </button>
   );
 }

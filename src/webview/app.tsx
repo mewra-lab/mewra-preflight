@@ -5,6 +5,8 @@ import type { WebviewMessage } from "../shared/messages.js";
 import { CheckRow } from "./components/check-row.js";
 import { PrButton } from "./components/pr-button.js";
 
+// MARK: - VS Code API
+
 declare const acquireVsCodeApi: () => {
   postMessage: (msg: unknown) => void;
 };
@@ -15,17 +17,42 @@ function post(msg: WebviewMessage): void {
   vscode.postMessage(msg);
 }
 
+// MARK: - Types
+
 type AppState =
   | { phase: "idle" }
   | { phase: "running"; snapshot: PreFlightSnapshot }
   | { phase: "done"; snapshot: PreFlightSnapshot }
   | { phase: "error"; message: string };
 
+// MARK: - Helpers
+
 function isBlocked(status: CheckStatus, blockOnWarnings: boolean): boolean {
   if (status === "fail") return true;
   if (blockOnWarnings && status === "warning") return true;
   return false;
 }
+
+function StatusPill({ status }: { status: CheckStatus }) {
+  const labels: Record<CheckStatus, string> = {
+    pass: "Passed",
+    fail: "Failed",
+    warning: "Warnings",
+    "not-configured": "Not Configured",
+    skipped: "Skipped",
+    running: "Running",
+    pending: "Pending",
+  };
+
+  return (
+    <div class={`status-pill status-pill--${status}`}>
+      <span class="status-pill__dot" />
+      <span class="status-pill__text">{labels[status]}</span>
+    </div>
+  );
+}
+
+// MARK: - App Component
 
 export function App() {
   const [state, setState] = useState<AppState>({ phase: "idle" });
@@ -66,16 +93,24 @@ export function App() {
 
   if (state.phase === "idle") {
     return (
-      <div class="container">
-        <header class="header">
-          <h1 class="header__title">Mewra PreFlight</h1>
+      <div class="glass-shell">
+        <header class="navbar">
+          <div class="navbar__brand">
+            <span class="navbar__icon">🚀</span>
+            <span class="navbar__title">Mewra PreFlight</span>
+          </div>
         </header>
-        <div class="empty-state">
-          <p class="empty-state__text">
-            Run the pipeline to validate your diff before pushing.
+
+        <div class="hero-card">
+          <div class="hero-card__badge">Pre-Push Pipeline</div>
+          <h2 class="hero-card__title">Validate your diff before pushing</h2>
+          <p class="hero-card__desc">
+            Fast, diff-scoped sanity checks for Prettier, ESLint, TypeScript,
+            and credentials.
           </p>
-          <button class="run-button" onClick={handleRun}>
-            ▶ Run Pipeline
+          <button class="glass-btn glass-btn--primary" onClick={handleRun}>
+            <span>▶</span>
+            <span>Run Pipeline</span>
           </button>
         </div>
       </div>
@@ -84,16 +119,22 @@ export function App() {
 
   if (state.phase === "error") {
     return (
-      <div class="container">
-        <header class="header">
-          <h1 class="header__title">Mewra PreFlight</h1>
-          <button class="run-button run-button--header" onClick={handleRun}>
-            ▶ Re-run
+      <div class="glass-shell">
+        <header class="navbar">
+          <div class="navbar__brand">
+            <span class="navbar__icon">🚀</span>
+            <span class="navbar__title">Mewra PreFlight</span>
+          </div>
+          <button class="glass-btn glass-btn--ghost" onClick={handleRun}>
+            <span>↻</span>
+            <span>Re-run</span>
           </button>
         </header>
-        <div class="error-state">
-          <span class="error-state__icon">⚠</span>
-          <p class="error-state__message">{state.message}</p>
+
+        <div class="error-panel">
+          <span class="error-panel__icon">⚠</span>
+          <h3 class="error-panel__title">Pipeline Error</h3>
+          <p class="error-panel__message">{state.message}</p>
         </div>
       </div>
     );
@@ -105,30 +146,46 @@ export function App() {
   const changedCount = snapshot.diff?.changedFiles.length ?? 0;
 
   return (
-    <div class="container">
-      <header class="header">
-        <h1 class="header__title">Mewra PreFlight</h1>
-        <span class={`status-badge status-badge--${snapshot.overallStatus}`}>
-          {snapshot.overallStatus}
-        </span>
-        {isRunning && <span class="spinner" aria-label="Running" />}
+    <div class="glass-shell">
+      <header class="navbar">
+        <div class="navbar__brand">
+          <span class="navbar__icon">🚀</span>
+          <span class="navbar__title">PreFlight</span>
+        </div>
+
+        <div class="navbar__center">
+          <StatusPill status={snapshot.overallStatus} />
+        </div>
+
         <button
-          class="run-button run-button--header"
+          class="glass-btn glass-btn--ghost"
           onClick={handleRun}
           disabled={isRunning}
         >
-          ▶ Re-run
+          <span class={isRunning ? "spinner-icon" : ""}>
+            {isRunning ? "⟳" : "↻"}
+          </span>
+          <span>{isRunning ? "Running" : "Re-run"}</span>
         </button>
       </header>
 
       {snapshot.diff && (
-        <p class="diff-summary">
-          {changedCount} file{changedCount !== 1 ? "s" : ""} changed vs{" "}
-          <code>{snapshot.diff.baseBranch}</code>
-        </p>
+        <div class="diff-strip">
+          <div class="diff-strip__info">
+            <span class="diff-strip__icon">⎇</span>
+            <span class="diff-strip__branch">{snapshot.diff.headBranch}</span>
+            <span class="diff-strip__arrow">→</span>
+            <span class="diff-strip__target">{snapshot.diff.baseBranch}</span>
+          </div>
+          <div class="diff-strip__stats">
+            <span class="diff-strip__count">
+              {changedCount} changed {changedCount === 1 ? "file" : "files"}
+            </span>
+          </div>
+        </div>
       )}
 
-      <section class="checks">
+      <main class="check-list">
         {snapshot.checks.map((snap) => (
           <CheckRow
             key={snap.definition.id}
@@ -136,10 +193,10 @@ export function App() {
             onOpenFinding={handleOpenFinding}
           />
         ))}
-      </section>
+      </main>
 
       {state.phase === "done" && (
-        <footer class="footer">
+        <footer class="footer-bar">
           <PrButton blocked={blocked} onLaunch={handleLaunchPR} />
         </footer>
       )}

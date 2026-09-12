@@ -38,24 +38,27 @@
   "contributes": {
     "commands": [
       {
-        "command": "mewra-preflight.runPipeline",
-        "title": "Run Pipeline",
+        "command": "mewra-preflight.openDashboard",
+        "title": "Open Dashboard",
+        "icon": "$(dashboard)",
         "category": "Mewra PreFlight"
       },
       {
-        "command": "mewra-preflight.openDashboard",
-        "title": "Open Dashboard",
+        "command": "mewra-preflight.runPipeline",
+        "title": "Run PreFlight Pipeline",
+        "icon": "$(rocket)",
         "category": "Mewra PreFlight"
       },
       {
         "command": "mewra-preflight.launchPR",
         "title": "Launch Pull Request",
+        "icon": "$(git-pull-request)",
         "category": "Mewra PreFlight"
       }
     ],
     "keybindings": [
       {
-        "command": "mewra-preflight.runPipeline",
+        "command": "mewra-preflight.openDashboard",
         "key": "alt+shift+p",
         "when": "workspaceFolderCount >= 1"
       }
@@ -63,11 +66,34 @@
     "menus": {
       "commandPalette": [
         {
+          "command": "mewra-preflight.openDashboard",
+          "when": "workspaceFolderCount >= 1"
+        },
+        {
           "command": "mewra-preflight.runPipeline",
           "when": "workspaceFolderCount >= 1"
         },
         {
           "command": "mewra-preflight.launchPR",
+          "when": "workspaceFolderCount >= 1"
+        }
+      ],
+      "scm/title": [
+        {
+          "command": "mewra-preflight.runPipeline",
+          "group": "navigation@1",
+          "when": "workspaceFolderCount >= 1"
+        },
+        {
+          "command": "mewra-preflight.openDashboard",
+          "group": "navigation@2",
+          "when": "workspaceFolderCount >= 1"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "mewra-preflight.openDashboard",
+          "group": "navigation",
           "when": "workspaceFolderCount >= 1"
         }
       ]

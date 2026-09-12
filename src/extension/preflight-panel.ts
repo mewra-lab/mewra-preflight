@@ -13,6 +13,12 @@ import { buildUniversalPack } from "../core/checks/packs/universal/index.js";
 import { buildJsTsPack } from "../core/checks/packs/js-ts/index.js";
 import { buildPRUrl } from "../core/pr/pr-launcher.js";
 
+// MARK: - Types
+
+export type StatusChangeCallback = (
+  status: "idle" | "running" | "pass" | "warning" | "fail",
+) => void;
+
 // MARK: - Panel Class
 
 export class PreFlightPanel {
@@ -22,12 +28,14 @@ export class PreFlightPanel {
   private readonly _extensionUri: vscode.Uri;
   private readonly _registry: CheckRegistry;
   private readonly _mcpHandler: PreFlightMcpHandler;
+  private readonly _onStatusChange: StatusChangeCallback | undefined;
   private _disposables: vscode.Disposable[] = [];
 
   static create(
     extensionUri: vscode.Uri,
     registry: CheckRegistry,
     mcpHandler: PreFlightMcpHandler,
+    onStatusChange?: StatusChangeCallback,
   ): PreFlightPanel {
     const panel = vscode.window.createWebviewPanel(
       PreFlightPanel.viewType,
@@ -39,7 +47,13 @@ export class PreFlightPanel {
         localResourceRoots: [vscode.Uri.joinPath(extensionUri, "dist")],
       },
     );
-    return new PreFlightPanel(panel, extensionUri, registry, mcpHandler);
+    return new PreFlightPanel(
+      panel,
+      extensionUri,
+      registry,
+      mcpHandler,
+      onStatusChange,
+    );
   }
 
   private constructor(
@@ -47,11 +61,13 @@ export class PreFlightPanel {
     extensionUri: vscode.Uri,
     registry: CheckRegistry,
     mcpHandler: PreFlightMcpHandler,
+    onStatusChange?: StatusChangeCallback,
   ) {
     this._panel = panel;
     this._extensionUri = extensionUri;
     this._registry = registry;
     this._mcpHandler = mcpHandler;
+    this._onStatusChange = onStatusChange;
 
     this._panel.webview.html = this._buildHtml();
 
@@ -109,8 +125,11 @@ export class PreFlightPanel {
     const root = this._workspaceRoot();
     if (!root) {
       this._post({ type: "error", message: "No workspace folder open." });
+      this._onStatusChange?.("idle");
       return;
     }
+
+    this._onStatusChange?.("running");
 
     const config = this._getConfig();
 
@@ -122,6 +141,7 @@ export class PreFlightPanel {
         type: "error",
         message: e instanceof Error ? e.message : "Failed to compute git diff.",
       });
+      this._onStatusChange?.("fail");
       return;
     }
 
@@ -142,6 +162,13 @@ export class PreFlightPanel {
     });
 
     this._mcpHandler.updateSnapshot(finalSnapshot);
+
+    const overall = finalSnapshot.overallStatus;
+    if (overall === "pass" || overall === "warning" || overall === "fail") {
+      this._onStatusChange?.(overall);
+    } else {
+      this._onStatusChange?.("idle");
+    }
   }
 
   private async _launchPR(): Promise<void> {
@@ -206,7 +233,7 @@ export class PreFlightPanel {
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'none';
       style-src ${webview.cspSource} 'nonce-${nonce}';
-      img-src ${webview.cspSource};
+      img-src ${webview.cspSource} data:;
       script-src 'nonce-${nonce}';" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="${styleUri}" />

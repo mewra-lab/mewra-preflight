@@ -23,10 +23,54 @@ const mcpHandler = new PreFlightMcpHandler(() => [
 ]);
 
 let panel: PreFlightPanel | undefined;
+let statusBarItem: vscode.StatusBarItem | undefined;
+
+function updateStatusBar(
+  status: "idle" | "running" | "pass" | "warning" | "fail",
+): void {
+  if (!statusBarItem) return;
+
+  if (status === "running") {
+    statusBarItem.text = "$(sync~spin) PreFlight: Running...";
+    statusBarItem.backgroundColor = undefined;
+    statusBarItem.tooltip = "Mewra PreFlight is running checks...";
+  } else if (status === "pass") {
+    statusBarItem.text = "$(check) PreFlight: Ready";
+    statusBarItem.backgroundColor = undefined;
+    statusBarItem.tooltip =
+      "Mewra PreFlight: All checks passed. Ready to push!";
+  } else if (status === "warning") {
+    statusBarItem.text = "$(warning) PreFlight: Warnings";
+    statusBarItem.backgroundColor = new vscode.ThemeColor(
+      "statusBarItem.warningBackground",
+    );
+    statusBarItem.tooltip =
+      "Mewra PreFlight: Completed with warnings. Click to inspect.";
+  } else if (status === "fail") {
+    statusBarItem.text = "$(error) PreFlight: Failed";
+    statusBarItem.backgroundColor = new vscode.ThemeColor(
+      "statusBarItem.errorBackground",
+    );
+    statusBarItem.tooltip =
+      "Mewra PreFlight: Checks failed. Fix issues before pushing.";
+  } else {
+    statusBarItem.text = "$(rocket) PreFlight";
+    statusBarItem.backgroundColor = undefined;
+    statusBarItem.tooltip =
+      "Mewra PreFlight — Open Pre-Push Dashboard (Alt+Shift+P)";
+  }
+}
 
 function getOrCreatePanel(extensionUri: vscode.Uri): PreFlightPanel {
   if (!panel) {
-    panel = PreFlightPanel.create(extensionUri, registry, mcpHandler);
+    panel = PreFlightPanel.create(
+      extensionUri,
+      registry,
+      mcpHandler,
+      (status) => {
+        updateStatusBar(status);
+      },
+    );
   }
   return panel;
 }
@@ -34,13 +78,25 @@ function getOrCreatePanel(extensionUri: vscode.Uri): PreFlightPanel {
 // MARK: - Lifecycle
 
 export function activate(context: vscode.ExtensionContext): MewraPreFlightAPI {
+  statusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Left,
+    10,
+  );
+  statusBarItem.name = "Mewra PreFlight";
+  statusBarItem.command = "mewra-preflight.openDashboard";
+  updateStatusBar("idle");
+  statusBarItem.show();
+  context.subscriptions.push(statusBarItem);
+
   context.subscriptions.push(
     vscode.commands.registerCommand("mewra-preflight.openDashboard", () => {
       getOrCreatePanel(context.extensionUri).reveal();
     }),
 
     vscode.commands.registerCommand("mewra-preflight.runPipeline", () => {
-      getOrCreatePanel(context.extensionUri).runPipeline();
+      const p = getOrCreatePanel(context.extensionUri);
+      p.reveal();
+      p.runPipeline();
     }),
 
     vscode.commands.registerCommand("mewra-preflight.launchPR", () => {
@@ -61,5 +117,7 @@ export function activate(context: vscode.ExtensionContext): MewraPreFlightAPI {
 export function deactivate(): void {
   panel?.dispose();
   panel = undefined;
+  statusBarItem?.dispose();
+  statusBarItem = undefined;
   registry.clear();
 }
