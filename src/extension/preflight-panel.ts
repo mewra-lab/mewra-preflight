@@ -8,6 +8,7 @@ import { runChecks } from "../core/checks/runner.js";
 import { createPreFlightContext } from "../core/checks/context.js";
 import { CheckRegistry } from "../core/checks/registry.js";
 import { PreFlightMcpHandler } from "../core/mcp/handler.js";
+import { detectEcosystem } from "../core/ecosystem/detect-ecosystem.js";
 import { buildUniversalPack } from "../core/checks/packs/universal/index.js";
 import { buildJsTsPack } from "../core/checks/packs/js-ts/index.js";
 import { buildPRUrl } from "../core/pr/pr-launcher.js";
@@ -124,9 +125,13 @@ export class PreFlightPanel {
       return;
     }
 
+    const detectedEcosystem = await detectEcosystem(root);
+    const shouldEnableJsTs =
+      config.enabledPacks.includes("js-ts") || detectedEcosystem === "js-ts";
+
     const checks = [
       ...buildUniversalPack(),
-      ...(config.enabledPacks.includes("js-ts") ? buildJsTsPack() : []),
+      ...(shouldEnableJsTs ? buildJsTsPack() : []),
       ...this._registry.getContributedChecks(),
     ];
 
