@@ -1,5 +1,3 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
 import type { CheckRunner, PreFlightContext } from "../../check-contract.js";
 import type {
   GitDiff,
@@ -7,9 +5,11 @@ import type {
   CheckFinding,
 } from "../../../../shared/types.js";
 
-const execFileAsync = promisify(execFile);
+// MARK: - Constants
 
 const TSC_LINE_RE = /^(.+)\((\d+),(\d+)\):\s+(?:error|warning)\s+\w+:\s+(.+)$/;
+
+// MARK: - Check Definition
 
 export const tscCheck: CheckRunner = {
   id: "js-ts:tsc",
@@ -23,40 +23,55 @@ export const tscCheck: CheckRunner = {
     );
   },
 
-  async run(_diff: GitDiff, context: PreFlightContext): Promise<CheckResult> {
-    try {
-      await execFileAsync("tsc", ["--noEmit", "--pretty", "false"], {
-        cwd: context.workspaceRoot,
-      });
-      return { status: "pass", findings: [] };
-    } catch (e) {
-      const stdout = (e as { stdout?: string }).stdout ?? "";
+  async run(diff: GitDiff, context: PreFlightContext): Promise<CheckResult> {
+    const tool = await context.resolveTool("tsc");
 
-      if ((e as { code?: unknown }).code === "ENOENT") {
-        return {
-          status: "not-configured",
-          findings: [],
-          message: "tsc not found in PATH or local node_modules.",
-        };
-      }
-
-      const findings: CheckFinding[] = stdout.split("\n").flatMap((line) => {
-        const match = TSC_LINE_RE.exec(line);
-        if (!match) return [];
-        const [, file, rawLine, rawCol, message] = match;
-        if (!file || !rawLine || !rawCol || !message) return [];
-        return [
-          {
-            file,
-            line: parseInt(rawLine, 10),
-            column: parseInt(rawCol, 10),
-            message,
-            rule: "tsc",
-          },
-        ];
-      });
-
-      return { status: findings.length > 0 ? "fail" : "pass", findings };
+    if (!tool) {
+      return {
+        status: "not-configured",
+        findings: [],
+        message:
+          "TypeScript compiler (tsc) is not installed in local node_modules or PATH.",
+      };
     }
+
+    const { stdout, code } = await context.runCommand(tool, [
+      "--noEmit",
+      "--pretty",
+      "false",
+    ]);
+
+    if (code === 0) {
+      return { status: "pass", findings: [] };
+    }
+
+    const changedPaths = new Set(
+      diff.changedFiles.map((f) => f.path.replace(/\\/g, "/")),
+    );
+
+    const findings: CheckFinding[] = stdout.split("\n").flatMap((line) => {
+      const match = TSC_LINE_RE.exec(line);
+      if (!match) return [];
+      const [, rawFile, rawLine, rawCol, message] = match;
+      if (!rawFile || !rawLine || !rawCol || !message) return [];
+      const normalizedFile = rawFile.replace(/\\/g, "/");
+
+      const isChanged = Array.from(changedPaths).some((p) =>
+        normalizedFile.endsWith(p),
+      );
+      if (!isChanged) return [];
+
+      return [
+        {
+          file: rawFile,
+          line: parseInt(rawLine, 10),
+          column: parseInt(rawCol, 10),
+          message,
+          rule: "tsc",
+        },
+      ];
+    });
+
+    return { status: findings.length > 0 ? "fail" : "pass", findings };
   },
 };

@@ -5,18 +5,29 @@ import type { ExtensionMessage } from "../shared/messages.js";
 import type { PreFlightConfig } from "../shared/types.js";
 import { computeGitDiff } from "../core/diff/git-diff.js";
 import { runChecks } from "../core/checks/runner.js";
+import { createPreFlightContext } from "../core/checks/context.js";
+import { CheckRegistry } from "../core/checks/registry.js";
+import { PreFlightMcpHandler } from "../core/mcp/handler.js";
 import { buildUniversalPack } from "../core/checks/packs/universal/index.js";
 import { buildJsTsPack } from "../core/checks/packs/js-ts/index.js";
 import { buildPRUrl } from "../core/pr/pr-launcher.js";
+
+// MARK: - Panel Class
 
 export class PreFlightPanel {
   static readonly viewType = "mewra-preflight.dashboard";
 
   private readonly _panel: vscode.WebviewPanel;
   private readonly _extensionUri: vscode.Uri;
+  private readonly _registry: CheckRegistry;
+  private readonly _mcpHandler: PreFlightMcpHandler;
   private _disposables: vscode.Disposable[] = [];
 
-  static create(extensionUri: vscode.Uri): PreFlightPanel {
+  static create(
+    extensionUri: vscode.Uri,
+    registry: CheckRegistry,
+    mcpHandler: PreFlightMcpHandler,
+  ): PreFlightPanel {
     const panel = vscode.window.createWebviewPanel(
       PreFlightPanel.viewType,
       "Mewra PreFlight",
@@ -27,12 +38,19 @@ export class PreFlightPanel {
         localResourceRoots: [vscode.Uri.joinPath(extensionUri, "dist")],
       },
     );
-    return new PreFlightPanel(panel, extensionUri);
+    return new PreFlightPanel(panel, extensionUri, registry, mcpHandler);
   }
 
-  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
+  private constructor(
+    panel: vscode.WebviewPanel,
+    extensionUri: vscode.Uri,
+    registry: CheckRegistry,
+    mcpHandler: PreFlightMcpHandler,
+  ) {
     this._panel = panel;
     this._extensionUri = extensionUri;
+    this._registry = registry;
+    this._mcpHandler = mcpHandler;
 
     this._panel.webview.html = this._buildHtml();
 
@@ -109,11 +127,16 @@ export class PreFlightPanel {
     const checks = [
       ...buildUniversalPack(),
       ...(config.enabledPacks.includes("js-ts") ? buildJsTsPack() : []),
+      ...this._registry.getContributedChecks(),
     ];
 
-    await runChecks(checks, diff, { workspaceRoot: root }, (snapshot) => {
+    const context = createPreFlightContext(root);
+
+    const finalSnapshot = await runChecks(checks, diff, context, (snapshot) => {
       this._post({ type: "snapshot", payload: snapshot });
     });
+
+    this._mcpHandler.updateSnapshot(finalSnapshot);
   }
 
   private async _launchPR(): Promise<void> {
@@ -129,6 +152,11 @@ export class PreFlightPanel {
       );
       return;
     }
+
+    this._mcpHandler.setDraftPR({
+      title: prUrl.title,
+      body: prUrl.body,
+    });
 
     await vscode.env.openExternal(vscode.Uri.parse(prUrl.url));
   }

@@ -4,8 +4,18 @@ import type {
   CheckSeverity,
 } from "../../shared/types.js";
 
+// MARK: - Types
+
+export type CommandResult = {
+  stdout: string;
+  stderr: string;
+  code: number;
+};
+
 export type PreFlightContext = {
   workspaceRoot: string;
+  resolveTool(binName: string): Promise<string | null>;
+  runCommand(cmd: string, args: string[], cwd?: string): Promise<CommandResult>;
 };
 
 export type CheckRunner = {

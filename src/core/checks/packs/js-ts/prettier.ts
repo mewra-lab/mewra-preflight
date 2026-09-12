@@ -1,17 +1,19 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
 import type { CheckRunner, PreFlightContext } from "../../check-contract.js";
 import type { GitDiff, CheckResult } from "../../../../shared/types.js";
 
-const execFileAsync = promisify(execFile);
+// MARK: - Constants
 
 const JS_TS_EXTENSIONS = /\.(ts|tsx|js|jsx|mjs|cjs|json|css|md)$/;
+
+// MARK: - Helpers
 
 function changedJsTsFiles(diff: GitDiff): string[] {
   return diff.changedFiles
     .filter((f) => f.status !== "deleted" && JS_TS_EXTENSIONS.test(f.path))
     .map((f) => f.path);
 }
+
+// MARK: - Check Definition
 
 export const prettierCheck: CheckRunner = {
   id: "js-ts:prettier",
@@ -25,34 +27,40 @@ export const prettierCheck: CheckRunner = {
 
   async run(diff: GitDiff, context: PreFlightContext): Promise<CheckResult> {
     const files = changedJsTsFiles(diff);
+    const tool = await context.resolveTool("prettier");
 
-    try {
-      await execFileAsync("prettier", ["--check", ...files], {
-        cwd: context.workspaceRoot,
-      });
-      return { status: "pass", findings: [] };
-    } catch (e) {
-      const stderr = (e as { stderr?: string }).stderr ?? "";
-      if ((e as { code?: number }).code === undefined) {
-        return {
-          status: "not-configured",
-          findings: [],
-          message: "prettier not found in PATH or local node_modules.",
-        };
-      }
-      const unformatted = stderr
-        .split("\n")
-        .filter((l) => l.includes("[warn]"))
-        .map((l) => l.replace("[warn]", "").trim());
+    if (!tool) {
       return {
-        status: "fail",
-        findings: unformatted.map((file) => ({
-          file,
-          line: 0,
-          message: "File is not formatted by Prettier.",
-          rule: "prettier",
-        })),
+        status: "not-configured",
+        findings: [],
+        message: "Prettier is not installed in local node_modules or PATH.",
       };
     }
+
+    const { stdout, stderr, code } = await context.runCommand(tool, [
+      "--check",
+      ...files,
+    ]);
+
+    if (code === 0) {
+      return { status: "pass", findings: [] };
+    }
+
+    const combinedOutput = `${stdout}\n${stderr}`;
+    const unformatted = combinedOutput
+      .split("\n")
+      .filter((l) => l.includes("[warn]"))
+      .map((l) => l.replace("[warn]", "").trim())
+      .filter((l) => l.length > 0);
+
+    return {
+      status: "fail",
+      findings: unformatted.map((file) => ({
+        file,
+        line: 0,
+        message: "File is not formatted by Prettier.",
+        rule: "prettier",
+      })),
+    };
   },
 };

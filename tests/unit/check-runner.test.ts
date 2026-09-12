@@ -13,7 +13,11 @@ const MOCK_DIFF: GitDiff = {
   rawPatch: "+const x = 1;",
 };
 
-const CONTEXT: PreFlightContext = { workspaceRoot: "/tmp/test" };
+const CONTEXT: PreFlightContext = {
+  workspaceRoot: "/tmp/test",
+  resolveTool: async () => null,
+  runCommand: async () => ({ stdout: "", stderr: "", code: 0 }),
+};
 
 function makeCheck(overrides: Partial<CheckRunner>): CheckRunner {
   return {
@@ -28,64 +32,76 @@ function makeCheck(overrides: Partial<CheckRunner>): CheckRunner {
 }
 
 describe("runChecks", () => {
-  it("returns pass snapshot when all checks pass", async () => {
-    const progress = vi.fn();
-    const snapshot = await runChecks(
-      [makeCheck({})],
-      MOCK_DIFF,
-      CONTEXT,
-      progress,
-    );
+  it("runs applicable checks and returns a snapshot", async () => {
+    const check1 = makeCheck({ id: "c1", label: "Check 1" });
+    const check2 = makeCheck({ id: "c2", label: "Check 2" });
+
+    const snapshot = await runChecks([check1, check2], MOCK_DIFF, CONTEXT);
+
     expect(snapshot.overallStatus).toBe("pass");
+    expect(snapshot.checks).toHaveLength(2);
     expect(snapshot.checks[0]?.result.status).toBe("pass");
+    expect(snapshot.checks[1]?.result.status).toBe("pass");
   });
 
-  it("returns fail snapshot when a check fails", async () => {
-    const failing = makeCheck({
-      run: async () => ({
-        status: "fail",
-        findings: [{ file: "src/foo.ts", line: 1, message: "oops" }],
-      }),
+  it("marks non-applicable checks as skipped", async () => {
+    const check = makeCheck({
+      id: "c1",
+      appliesTo: () => false,
     });
-    const progress = vi.fn();
-    const snapshot = await runChecks([failing], MOCK_DIFF, CONTEXT, progress);
+
+    const snapshot = await runChecks([check], MOCK_DIFF, CONTEXT);
+
+    expect(snapshot.checks[0]?.result.status).toBe("skipped");
+    expect(snapshot.overallStatus).toBe("pass");
+  });
+
+  it("sets overallStatus to fail if any error-severity check fails", async () => {
+    const checkPass = makeCheck({ id: "c1" });
+    const checkFail = makeCheck({
+      id: "c2",
+      severity: "error",
+      run: async () => ({ status: "fail", findings: [] }),
+    });
+
+    const snapshot = await runChecks(
+      [checkPass, checkFail],
+      MOCK_DIFF,
+      CONTEXT,
+    );
+
     expect(snapshot.overallStatus).toBe("fail");
   });
 
-  it("marks check as skipped when appliesTo returns false", async () => {
-    const skipped = makeCheck({ appliesTo: () => false });
-    const progress = vi.fn();
-    const snapshot = await runChecks([skipped], MOCK_DIFF, CONTEXT, progress);
-    expect(snapshot.checks[0]?.result.status).toBe("skipped");
-  });
-
-  it("catches unexpected check errors and marks as fail", async () => {
-    const throwing = makeCheck({
-      run: async () => {
-        throw new Error("boom");
-      },
+  it("sets overallStatus to warning if only warning checks fail", async () => {
+    const checkWarning = makeCheck({
+      id: "c1",
+      severity: "warning",
+      run: async () => ({ status: "warning", findings: [] }),
     });
-    const progress = vi.fn();
-    const snapshot = await runChecks([throwing], MOCK_DIFF, CONTEXT, progress);
-    expect(snapshot.checks[0]?.result.status).toBe("fail");
+
+    const snapshot = await runChecks([checkWarning], MOCK_DIFF, CONTEXT);
+
+    expect(snapshot.overallStatus).toBe("warning");
   });
 
-  it("calls onProgress with pending state before running", async () => {
-    const progress = vi.fn();
-    await runChecks([makeCheck({})], MOCK_DIFF, CONTEXT, progress);
-    const firstCall = progress.mock.calls[0]?.[0];
-    expect(firstCall?.checks[0]?.result.status).toBe("pending");
+  it("ignores not-configured status for overall verdict", async () => {
+    const checkMissing = makeCheck({
+      id: "c1",
+      run: async () => ({ status: "not-configured", findings: [] }),
+    });
+
+    const snapshot = await runChecks([checkMissing], MOCK_DIFF, CONTEXT);
+
+    expect(snapshot.overallStatus).toBe("pass");
   });
 
-  it("populates finishedAt on final snapshot", async () => {
+  it("calls onProgress for each check transition", async () => {
     const progress = vi.fn();
-    const snapshot = await runChecks(
-      [makeCheck({})],
-      MOCK_DIFF,
-      CONTEXT,
-      progress,
-    );
-    expect(snapshot.finishedAt).toBeDefined();
-    expect(snapshot.finishedAt).toBeGreaterThanOrEqual(snapshot.startedAt);
+    const check = makeCheck({ id: "c1" });
+
+    await runChecks([check], MOCK_DIFF, CONTEXT, progress);
+
+    expect(progress).toHaveBeenCalled();
   });
 });

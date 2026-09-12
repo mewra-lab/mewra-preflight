@@ -6,13 +6,12 @@ import type {
   PreFlightSnapshot,
 } from "../../shared/types.js";
 
+// MARK: - Helpers
+
 function deriveOverallStatus(checks: CheckSnapshot[]): CheckStatus {
   const statuses = checks.map((c) => c.result.status);
   if (statuses.some((s) => s === "fail")) return "fail";
   if (statuses.some((s) => s === "running")) return "running";
-  if (statuses.every((s) => s === "not-configured" || s === "skipped")) {
-    return "not-configured";
-  }
   if (statuses.some((s) => s === "warning")) return "warning";
   return "pass";
 }
@@ -21,13 +20,17 @@ function cloneSnapshot(snapshot: PreFlightSnapshot): PreFlightSnapshot {
   return JSON.parse(JSON.stringify(snapshot)) as PreFlightSnapshot;
 }
 
+// MARK: - Types
+
 export type RunnerProgressCallback = (snapshot: PreFlightSnapshot) => void;
+
+// MARK: - Runner
 
 export async function runChecks(
   checks: CheckRunner[],
   diff: GitDiff,
   context: PreFlightContext,
-  onProgress: RunnerProgressCallback,
+  onProgress?: RunnerProgressCallback,
 ): Promise<PreFlightSnapshot> {
   const runId = crypto.randomUUID();
   const startedAt = Date.now();
@@ -51,7 +54,9 @@ export async function runChecks(
       checks: snapshots,
       overallStatus: deriveOverallStatus(snapshots),
     };
-    onProgress(cloneSnapshot(current));
+    if (onProgress) {
+      onProgress(cloneSnapshot(current));
+    }
   };
 
   emit();
