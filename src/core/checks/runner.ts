@@ -64,6 +64,7 @@ export async function runChecks(
       label: c.label,
       severity: c.severity,
       pack: c.pack,
+      fixable: c.fixable,
     },
     result: { status: "pending", findings: [] },
   }));

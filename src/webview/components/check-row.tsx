@@ -122,7 +122,9 @@ export function CheckRow({
     definition.id === "js-ts:prettier" ||
     definition.id === "js-ts:eslint" ||
     definition.id === "go:gofmt" ||
-    definition.id === "python:format";
+    definition.id === "python:format" ||
+    definition.id === "php:cs-fixer" ||
+    definition.fixable === true;
   const isFixingAll = fixingTarget === definition.id;
 
   const toggleExpanded = () => {

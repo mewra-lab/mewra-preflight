@@ -57,5 +57,13 @@ export function mergeWorkspaceConfig(
     }
   }
 
+  if (fileConfig.customPacks !== undefined) {
+    merged.customPacks = fileConfig.customPacks;
+  }
+
+  if (fileConfig.customChecks !== undefined) {
+    merged.customChecks = fileConfig.customChecks;
+  }
+
   return merged;
 }

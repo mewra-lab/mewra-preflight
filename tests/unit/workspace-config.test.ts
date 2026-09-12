@@ -86,4 +86,32 @@ describe("workspace-config", () => {
     expect(merged.manualChecklist).toHaveLength(1);
     expect(merged.gitHost).toBe("github");
   });
+
+  it("merges customPacks and customChecks into config", () => {
+    const base: PreFlightConfig = {
+      targetBranch: "main",
+      enabledPacks: ["universal"],
+      blockingOnWarnings: false,
+      gitHost: "github",
+      diffScope: "branch",
+    };
+
+    const merged = mergeWorkspaceConfig(base, {
+      customPacks: [
+        {
+          id: "rust",
+          label: "Rust",
+          checks: [{ id: "rust:fmt", label: "Cargo Fmt", tool: "cargo" }],
+        },
+      ],
+      customChecks: [
+        { id: "custom:sh", label: "ShellCheck", tool: "shellcheck" },
+      ],
+    });
+
+    expect(merged.customPacks).toHaveLength(1);
+    expect(merged.customPacks?.[0]?.id).toBe("rust");
+    expect(merged.customChecks).toHaveLength(1);
+    expect(merged.customChecks?.[0]?.id).toBe("custom:sh");
+  });
 });

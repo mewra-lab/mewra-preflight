@@ -31,7 +31,9 @@ VS Code Workbench
 │   │   │       ├── universal/     — language-agnostic checks
 │   │   │       ├── js-ts/         — JS/TS ecosystem checks
 │   │   │       ├── go/            — Go ecosystem checks (gofmt, go vet, golangci-lint)
-│   │   │       └── python/        — Python ecosystem checks (ruff, black, flake8, mypy)
+│   │   │       ├── python/        — Python ecosystem checks (ruff, black, flake8, mypy)
+│   │   │       ├── php/           — PHP ecosystem checks (php-cs-fixer, phpstan/psalm, test-pairing)
+│   │   │       └── custom/        — Community JSON-based custom pack runner
 │   │   ├── ecosystem/
 │   │   │   └── detect-ecosystem.ts
 │   │   └── pr/
@@ -75,7 +77,7 @@ mewra-preflight/
 │   │   │   ├── context.ts
 │   │   │   ├── runner.ts
 │   │   │   ├── manual-evaluator.ts
-│   │   │   └── packs/{universal,js-ts,go,python}/
+│   │   │   └── packs/{universal,js-ts,go,python,php,custom}/
 │   │   ├── ecosystem/detect-ecosystem.ts
 │   │   ├── mcp/handler.ts
 │   │   └── pr/pr-launcher.ts
@@ -115,7 +117,7 @@ Snapshot → PostMessage (validated) → Webview
 
 ## 5. Check pack contract
 
-Each check pack exposes a `build<Pack>Pack(): CheckRunner[]` factory. A `CheckRunner` must:
+Each check pack exposes a `build<Pack>Pack(): CheckRunner[]` factory (or `buildCustomChecks` for community JSON-based packs). A `CheckRunner` must:
 
 - declare `id`, `label`, `severity`, `pack`;
 - implement `appliesTo(diff): boolean` to decide if it should run against the diff;
@@ -129,4 +131,4 @@ Each check pack exposes a `build<Pack>Pack(): CheckRunner[]` factory. A `CheckRu
 
 ## 7. Tool resolution
 
-Tools (e.g., `prettier`, `eslint`, `tsc`, `ruff`, `black`, `flake8`, `mypy`, `gofmt`, `govet`, `golangci-lint`) are resolved using project-local paths first (`node_modules/.bin/`, `.venv/bin/`, `venv/bin/`, `env/bin/`), user local environments (`~/.cargo/bin`, `~/.local/bin`, `~/go/bin`), and finally system `PATH`. A check degrades gracefully to `not-configured` if the binary cannot be resolved.
+Tools (e.g., `prettier`, `eslint`, `tsc`, `ruff`, `black`, `flake8`, `mypy`, `gofmt`, `govet`, `golangci-lint`, `php-cs-fixer`, `phpstan`, `psalm`, custom CLI tools) are resolved using project-local paths first (`node_modules/.bin/`, `.venv/bin/`, `venv/bin/`, `vendor/bin/`), user local environments (`~/.cargo/bin`, `~/.local/bin`, `~/go/bin`, `~/.composer/vendor/bin`), and finally system `PATH`. A check degrades gracefully to `not-configured` if the binary cannot be resolved.

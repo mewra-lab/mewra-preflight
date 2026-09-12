@@ -30,6 +30,8 @@ export function createPreFlightContext(
       while (true) {
         const localCandidates = [
           resolve(currentDir, "node_modules", ".bin", binName),
+          resolve(currentDir, "vendor", "bin", binName),
+          resolve(currentDir, "vendor", "bin", `${binName}.bat`),
           resolve(currentDir, ".venv", "bin", binName),
           resolve(currentDir, "venv", "bin", binName),
           resolve(currentDir, "env", "bin", binName),
@@ -51,6 +53,8 @@ export function createPreFlightContext(
         resolve(home, ".local", "bin", binName),
         resolve(home, ".cargo", "bin", binName),
         resolve(home, "go", "bin", binName),
+        resolve(home, ".composer", "vendor", "bin", binName),
+        resolve(home, ".config", "composer", "vendor", "bin", binName),
       ];
       for (const candidate of userBinCandidates) {
         if (await isExecutable(candidate)) {

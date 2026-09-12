@@ -19,6 +19,8 @@ import { buildUniversalPack } from "../core/checks/packs/universal/index.js";
 import { buildJsTsPack } from "../core/checks/packs/js-ts/index.js";
 import { buildGoPack } from "../core/checks/packs/go/index.js";
 import { buildPythonPack } from "../core/checks/packs/python/index.js";
+import { buildPhpPack } from "../core/checks/packs/php/index.js";
+import { buildCustomChecks } from "../core/checks/packs/custom/custom-runner.js";
 import { buildPRUrl } from "../core/pr/pr-launcher.js";
 import {
   loadWorkspaceConfig,
@@ -259,6 +261,14 @@ export class PreFlightPanel {
     let cmd: string;
     if (pack === "python") {
       cmd = `pip install ${toolName}`;
+    } else if (pack === "php") {
+      const pkgMap: Record<string, string> = {
+        "php-cs-fixer": "friendsofphp/php-cs-fixer",
+        phpstan: "phpstan/phpstan",
+        psalm: "vimeo/psalm",
+      };
+      const pkg = pkgMap[toolName] ?? toolName;
+      cmd = `composer require --dev ${pkg}`;
     } else {
       const pkg = toolName === "tsc" ? "typescript" : toolName;
       const pm = await detectJsPackageManager(root);
@@ -318,6 +328,10 @@ export class PreFlightPanel {
     const shouldEnablePython =
       config.enabledPacks.includes("python") ||
       activeEcosystems.includes("python");
+    const shouldEnablePhp =
+      config.enabledPacks.includes("php") || activeEcosystems.includes("php");
+
+    const customChecks = await buildCustomChecks(config, root);
 
     const checks = [
       ...buildUniversalPack(
@@ -326,6 +340,8 @@ export class PreFlightPanel {
       ...(shouldEnableJsTs ? buildJsTsPack() : []),
       ...(shouldEnableGo ? buildGoPack() : []),
       ...(shouldEnablePython ? buildPythonPack() : []),
+      ...(shouldEnablePhp ? buildPhpPack() : []),
+      ...customChecks,
       ...this._registry.getContributedChecks(),
     ];
 
@@ -468,6 +484,71 @@ export class PreFlightPanel {
         }
         await vscode.workspace.saveAll(false);
         await this._runPipeline();
+      } else if (checkId === "php:cs-fixer") {
+        const tool = await context.resolveTool("php-cs-fixer");
+        if (!tool) {
+          this._post({ type: "quickFixFailed", checkId, file });
+          void vscode.window.showErrorMessage(
+            "php-cs-fixer is not installed in vendor/bin or PATH.",
+          );
+          return;
+        }
+
+        const args = file ? ["fix", file] : ["fix", "."];
+        const res = await context.runCommand(tool, args);
+        if (res.code === 0) {
+          void vscode.window.showInformationMessage(
+            file
+              ? `Formatted ${file} with php-cs-fixer.`
+              : "Formatted PHP files with php-cs-fixer.",
+          );
+        } else {
+          this._post({ type: "quickFixFailed", checkId, file });
+          void vscode.window.showWarningMessage(
+            res.stderr.trim() ||
+              `php-cs-fixer failed to format ${file ?? "files"}.`,
+          );
+        }
+        await vscode.workspace.saveAll(false);
+        await this._runPipeline();
+      } else {
+        const fileConfig = await loadWorkspaceConfig(root);
+        const config = this._getConfig(fileConfig);
+        const allCustom = [
+          ...(config.customChecks ?? []),
+          ...(config.customPacks?.flatMap((p) => p.checks) ?? []),
+        ];
+        const customCheck = allCustom.find((c) => c.id === checkId);
+        if (
+          customCheck &&
+          customCheck.fixArgs &&
+          customCheck.fixArgs.length > 0
+        ) {
+          const tool = await context.resolveTool(customCheck.tool);
+          if (!tool) {
+            this._post({ type: "quickFixFailed", checkId, file });
+            void vscode.window.showErrorMessage(
+              `${customCheck.tool} is not installed.`,
+            );
+            return;
+          }
+
+          const args = [...customCheck.fixArgs];
+          if (file) args.push(file);
+          const res = await context.runCommand(tool, args);
+          if (res.code === 0) {
+            void vscode.window.showInformationMessage(
+              `Fixed with ${customCheck.label}.`,
+            );
+          } else {
+            this._post({ type: "quickFixFailed", checkId, file });
+            void vscode.window.showWarningMessage(
+              res.stderr.trim() || `QuickFix failed for ${customCheck.label}.`,
+            );
+          }
+          await vscode.workspace.saveAll(false);
+          await this._runPipeline();
+        }
       }
     } catch {
       this._post({ type: "quickFixFailed", checkId, file });
@@ -571,13 +652,12 @@ export class PreFlightPanel {
   },
   // Custom manual checklist items (press Ctrl+Space inside to insert a template)
   "manualChecklist": [
-    // Example (conditional check):
-    // {
-    //   "id": "db-migration",
-    //   "label": "Did you apply database migration to dev DB?",
-    //   "severity": "error",
-    //   "condition": { "modifiedFilesMatch": "prisma/migrations/**" }
-    // }
+    {
+      "id": "db-migration",
+      "label": "Did you apply database migration to dev DB?",
+      "severity": "error",
+      "condition": { "modifiedFilesMatch": "prisma/migrations/**" }
+    }
   ]
 }
 `;

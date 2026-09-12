@@ -40,6 +40,7 @@ export const CheckDefinitionSchema = z.object({
   label: z.string(),
   severity: CheckSeveritySchema,
   pack: z.string(),
+  fixable: z.boolean().optional(),
 });
 
 export type CheckDefinition = z.infer<typeof CheckDefinitionSchema>;
@@ -102,6 +103,26 @@ export const PreFlightSnapshotSchema = z.object({
 
 export type PreFlightSnapshot = z.infer<typeof PreFlightSnapshotSchema>;
 
+export type CustomCheckConfig = {
+  id: string;
+  label: string;
+  tool: string;
+  args?: string[];
+  appendChangedFiles?: boolean;
+  fileExtensions?: string[];
+  filesMatch?: string;
+  severity?: "error" | "warning";
+  pack?: string;
+  fixArgs?: string[];
+};
+
+export type CustomPackConfig = {
+  id: string;
+  label: string;
+  ecosystemMarker?: string;
+  checks: CustomCheckConfig[];
+};
+
 export type ManualCheckConfig = {
   id: string;
   label: string;
@@ -126,6 +147,8 @@ export type PreFlightConfigFile = {
     { enabled?: boolean; severity?: "error" | "warning" }
   >;
   manualChecklist?: ManualCheckConfig[];
+  customPacks?: CustomPackConfig[];
+  customChecks?: CustomCheckConfig[];
 };
 
 export type PreFlightConfig = {
@@ -143,4 +166,6 @@ export type PreFlightConfig = {
     noMergeConflicts?: "error" | "warning" | "off";
     largeFileThresholdMb?: number;
   };
+  customPacks?: CustomPackConfig[];
+  customChecks?: CustomCheckConfig[];
 };

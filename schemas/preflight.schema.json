@@ -245,6 +245,155 @@
               }
             }
           }
+        },
+        "php": {
+          "type": "object",
+          "description": "PHP ecosystem settings",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "format": {
+              "type": "object",
+              "properties": {
+                "tool": { "type": "string", "default": "php-cs-fixer" },
+                "enabled": { "type": "boolean", "default": true }
+              }
+            },
+            "analyze": {
+              "type": "object",
+              "properties": {
+                "tool": {
+                  "type": "string",
+                  "enum": ["phpstan", "psalm"],
+                  "default": "phpstan"
+                },
+                "enabled": { "type": "boolean", "default": true }
+              }
+            },
+            "testPairing": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean", "default": true }
+              }
+            }
+          }
+        }
+      }
+    },
+    "customPacks": {
+      "type": "array",
+      "description": "Custom community check packs (no-code tool registration)",
+      "defaultSnippets": [
+        {
+          "label": "Custom Pack (e.g. Rust, Ruby, Shell)",
+          "description": "Define a custom ecosystem pack with checks",
+          "body": [
+            {
+              "id": "${1:rust}",
+              "label": "${2:Rust}",
+              "ecosystemMarker": "${3:Cargo.toml}",
+              "checks": [
+                {
+                  "id": "${1:rust}:${4:fmt}",
+                  "label": "${5:Cargo Fmt}",
+                  "tool": "${6:cargo}",
+                  "args": ["fmt", "--check", "--"],
+                  "appendChangedFiles": true,
+                  "fileExtensions": [".rs"],
+                  "severity": "error",
+                  "fixArgs": ["fmt", "--"]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "checks"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "ecosystemMarker": { "type": "string" },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "label", "tool"],
+              "properties": {
+                "id": { "type": "string" },
+                "label": { "type": "string" },
+                "tool": { "type": "string" },
+                "args": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "appendChangedFiles": { "type": "boolean", "default": true },
+                "fileExtensions": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "filesMatch": { "type": "string" },
+                "severity": {
+                  "type": "string",
+                  "enum": ["error", "warning"],
+                  "default": "error"
+                },
+                "fixArgs": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "customChecks": {
+      "type": "array",
+      "description": "Standalone custom checks (e.g. shellcheck, yamllint)",
+      "defaultSnippets": [
+        {
+          "label": "Custom Check (e.g. ShellCheck, Linter)",
+          "description": "Define a standalone CLI check runner",
+          "body": [
+            {
+              "id": "custom:${1:shellcheck}",
+              "label": "${2:ShellCheck}",
+              "tool": "${3:shellcheck}",
+              "args": ["${4:-x}"],
+              "appendChangedFiles": true,
+              "fileExtensions": ["${5:.sh}"],
+              "severity": "${6|warning,error|}"
+            }
+          ]
+        }
+      ],
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "tool"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "tool": { "type": "string" },
+          "args": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "appendChangedFiles": { "type": "boolean", "default": true },
+          "fileExtensions": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "filesMatch": { "type": "string" },
+          "severity": {
+            "type": "string",
+            "enum": ["error", "warning"],
+            "default": "error"
+          },
+          "fixArgs": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
         }
       }
     }

@@ -28,6 +28,7 @@ export type CheckRunner = {
   readonly label: string;
   readonly severity: CheckSeverity;
   readonly pack: string;
+  readonly fixable?: boolean;
   appliesTo(diff: GitDiff): boolean;
   run(diff: GitDiff, context: PreFlightContext): Promise<CheckResult>;
 };

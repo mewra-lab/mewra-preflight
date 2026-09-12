@@ -6,6 +6,7 @@ import { buildUniversalPack } from "../core/checks/packs/universal/index.js";
 import { buildJsTsPack } from "../core/checks/packs/js-ts/index.js";
 import { buildGoPack } from "../core/checks/packs/go/index.js";
 import { buildPythonPack } from "../core/checks/packs/python/index.js";
+import { buildPhpPack } from "../core/checks/packs/php/index.js";
 import type { CheckRunner } from "../core/checks/check-contract.js";
 
 // MARK: - Types
@@ -23,6 +24,7 @@ const mcpHandler = new PreFlightMcpHandler(() => [
   ...buildJsTsPack(),
   ...buildGoPack(),
   ...buildPythonPack(),
+  ...buildPhpPack(),
   ...registry.getContributedChecks(),
 ]);
 

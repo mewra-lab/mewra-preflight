@@ -127,14 +127,16 @@
               "universal",
               "js-ts",
               "go",
-              "python"
+              "python",
+              "php"
             ]
           },
           "default": [
             "universal",
             "js-ts",
             "go",
-            "python"
+            "python",
+            "php"
           ],
           "description": "Ecosystem packs to activate."
         },

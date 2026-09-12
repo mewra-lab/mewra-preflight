@@ -14,7 +14,7 @@ function globToRegex(pattern: string): RegExp {
   return new RegExp(`^${escaped}$`);
 }
 
-function doesFileMatch(file: string, pattern: string): boolean {
+export function doesFileMatch(file: string, pattern: string): boolean {
   if (pattern.endsWith("/**")) {
     const prefix = pattern.slice(0, -3);
     return file.startsWith(`${prefix}/`) || file === prefix;
