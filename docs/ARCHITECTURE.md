@@ -29,7 +29,9 @@ VS Code Workbench
 │   │   │   ├── runner.ts          — parallel check execution engine
 │   │   │   └── packs/
 │   │   │       ├── universal/     — language-agnostic checks
-│   │   │       └── js-ts/         — JS/TS ecosystem checks
+│   │   │       ├── js-ts/         — JS/TS ecosystem checks
+│   │   │       ├── go/            — Go ecosystem checks (gofmt, go vet, golangci-lint)
+│   │   │       └── python/        — Python ecosystem checks (ruff, black, flake8, mypy)
 │   │   ├── ecosystem/
 │   │   │   └── detect-ecosystem.ts
 │   │   └── pr/
@@ -73,7 +75,7 @@ mewra-preflight/
 │   │   │   ├── context.ts
 │   │   │   ├── runner.ts
 │   │   │   ├── manual-evaluator.ts
-│   │   │   └── packs/{universal,js-ts}/
+│   │   │   └── packs/{universal,js-ts,go,python}/
 │   │   ├── ecosystem/detect-ecosystem.ts
 │   │   ├── mcp/handler.ts
 │   │   └── pr/pr-launcher.ts
@@ -123,8 +125,8 @@ Each check pack exposes a `build<Pack>Pack(): CheckRunner[]` factory. A `CheckRu
 
 ## 6. Ecosystem detection
 
-`detectEcosystem` checks for marker files (`package.json`, `go.mod`, `pyproject.toml`, `composer.json`) using `fs.access`. The result informs which packs are available but does not override the user's `mewraPreflight.enabledPacks` setting.
+`detectActiveEcosystems` checks for marker files (`package.json`, `go.mod`, `go.sum`, `uv.lock`, `pyproject.toml`, `requirements.txt`, `Pipfile`, `setup.py`, `composer.json`) across the workspace. It supports multi-ecosystem workspaces simultaneously.
 
 ## 7. Tool resolution
 
-Tools (e.g., `prettier`, `eslint`, `tsc`) are resolved by the OS via the `PATH` that VS Code inherits from the shell. A check may choose to resolve project-local binaries via `node_modules/.bin/<tool>` when the project-local version is required for correctness.
+Tools (e.g., `prettier`, `eslint`, `tsc`, `ruff`, `black`, `flake8`, `mypy`, `gofmt`, `govet`, `golangci-lint`) are resolved using project-local paths first (`node_modules/.bin/`, `.venv/bin/`, `venv/bin/`, `env/bin/`), user local environments (`~/.cargo/bin`, `~/.local/bin`, `~/go/bin`), and finally system `PATH`. A check degrades gracefully to `not-configured` if the binary cannot be resolved.
