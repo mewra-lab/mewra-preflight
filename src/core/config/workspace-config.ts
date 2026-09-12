@@ -49,9 +49,12 @@ export function mergeWorkspaceConfig(
     merged.manualChecklist = fileConfig.manualChecklist;
   }
 
-  if (fileConfig.universalChecks?.largeFileThresholdMb !== undefined) {
-    merged.largeFileThresholdMb =
-      fileConfig.universalChecks.largeFileThresholdMb;
+  if (fileConfig.universalChecks !== undefined) {
+    merged.universalChecks = fileConfig.universalChecks;
+    if (fileConfig.universalChecks.largeFileThresholdMb !== undefined) {
+      merged.largeFileThresholdMb =
+        fileConfig.universalChecks.largeFileThresholdMb;
+    }
   }
 
   return merged;

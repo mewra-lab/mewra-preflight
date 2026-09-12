@@ -118,6 +118,7 @@ export type PreFlightConfigFile = {
     noDebugStatements?: "error" | "warning" | "off";
     noSecrets?: "error" | "warning" | "off";
     noLocalhostUrls?: "error" | "warning" | "off";
+    noMergeConflicts?: "error" | "warning" | "off";
     largeFileThresholdMb?: number;
   };
   contributedChecks?: Record<
@@ -135,4 +136,11 @@ export type PreFlightConfig = {
   diffScope: DiffScope;
   manualChecklist?: ManualCheckConfig[];
   largeFileThresholdMb?: number;
+  universalChecks?: {
+    noDebugStatements?: "error" | "warning" | "off";
+    noSecrets?: "error" | "warning" | "off";
+    noLocalhostUrls?: "error" | "warning" | "off";
+    noMergeConflicts?: "error" | "warning" | "off";
+    largeFileThresholdMb?: number;
+  };
 };

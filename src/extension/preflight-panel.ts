@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { resolve, isAbsolute } from "node:path";
-import { access } from "node:fs/promises";
+import { access, readFile, writeFile } from "node:fs/promises";
 import { generateNonce } from "./security/nonce.js";
 import { WebviewMessageSchema } from "../shared/messages.js";
 import type { ExtensionMessage } from "../shared/messages.js";
@@ -160,14 +160,17 @@ export class PreFlightPanel {
   ): PreFlightConfig {
     const cfg = vscode.workspace.getConfiguration("mewraPreflight");
     const base: PreFlightConfig = {
-      targetBranch:
-        this._selectedTargetBranch ?? cfg.get<string>("targetBranch") ?? "main",
+      targetBranch: cfg.get<string>("targetBranch") ?? "main",
       enabledPacks: cfg.get<string[]>("enabledPacks") ?? ["universal", "js-ts"],
       blockingOnWarnings: cfg.get<boolean>("blockingOnWarnings") ?? false,
       gitHost: cfg.get<"github" | "gitlab">("gitHost") ?? "github",
       diffScope: cfg.get<DiffScope>("diffScope") ?? "branch",
     };
-    return mergeWorkspaceConfig(base, fileConfig);
+    const merged = mergeWorkspaceConfig(base, fileConfig);
+    if (this._selectedTargetBranch) {
+      merged.targetBranch = this._selectedTargetBranch;
+    }
+    return merged;
   }
 
   private _workspaceRoot(): string | null {
@@ -239,6 +242,8 @@ export class PreFlightPanel {
       } catch {
         void vscode.window.showErrorMessage(`Could not open file: ${msg.path}`);
       }
+    } else if (msg.type === "openConfig") {
+      await this.openConfig();
     }
   }
 
@@ -307,7 +312,9 @@ export class PreFlightPanel {
       config.enabledPacks.includes("js-ts") || detectedEcosystem === "js-ts";
 
     const checks = [
-      ...buildUniversalPack(config.largeFileThresholdMb),
+      ...buildUniversalPack(
+        config.universalChecks ?? config.largeFileThresholdMb,
+      ),
       ...(shouldEnableJsTs ? buildJsTsPack() : []),
       ...this._registry.getContributedChecks(),
     ];
@@ -422,7 +429,7 @@ export class PreFlightPanel {
       placeHolder: "Select target branch to diff against",
     });
 
-    if (selected && selected.label !== current) {
+    if (selected) {
       this._selectedTargetBranch = selected.label;
       await this._runPipeline();
     }
@@ -462,6 +469,64 @@ export class PreFlightPanel {
 
   launchPR(): void {
     void this._launchPR();
+  }
+
+  async openConfig(): Promise<void> {
+    const root = this._workspaceRoot();
+    if (!root) return;
+
+    const configPath = resolve(root, ".mewra-preflight.json");
+    let shouldWriteStarter = false;
+
+    try {
+      const content = await readFile(configPath, "utf-8");
+      if (content.trim().length === 0) {
+        shouldWriteStarter = true;
+      }
+    } catch {
+      shouldWriteStarter = true;
+    }
+
+    if (shouldWriteStarter) {
+      const template = `{
+  "$schema": "https://raw.githubusercontent.com/mewra-lab/mewra-preflight/main/schemas/preflight.schema.json",
+  "targetBranch": "main",
+  "universalChecks": {
+    "noDebugStatements": "error",
+    "noSecrets": "error",
+    "noLocalhostUrls": "error",
+    "noMergeConflicts": "error",
+    "largeFileThresholdMb": 1
+  },
+  // Custom manual checklist items (press Ctrl+Space inside to insert a template)
+  "manualChecklist": [
+    // Example (conditional check):
+    // {
+    //   "id": "db-migration",
+    //   "label": "Did you apply database migration to dev DB?",
+    //   "severity": "error",
+    //   "condition": { "modifiedFilesMatch": "prisma/migrations/**" }
+    // }
+  ]
+}
+`;
+      try {
+        await writeFile(configPath, template, "utf-8");
+      } catch {}
+    }
+
+    try {
+      const uri = vscode.Uri.file(configPath);
+      const doc = await vscode.workspace.openTextDocument(uri);
+      await vscode.window.showTextDocument(doc, {
+        viewColumn: vscode.ViewColumn.One,
+        preview: false,
+      });
+    } catch {
+      void vscode.window.showErrorMessage(
+        "Could not open .mewra-preflight.json",
+      );
+    }
   }
 
   reveal(): void {

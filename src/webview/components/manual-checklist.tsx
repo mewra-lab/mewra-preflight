@@ -10,13 +10,14 @@ type ManualChecklistProps = {
 // MARK: - Component
 
 export function ManualChecklist({ items, onToggle }: ManualChecklistProps) {
-  if (items.length === 0) return null;
+  const visibleItems = items.filter((item) => item.triggered);
+  if (visibleItems.length === 0) return null;
 
   return (
     <div class="check-group manual-checks">
       <div class="check-group__title">MANUAL CHECKS</div>
       <div class="manual-checks__list">
-        {items.map((item) => (
+        {visibleItems.map((item) => (
           <label
             key={item.id}
             class={`manual-check-item ${item.checked ? "manual-check-item--checked" : ""}`}

@@ -57,6 +57,12 @@
         "title": "Launch Pull Request",
         "icon": "$(git-pull-request)",
         "category": "Mewra PreFlight"
+      },
+      {
+        "command": "mewra-preflight.openConfig",
+        "title": "Open Configuration (.mewra-preflight.json)",
+        "icon": "$(gear)",
+        "category": "Mewra PreFlight"
       }
     ],
     "keybindings": [
@@ -78,6 +84,10 @@
         },
         {
           "command": "mewra-preflight.launchPR",
+          "when": "workspaceFolderCount >= 1"
+        },
+        {
+          "command": "mewra-preflight.openConfig",
           "when": "workspaceFolderCount >= 1"
         }
       ],
@@ -154,6 +164,20 @@
       {
         "id": "mewra-preflight",
         "label": "Mewra PreFlight"
+      }
+    ],
+    "languages": [
+      {
+        "id": "jsonc",
+        "filenames": [
+          ".mewra-preflight.json"
+        ]
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": ".mewra-preflight.json",
+        "url": "./schemas/preflight.schema.json"
       }
     ]
   },

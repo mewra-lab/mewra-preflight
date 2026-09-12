@@ -132,6 +132,24 @@ body {
   white-space: nowrap;
 }
 
+.navbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.navbar__config-btn {
+  flex-shrink: 0;
+  padding: 4px 6px;
+  font-size: 11px;
+  color: var(--pf-muted);
+}
+
+.navbar__config-btn:hover {
+  color: var(--pf-fg);
+}
+
 .navbar__rerun-btn {
   flex-shrink: 0;
   padding: 4px 8px;
@@ -371,10 +389,11 @@ body {
   background: rgba(255, 255, 255, 0.06);
   padding: 1px 5px;
   border-radius: var(--pf-radius-sm);
-  max-width: 105px;
+  max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex-shrink: 1;
 }
 
 .diff-strip__arrow {
@@ -388,6 +407,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .diff-strip__target-btn {
@@ -401,8 +421,9 @@ body {
   color: var(--pf-muted);
   cursor: pointer;
   transition: all 0.15s ease;
-  max-width: 105px;
+  max-width: 320px;
   min-width: 0;
+  flex-shrink: 1;
 }
 
 .diff-strip__target-btn:hover {

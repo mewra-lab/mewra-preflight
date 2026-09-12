@@ -1,0 +1,177 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Mewra PreFlight Configuration",
+  "description": "Configuration schema for Mewra PreFlight pre-push pipeline (.mewra-preflight.json)",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Schema URI for autocompletion and validation"
+    },
+    "targetBranch": {
+      "type": "string",
+      "description": "Default target git branch to diff against (e.g. main, develop, master)",
+      "default": "main"
+    },
+    "universalChecks": {
+      "type": "object",
+      "description": "Configuration for universal language-agnostic sanity checks",
+      "properties": {
+        "noDebugStatements": {
+          "type": "string",
+          "enum": ["error", "warning", "off"],
+          "description": "Severity for console.log and debugger statements",
+          "default": "error"
+        },
+        "noSecrets": {
+          "type": "string",
+          "enum": ["error", "warning", "off"],
+          "description": "Severity for leaked API keys, tokens, or .env secrets",
+          "default": "error"
+        },
+        "noLocalhostUrls": {
+          "type": "string",
+          "enum": ["error", "warning", "off"],
+          "description": "Severity for hardcoded localhost/127.0.0.1 URLs",
+          "default": "error"
+        },
+        "noMergeConflicts": {
+          "type": "string",
+          "enum": ["error", "warning", "off"],
+          "description": "Severity for unresolved git merge conflict markers",
+          "default": "error"
+        },
+        "largeFileThresholdMb": {
+          "type": "number",
+          "description": "Threshold in MB for flagging large newly added files (set to 0 to disable)",
+          "default": 1
+        }
+      }
+    },
+    "manualChecklist": {
+      "type": "array",
+      "description": "Custom manual checklist items displayed before push & PR creation. Press Ctrl+Space to insert a template.",
+      "defaultSnippets": [
+        {
+          "label": "Manual Check (Conditional)",
+          "description": "Add a manual verification item triggered when matching files are modified",
+          "body": [
+            {
+              "id": "${1:db-migration}",
+              "label": "${2:Did you apply database migration to dev DB?}",
+              "severity": "${3|error,warning|}",
+              "condition": {
+                "modifiedFilesMatch": "${4:prisma/migrations/**}"
+              }
+            }
+          ]
+        },
+        {
+          "label": "Manual Check (Always Active)",
+          "description": "Add a manual verification item shown on every PR",
+          "body": [
+            {
+              "id": "${1:check-id}",
+              "label": "${2:Verification task description}",
+              "severity": "${3|warning,error|}"
+            }
+          ]
+        }
+      ],
+      "items": {
+        "type": "object",
+        "required": ["id", "label"],
+        "defaultSnippets": [
+          {
+            "label": "Manual Check (Conditional)",
+            "description": "Triggered when files matching glob pattern are modified",
+            "body": {
+              "id": "${1:db-migration}",
+              "label": "${2:Did you apply database migration to dev DB?}",
+              "severity": "${3|error,warning|}",
+              "condition": {
+                "modifiedFilesMatch": "${4:prisma/migrations/**}"
+              }
+            }
+          },
+          {
+            "label": "Manual Check (Always Active)",
+            "description": "Always displayed on every PR",
+            "body": {
+              "id": "${1:check-id}",
+              "label": "${2:Verification task description}",
+              "severity": "${3|warning,error|}"
+            }
+          }
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for this manual check"
+          },
+          "label": {
+            "type": "string",
+            "description": "Human-readable label / question displayed in dashboard"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["error", "warning"],
+            "default": "error",
+            "description": "Severity level. 'error' blocks push until checked; 'warning' displays a notice"
+          },
+          "condition": {
+            "type": "object",
+            "description": "Optional condition determining when this check triggers",
+            "properties": {
+              "modifiedFilesMatch": {
+                "type": "string",
+                "description": "Glob pattern matching changed files to trigger this check (e.g. 'prisma/migrations/**')"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ecosystems": {
+      "type": "object",
+      "description": "Configuration for ecosystem-specific check packs (e.g. js-ts, go, python)",
+      "properties": {
+        "js-ts": {
+          "type": "object",
+          "description": "JavaScript / TypeScript ecosystem settings",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "format": {
+              "type": "object",
+              "properties": {
+                "tool": { "type": "string", "default": "prettier" },
+                "enabled": { "type": "boolean", "default": true }
+              }
+            },
+            "lint": {
+              "type": "object",
+              "properties": {
+                "tool": { "type": "string", "default": "eslint" },
+                "enabled": { "type": "boolean", "default": true }
+              }
+            },
+            "typecheck": {
+              "type": "object",
+              "properties": {
+                "tool": { "type": "string", "default": "tsc" },
+                "enabled": { "type": "boolean", "default": true }
+              }
+            },
+            "testPairing": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean", "default": true },
+                "pattern": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

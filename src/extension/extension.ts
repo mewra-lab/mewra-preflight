@@ -111,6 +111,18 @@ export function activate(context: vscode.ExtensionContext): MewraPreFlightAPI {
       );
       p.launchPR();
     }),
+
+    vscode.commands.registerCommand("mewra-preflight.openConfig", () => {
+      const p = PreFlightPanel.createOrShow(
+        context.extensionUri,
+        registry,
+        mcpHandler,
+        (status) => {
+          updateStatusBar(status);
+        },
+      );
+      void p.openConfig();
+    }),
   );
 
   const lmApi = (

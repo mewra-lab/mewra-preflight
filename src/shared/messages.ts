@@ -69,6 +69,9 @@ export const WebviewMessageSchema = z.discriminatedUnion("type", [
     pack: z.string().optional(),
   }),
   z.object({
+    type: z.literal("openConfig"),
+  }),
+  z.object({
     type: z.literal("ready"),
   }),
 ]);

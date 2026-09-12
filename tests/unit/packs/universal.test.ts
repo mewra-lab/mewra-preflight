@@ -156,3 +156,28 @@ describe("universal pack — large-file-warning", () => {
     expect(largeFile.appliesTo(diffModified)).toBe(false);
   });
 });
+
+describe("universal pack — configuration options", () => {
+  it("disables checks when configured with off", () => {
+    const checks = buildUniversalPack({
+      noDebugStatements: "off",
+      noSecrets: "off",
+      noLocalhostUrls: "off",
+      noMergeConflicts: "off",
+      largeFileThresholdMb: 0,
+    });
+    expect(checks).toHaveLength(0);
+  });
+
+  it("customizes check severity to warning", () => {
+    const checks = buildUniversalPack({
+      noDebugStatements: "warning",
+      noSecrets: "warning",
+      noLocalhostUrls: "warning",
+      noMergeConflicts: "warning",
+    });
+    for (const c of checks) {
+      expect(c.severity).toBe("warning");
+    }
+  });
+});

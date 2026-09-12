@@ -73,6 +73,26 @@ function MewraLogo() {
   );
 }
 
+function SettingsIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      role="img"
+      aria-label="Settings"
+    >
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  );
+}
+
 // MARK: - App Component
 
 export function App() {
@@ -123,6 +143,10 @@ export function App() {
     post({ type: "launchPR" });
   }, []);
 
+  const handleOpenConfig = useCallback(() => {
+    post({ type: "openConfig" });
+  }, []);
+
   const handleOpenFinding = useCallback((path: string, line: number) => {
     post({ type: "openFile", path, line });
   }, []);
@@ -159,6 +183,15 @@ export function App() {
             <MewraLogo />
             <span class="navbar__title">Mewra PreFlight</span>
           </div>
+          <div class="navbar__actions">
+            <button
+              class="glass-btn glass-btn--ghost navbar__config-btn"
+              onClick={handleOpenConfig}
+              title="Open configuration (.mewra-preflight.json)"
+            >
+              <SettingsIcon />
+            </button>
+          </div>
         </header>
 
         <div class="hero-card">
@@ -187,24 +220,33 @@ export function App() {
             <MewraLogo />
             <span class="navbar__title">Mewra PreFlight</span>
           </div>
-          <button class="glass-btn glass-btn--ghost" onClick={handleRun}>
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+          <div class="navbar__actions">
+            <button
+              class="glass-btn glass-btn--ghost navbar__config-btn"
+              onClick={handleOpenConfig}
+              title="Open configuration (.mewra-preflight.json)"
             >
-              <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
-              <path d="M21 3v5h-5" />
-              <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
-              <path d="M3 21v-5h5" />
-            </svg>
-            <span>Re-run</span>
-          </button>
+              <SettingsIcon />
+            </button>
+            <button class="glass-btn glass-btn--ghost" onClick={handleRun}>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+                <path d="M3 21v-5h5" />
+              </svg>
+              <span>Re-run</span>
+            </button>
+          </div>
         </header>
 
         <div class="error-panel">
@@ -252,34 +294,43 @@ export function App() {
           <StatusPill status={snapshot.overallStatus} />
         </div>
 
-        <button
-          class="glass-btn glass-btn--ghost navbar__rerun-btn"
-          onClick={handleRun}
-          disabled={isRunning}
-          title={
-            isRunning ? "Running pipeline..." : "Re-run PreFlight pipeline"
-          }
-        >
-          <svg
-            class={isRunning ? "spinner-svg" : ""}
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+        <div class="navbar__actions">
+          <button
+            class="glass-btn glass-btn--ghost navbar__config-btn"
+            onClick={handleOpenConfig}
+            title="Open configuration (.mewra-preflight.json)"
           >
-            <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
-            <path d="M21 3v5h-5" />
-            <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
-            <path d="M3 21v-5h5" />
-          </svg>
-          <span class="navbar__rerun-text">
-            {isRunning ? "Running" : "Re-run"}
-          </span>
-        </button>
+            <SettingsIcon />
+          </button>
+          <button
+            class="glass-btn glass-btn--ghost navbar__rerun-btn"
+            onClick={handleRun}
+            disabled={isRunning}
+            title={
+              isRunning ? "Running pipeline..." : "Re-run PreFlight pipeline"
+            }
+          >
+            <svg
+              class={isRunning ? "spinner-svg" : ""}
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+              <path d="M21 3v5h-5" />
+              <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+              <path d="M3 21v-5h5" />
+            </svg>
+            <span class="navbar__rerun-text">
+              {isRunning ? "Running" : "Re-run"}
+            </span>
+          </button>
+        </div>
       </header>
 
       {snapshot.diff && (

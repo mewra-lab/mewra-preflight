@@ -102,7 +102,11 @@ export async function runChecks(
       const t0 = Date.now();
       try {
         const result = await check.run(diff, context);
-        snapshot.result = { ...result, durationMs: Date.now() - t0 };
+        const status =
+          result.status === "fail" && check.severity === "warning"
+            ? "warning"
+            : result.status;
+        snapshot.result = { ...result, status, durationMs: Date.now() - t0 };
       } catch {
         snapshot.result = {
           status: "fail",

@@ -82,6 +82,7 @@ describe("workspace-config", () => {
 
     expect(merged.targetBranch).toBe("develop");
     expect(merged.largeFileThresholdMb).toBe(5);
+    expect(merged.universalChecks?.largeFileThresholdMb).toBe(5);
     expect(merged.manualChecklist).toHaveLength(1);
     expect(merged.gitHost).toBe("github");
   });
