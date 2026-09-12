@@ -125,12 +125,16 @@
             "type": "string",
             "enum": [
               "universal",
-              "js-ts"
+              "js-ts",
+              "go",
+              "python"
             ]
           },
           "default": [
             "universal",
-            "js-ts"
+            "js-ts",
+            "go",
+            "python"
           ],
           "description": "Ecosystem packs to activate."
         },

@@ -170,6 +170,81 @@
               }
             }
           }
+        },
+        "go": {
+          "type": "object",
+          "description": "Go ecosystem settings",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "format": {
+              "type": "object",
+              "properties": {
+                "tool": { "type": "string", "default": "gofmt" },
+                "enabled": { "type": "boolean", "default": true }
+              }
+            },
+            "vet": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean", "default": true }
+              }
+            },
+            "lint": {
+              "type": "object",
+              "properties": {
+                "tool": { "type": "string", "default": "golangci-lint" },
+                "enabled": { "type": "boolean", "default": true }
+              }
+            },
+            "testPairing": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean", "default": true }
+              }
+            }
+          }
+        },
+        "python": {
+          "type": "object",
+          "description": "Python ecosystem settings (supports uv, ruff, black, mypy)",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "format": {
+              "type": "object",
+              "properties": {
+                "tool": {
+                  "type": "string",
+                  "enum": ["ruff", "black"],
+                  "default": "ruff"
+                },
+                "enabled": { "type": "boolean", "default": true }
+              }
+            },
+            "lint": {
+              "type": "object",
+              "properties": {
+                "tool": {
+                  "type": "string",
+                  "enum": ["ruff", "flake8"],
+                  "default": "ruff"
+                },
+                "enabled": { "type": "boolean", "default": true }
+              }
+            },
+            "typecheck": {
+              "type": "object",
+              "properties": {
+                "tool": { "type": "string", "default": "mypy" },
+                "enabled": { "type": "boolean", "default": true }
+              }
+            },
+            "testPairing": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean", "default": true }
+              }
+            }
+          }
         }
       }
     }

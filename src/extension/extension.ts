@@ -4,6 +4,8 @@ import { CheckRegistry } from "../core/checks/registry.js";
 import { PreFlightMcpHandler } from "../core/mcp/handler.js";
 import { buildUniversalPack } from "../core/checks/packs/universal/index.js";
 import { buildJsTsPack } from "../core/checks/packs/js-ts/index.js";
+import { buildGoPack } from "../core/checks/packs/go/index.js";
+import { buildPythonPack } from "../core/checks/packs/python/index.js";
 import type { CheckRunner } from "../core/checks/check-contract.js";
 
 // MARK: - Types
@@ -19,6 +21,8 @@ const registry = new CheckRegistry();
 const mcpHandler = new PreFlightMcpHandler(() => [
   ...buildUniversalPack(),
   ...buildJsTsPack(),
+  ...buildGoPack(),
+  ...buildPythonPack(),
   ...registry.getContributedChecks(),
 ]);
 

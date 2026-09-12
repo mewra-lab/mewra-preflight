@@ -119,7 +119,10 @@ export function CheckRow({
   const hasFindings = result.findings.length > 0;
   const [expanded, setExpanded] = useState(hasFindings);
   const isFixable =
-    definition.id === "js-ts:prettier" || definition.id === "js-ts:eslint";
+    definition.id === "js-ts:prettier" ||
+    definition.id === "js-ts:eslint" ||
+    definition.id === "go:gofmt" ||
+    definition.id === "python:format";
   const isFixingAll = fixingTarget === definition.id;
 
   const toggleExpanded = () => {

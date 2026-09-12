@@ -1,7 +1,11 @@
 import { access } from "node:fs/promises";
 import { join } from "node:path";
 
+// MARK: - Types
+
 export type Ecosystem = "js-ts" | "python" | "go" | "php" | "unknown";
+
+// MARK: - Helpers
 
 async function exists(path: string): Promise<boolean> {
   try {
@@ -12,20 +16,46 @@ async function exists(path: string): Promise<boolean> {
   }
 }
 
+async function anyExists(
+  workspaceRoot: string,
+  files: string[],
+): Promise<boolean> {
+  const checks = await Promise.all(
+    files.map((file) => exists(join(workspaceRoot, file))),
+  );
+  return checks.some(Boolean);
+}
+
+// MARK: - Detectors
+
+export async function detectActiveEcosystems(
+  workspaceRoot: string,
+): Promise<Ecosystem[]> {
+  const [hasJsTs, hasGo, hasPython, hasPhp] = await Promise.all([
+    anyExists(workspaceRoot, ["package.json"]),
+    anyExists(workspaceRoot, ["go.mod", "go.sum"]),
+    anyExists(workspaceRoot, [
+      "pyproject.toml",
+      "uv.lock",
+      "requirements.txt",
+      "Pipfile",
+      "setup.py",
+    ]),
+    anyExists(workspaceRoot, ["composer.json"]),
+  ]);
+
+  const active: Ecosystem[] = [];
+  if (hasJsTs) active.push("js-ts");
+  if (hasGo) active.push("go");
+  if (hasPython) active.push("python");
+  if (hasPhp) active.push("php");
+
+  return active;
+}
+
 export async function detectEcosystem(
   workspaceRoot: string,
 ): Promise<Ecosystem> {
-  const [hasPackageJson, hasGoMod, hasPyproject, hasComposerJson] =
-    await Promise.all([
-      exists(join(workspaceRoot, "package.json")),
-      exists(join(workspaceRoot, "go.mod")),
-      exists(join(workspaceRoot, "pyproject.toml")),
-      exists(join(workspaceRoot, "composer.json")),
-    ]);
-
-  if (hasPackageJson) return "js-ts";
-  if (hasGoMod) return "go";
-  if (hasPyproject) return "python";
-  if (hasComposerJson) return "php";
-  return "unknown";
+  const active = await detectActiveEcosystems(workspaceRoot);
+  return active[0] ?? "unknown";
 }

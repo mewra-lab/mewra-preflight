@@ -28,13 +28,34 @@ export function createPreFlightContext(
     async resolveTool(binName: string): Promise<string | null> {
       let currentDir = workspaceRoot;
       while (true) {
-        const localBin = resolve(currentDir, "node_modules", ".bin", binName);
-        if (await isExecutable(localBin)) {
-          return localBin;
+        const localCandidates = [
+          resolve(currentDir, "node_modules", ".bin", binName),
+          resolve(currentDir, ".venv", "bin", binName),
+          resolve(currentDir, "venv", "bin", binName),
+          resolve(currentDir, "env", "bin", binName),
+          resolve(currentDir, ".venv", "Scripts", `${binName}.exe`),
+          resolve(currentDir, "venv", "Scripts", `${binName}.exe`),
+        ];
+        for (const candidate of localCandidates) {
+          if (await isExecutable(candidate)) {
+            return candidate;
+          }
         }
         const parent = resolve(currentDir, "..");
         if (parent === currentDir) break;
         currentDir = parent;
+      }
+
+      const home = process.env.HOME ?? "";
+      const userBinCandidates = [
+        resolve(home, ".local", "bin", binName),
+        resolve(home, ".cargo", "bin", binName),
+        resolve(home, "go", "bin", binName),
+      ];
+      for (const candidate of userBinCandidates) {
+        if (await isExecutable(candidate)) {
+          return candidate;
+        }
       }
 
       const lookupCmd = process.platform === "win32" ? "where" : "which";
@@ -45,13 +66,12 @@ export function createPreFlightContext(
       } catch {}
 
       if (process.platform !== "win32") {
-        const home = process.env.HOME ?? "";
         const commonPaths = [
           `/opt/homebrew/bin/${binName}`,
           `/usr/local/bin/${binName}`,
+          `/usr/local/go/bin/${binName}`,
           `${home}/.nvm/current/bin/${binName}`,
           `${home}/.pnpm/${binName}`,
-          `${home}/.local/bin/${binName}`,
           `/usr/bin/${binName}`,
         ];
         for (const p of commonPaths) {

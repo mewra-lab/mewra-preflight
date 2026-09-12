@@ -14,9 +14,11 @@ import { deriveOverallStatus, runChecks } from "../core/checks/runner.js";
 import { createPreFlightContext } from "../core/checks/context.js";
 import { CheckRegistry } from "../core/checks/registry.js";
 import { PreFlightMcpHandler } from "../core/mcp/handler.js";
-import { detectEcosystem } from "../core/ecosystem/detect-ecosystem.js";
+import { detectActiveEcosystems } from "../core/ecosystem/detect-ecosystem.js";
 import { buildUniversalPack } from "../core/checks/packs/universal/index.js";
 import { buildJsTsPack } from "../core/checks/packs/js-ts/index.js";
+import { buildGoPack } from "../core/checks/packs/go/index.js";
+import { buildPythonPack } from "../core/checks/packs/python/index.js";
 import { buildPRUrl } from "../core/pr/pr-launcher.js";
 import {
   loadWorkspaceConfig,
@@ -307,15 +309,23 @@ export class PreFlightPanel {
       this._manualCheckStates,
     );
 
-    const detectedEcosystem = await detectEcosystem(root);
+    const activeEcosystems = await detectActiveEcosystems(root);
     const shouldEnableJsTs =
-      config.enabledPacks.includes("js-ts") || detectedEcosystem === "js-ts";
+      config.enabledPacks.includes("js-ts") ||
+      activeEcosystems.includes("js-ts");
+    const shouldEnableGo =
+      config.enabledPacks.includes("go") || activeEcosystems.includes("go");
+    const shouldEnablePython =
+      config.enabledPacks.includes("python") ||
+      activeEcosystems.includes("python");
 
     const checks = [
       ...buildUniversalPack(
         config.universalChecks ?? config.largeFileThresholdMb,
       ),
       ...(shouldEnableJsTs ? buildJsTsPack() : []),
+      ...(shouldEnableGo ? buildGoPack() : []),
+      ...(shouldEnablePython ? buildPythonPack() : []),
       ...this._registry.getContributedChecks(),
     ];
 
@@ -393,6 +403,67 @@ export class PreFlightPanel {
           this._post({ type: "quickFixFailed", checkId, file });
           void vscode.window.showWarningMessage(
             res.stderr.trim() || `ESLint failed to fix ${file ?? "files"}.`,
+          );
+        }
+        await vscode.workspace.saveAll(false);
+        await this._runPipeline();
+      } else if (checkId === "go:gofmt") {
+        const tool = await context.resolveTool("gofmt");
+        if (!tool) {
+          this._post({ type: "quickFixFailed", checkId, file });
+          void vscode.window.showErrorMessage(
+            "gofmt is not found in Go toolchain or PATH.",
+          );
+          return;
+        }
+
+        const args = file ? ["-w", file] : ["-w", "."];
+        const res = await context.runCommand(tool, args);
+        if (res.code === 0) {
+          void vscode.window.showInformationMessage(
+            file
+              ? `Formatted ${file} with gofmt.`
+              : "Formatted Go files with gofmt.",
+          );
+        } else {
+          this._post({ type: "quickFixFailed", checkId, file });
+          void vscode.window.showWarningMessage(
+            res.stderr.trim() || `gofmt failed to format ${file ?? "files"}.`,
+          );
+        }
+        await vscode.workspace.saveAll(false);
+        await this._runPipeline();
+      } else if (checkId === "python:format") {
+        const ruffTool = await context.resolveTool("ruff");
+        const blackTool = !ruffTool ? await context.resolveTool("black") : null;
+        const tool = ruffTool ?? blackTool;
+        if (!tool) {
+          this._post({ type: "quickFixFailed", checkId, file });
+          void vscode.window.showErrorMessage(
+            "Neither ruff nor black is installed in venv or PATH.",
+          );
+          return;
+        }
+
+        const isRuff = Boolean(ruffTool);
+        const args = isRuff
+          ? file
+            ? ["format", file]
+            : ["format", "."]
+          : file
+            ? [file]
+            : ["."];
+        const res = await context.runCommand(tool, args);
+        if (res.code === 0) {
+          void vscode.window.showInformationMessage(
+            file
+              ? `Formatted ${file} with ${isRuff ? "ruff format" : "black"}.`
+              : `Formatted Python files with ${isRuff ? "ruff format" : "black"}.`,
+          );
+        } else {
+          this._post({ type: "quickFixFailed", checkId, file });
+          void vscode.window.showWarningMessage(
+            res.stderr.trim() || `Failed to format ${file ?? "files"}.`,
           );
         }
         await vscode.workspace.saveAll(false);
