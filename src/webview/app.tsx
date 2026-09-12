@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback } from "preact/hooks";
-import type { PreFlightSnapshot, CheckStatus } from "../shared/types.js";
+import type {
+  PreFlightSnapshot,
+  CheckStatus,
+  DiffScope,
+} from "../shared/types.js";
 import { ExtensionMessageSchema } from "../shared/messages.js";
 import type { WebviewMessage } from "../shared/messages.js";
 import { CheckRow } from "./components/check-row.js";
@@ -91,6 +95,10 @@ export function App() {
     post({ type: "openFile", path, line });
   }, []);
 
+  const handleScopeChange = useCallback((scope: DiffScope) => {
+    post({ type: "changeDiffScope", scope });
+  }, []);
+
   if (state.phase === "idle") {
     return (
       <div class="glass-shell">
@@ -172,6 +180,7 @@ export function App() {
   const blocked = isBlocked(snapshot.overallStatus, false);
   const isRunning = state.phase === "running";
   const changedCount = snapshot.diff?.changedFiles.length ?? 0;
+  const currentScope = snapshot.diff?.scope ?? "branch";
 
   return (
     <div class="glass-shell">
@@ -210,45 +219,74 @@ export function App() {
       </header>
 
       {snapshot.diff && (
-        <div class="diff-strip">
-          <div class="diff-strip__info">
-            <svg
-              class="diff-strip__icon"
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+        <div class="diff-container">
+          <div class="scope-selector">
+            <button
+              class={`scope-tab ${currentScope === "branch" ? "scope-tab--active" : ""}`}
+              onClick={() => handleScopeChange("branch")}
             >
-              <line x1="6" y1="3" x2="6" y2="15" />
-              <circle cx="18" cy="6" r="3" />
-              <circle cx="6" cy="18" r="3" />
-              <path d="M18 9a9 9 0 0 1-9 9" />
-            </svg>
-            <span class="diff-strip__branch">{snapshot.diff.headBranch}</span>
-            <svg
-              class="diff-strip__arrow"
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+              Branch
+            </button>
+            <button
+              class={`scope-tab ${currentScope === "staged" ? "scope-tab--active" : ""}`}
+              onClick={() => handleScopeChange("staged")}
             >
-              <line x1="5" y1="12" x2="19" y2="12" />
-              <polyline points="12 5 19 12 12 19" />
-            </svg>
-            <span class="diff-strip__target">{snapshot.diff.baseBranch}</span>
+              Staged
+            </button>
+            <button
+              class={`scope-tab ${currentScope === "working" ? "scope-tab--active" : ""}`}
+              onClick={() => handleScopeChange("working")}
+            >
+              Working Tree
+            </button>
           </div>
-          <div class="diff-strip__stats">
-            <span class="diff-strip__count">
-              {changedCount} changed {changedCount === 1 ? "file" : "files"}
-            </span>
+
+          <div class="diff-strip">
+            <div class="diff-strip__info">
+              <svg
+                class="diff-strip__icon"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="6" y1="3" x2="6" y2="15" />
+                <circle cx="18" cy="6" r="3" />
+                <circle cx="6" cy="18" r="3" />
+                <path d="M18 9a9 9 0 0 1-9 9" />
+              </svg>
+              <span class="diff-strip__branch">{snapshot.diff.headBranch}</span>
+              {currentScope !== "staged" && currentScope !== "working" && (
+                <>
+                  <svg
+                    class="diff-strip__arrow"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
+                  <span class="diff-strip__target">
+                    {snapshot.diff.baseBranch}
+                  </span>
+                </>
+              )}
+            </div>
+            <div class="diff-strip__stats">
+              <span class="diff-strip__count">
+                {changedCount} changed {changedCount === 1 ? "file" : "files"}
+              </span>
+            </div>
           </div>
         </div>
       )}

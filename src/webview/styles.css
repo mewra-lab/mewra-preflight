@@ -234,6 +234,47 @@ body {
   }
 }
 
+.diff-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.scope-selector {
+  display: inline-flex;
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--pf-glass-border-subtle);
+  border-radius: var(--pf-radius-md);
+  padding: 2px;
+  gap: 2px;
+}
+
+.scope-tab {
+  background: transparent;
+  border: none;
+  color: var(--pf-muted);
+  font-family: var(--pf-font);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: var(--pf-radius-sm);
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scope-tab:hover:not(.scope-tab--active) {
+  color: var(--pf-fg);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.scope-tab--active {
+  color: var(--pf-fg);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  font-weight: 600;
+}
+
 .diff-strip {
   display: flex;
   align-items: center;

@@ -26,6 +26,11 @@ export type ExtensionMessage = z.infer<typeof ExtensionMessageSchema>;
 export const WebviewMessageSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("runPipeline"),
+    scope: z.enum(["branch", "staged", "working"]).optional(),
+  }),
+  z.object({
+    type: z.literal("changeDiffScope"),
+    scope: z.enum(["branch", "staged", "working"]),
   }),
   z.object({
     type: z.literal("launchPR"),

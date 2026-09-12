@@ -30,3 +30,28 @@ describe("parseNameStatus (internal helper via module boundary)", () => {
     expect(statusMap[status[0] ?? ""] ?? "modified").toBe("deleted");
   });
 });
+
+import { computeGitDiff } from "../../src/core/diff/git-diff.js";
+
+describe("computeGitDiff scopes", () => {
+  it("computes diff with branch scope", async () => {
+    const diff = await computeGitDiff(process.cwd(), "main", "branch");
+    expect(diff.scope).toBe("branch");
+    expect(Array.isArray(diff.changedFiles)).toBe(true);
+    expect(typeof diff.rawPatch).toBe("string");
+  });
+
+  it("computes diff with staged scope", async () => {
+    const diff = await computeGitDiff(process.cwd(), "main", "staged");
+    expect(diff.scope).toBe("staged");
+    expect(Array.isArray(diff.changedFiles)).toBe(true);
+    expect(typeof diff.rawPatch).toBe("string");
+  });
+
+  it("computes diff with working scope", async () => {
+    const diff = await computeGitDiff(process.cwd(), "main", "working");
+    expect(diff.scope).toBe("working");
+    expect(Array.isArray(diff.changedFiles)).toBe(true);
+    expect(typeof diff.rawPatch).toBe("string");
+  });
+});

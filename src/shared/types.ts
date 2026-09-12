@@ -44,6 +44,10 @@ export const CheckDefinitionSchema = z.object({
 
 export type CheckDefinition = z.infer<typeof CheckDefinitionSchema>;
 
+export const DiffScopeSchema = z.enum(["branch", "staged", "working"]);
+
+export type DiffScope = z.infer<typeof DiffScopeSchema>;
+
 export const ChangedFileSchema = z.object({
   path: z.string(),
   status: z.enum(["added", "modified", "deleted", "renamed"]),
@@ -57,6 +61,7 @@ export const GitDiffSchema = z.object({
   headBranch: z.string(),
   changedFiles: z.array(ChangedFileSchema),
   rawPatch: z.string(),
+  scope: DiffScopeSchema.optional(),
 });
 
 export type GitDiff = z.infer<typeof GitDiffSchema>;
@@ -84,4 +89,5 @@ export type PreFlightConfig = {
   enabledPacks: string[];
   blockingOnWarnings: boolean;
   gitHost: "github" | "gitlab";
+  diffScope: DiffScope;
 };

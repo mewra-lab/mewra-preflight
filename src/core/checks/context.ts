@@ -42,8 +42,7 @@ export function createPreFlightContext(
         const { stdout } = await execFileAsync(lookupCmd, [binName]);
         const resolved = stdout.trim().split("\n")[0]?.trim();
         if (resolved && resolved.length > 0) return resolved;
-      } catch {
-              }
+      } catch {}
 
       if (process.platform !== "win32") {
         const home = process.env.HOME ?? "";

@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { readFile, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { promisify } from "node:util";
-import type { GitDiff, ChangedFile } from "../../shared/types.js";
+import type { GitDiff, ChangedFile, DiffScope } from "../../shared/types.js";
 
 // MARK: - Types
 
@@ -140,12 +140,76 @@ async function synthesizeUntrackedPatch(
 export async function computeGitDiff(
   workspaceRoot: string,
   baseBranch: string,
+  scope: DiffScope = "branch",
 ): Promise<GitDiff> {
   const headBranch = await resolveCurrentBranch(workspaceRoot);
   const resolvedBase = await resolveBaseRef(workspaceRoot, baseBranch);
 
   let nameStatus = "";
   let rawPatch = "";
+
+  if (scope === "staged") {
+    [nameStatus, rawPatch] = await Promise.all([
+      runGit(workspaceRoot, ["diff", "--cached", "--name-status"]),
+      runGit(workspaceRoot, ["diff", "--cached"]),
+    ]);
+
+    return {
+      baseBranch: resolvedBase,
+      headBranch,
+      changedFiles: parseNameStatus(nameStatus),
+      rawPatch,
+      scope: "staged",
+    };
+  }
+
+  if (scope === "working") {
+    [nameStatus, rawPatch] = await Promise.all([
+      runGit(workspaceRoot, ["diff", "--name-status", "HEAD"]),
+      runGit(workspaceRoot, ["diff", "HEAD"]),
+    ]);
+
+    if (!nameStatus) {
+      try {
+        await runGit(workspaceRoot, ["rev-parse", "--verify", "HEAD~1"]);
+        [nameStatus, rawPatch] = await Promise.all([
+          runGit(workspaceRoot, ["diff", "--name-status", "HEAD~1..HEAD"]),
+          runGit(workspaceRoot, ["diff", "HEAD~1..HEAD"]),
+        ]);
+      } catch {
+      }
+    }
+
+    const changedFiles = parseNameStatus(nameStatus);
+    const existingPaths = new Set(changedFiles.map((f) => f.path));
+
+    const untracked = await getUntrackedFiles(workspaceRoot);
+    const newUntracked = untracked.filter((u) => !existingPaths.has(u));
+
+    for (const u of newUntracked) {
+      changedFiles.push({ path: u, status: "added" });
+    }
+
+    if (newUntracked.length > 0) {
+      const untrackedPatch = await synthesizeUntrackedPatch(
+        workspaceRoot,
+        newUntracked,
+      );
+      if (untrackedPatch) {
+        rawPatch = rawPatch
+          ? `${rawPatch}\n\n${untrackedPatch}`
+          : untrackedPatch;
+      }
+    }
+
+    return {
+      baseBranch: resolvedBase,
+      headBranch,
+      changedFiles,
+      rawPatch,
+      scope: "working",
+    };
+  }
 
   if (headBranch !== resolvedBase && resolvedBase !== "HEAD") {
     try {
@@ -184,7 +248,7 @@ export async function computeGitDiff(
           runGit(workspaceRoot, ["diff", "HEAD~1..HEAD"]),
         ]);
       } catch {
-              }
+      }
     }
   }
 
@@ -213,5 +277,6 @@ export async function computeGitDiff(
     headBranch,
     changedFiles,
     rawPatch,
+    scope: "branch",
   };
 }

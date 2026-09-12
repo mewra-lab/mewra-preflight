@@ -3,7 +3,7 @@ import { resolve, isAbsolute } from "node:path";
 import { generateNonce } from "./security/nonce.js";
 import { WebviewMessageSchema } from "../shared/messages.js";
 import type { ExtensionMessage } from "../shared/messages.js";
-import type { PreFlightConfig } from "../shared/types.js";
+import type { PreFlightConfig, DiffScope } from "../shared/types.js";
 import { computeGitDiff } from "../core/diff/git-diff.js";
 import { runChecks } from "../core/checks/runner.js";
 import { createPreFlightContext } from "../core/checks/context.js";
@@ -33,6 +33,7 @@ export class PreFlightPanel {
   private readonly _onStatusChange: StatusChangeCallback | undefined;
   private _disposables: vscode.Disposable[] = [];
   private _isDisposed = false;
+  private _selectedScope: DiffScope | undefined;
 
   static createOrShow(
     extensionUri: vscode.Uri,
@@ -108,6 +109,7 @@ export class PreFlightPanel {
       enabledPacks: cfg.get<string[]>("enabledPacks") ?? ["universal", "js-ts"],
       blockingOnWarnings: cfg.get<boolean>("blockingOnWarnings") ?? false,
       gitHost: cfg.get<"github" | "gitlab">("gitHost") ?? "github",
+      diffScope: cfg.get<DiffScope>("diffScope") ?? "branch",
     };
   }
 
@@ -121,7 +123,13 @@ export class PreFlightPanel {
 
     const msg = parsed.data;
 
-    if (msg.type === "ready" || msg.type === "runPipeline") {
+    if (msg.type === "ready") {
+      await this._runPipeline();
+    } else if (msg.type === "runPipeline") {
+      if (msg.scope) this._selectedScope = msg.scope;
+      await this._runPipeline();
+    } else if (msg.type === "changeDiffScope") {
+      this._selectedScope = msg.scope;
       await this._runPipeline();
     } else if (msg.type === "launchPR") {
       await this._launchPR();
@@ -163,9 +171,10 @@ export class PreFlightPanel {
 
     const config = this._getConfig();
 
+    const scope = this._selectedScope ?? config.diffScope;
     let diff;
     try {
-      diff = await computeGitDiff(root, config.targetBranch);
+      diff = await computeGitDiff(root, config.targetBranch, scope);
     } catch (e) {
       this._post({
         type: "error",
@@ -293,7 +302,6 @@ export class PreFlightPanel {
 
     try {
       this._panel.dispose();
-    } catch {
-          }
+    } catch {}
   }
 }

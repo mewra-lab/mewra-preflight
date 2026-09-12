@@ -137,6 +137,16 @@
           ],
           "default": "github",
           "description": "Git hosting platform for PR URL construction."
+        },
+        "mewraPreflight.diffScope": {
+          "type": "string",
+          "enum": [
+            "branch",
+            "staged",
+            "working"
+          ],
+          "default": "branch",
+          "description": "Scope of the diff to analyze: \"branch\" (all commits + working tree vs base branch), \"staged\" (staged changes only), or \"working\" (all uncommitted changes vs HEAD)."
         }
       }
     },
