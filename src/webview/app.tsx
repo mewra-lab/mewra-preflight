@@ -430,16 +430,18 @@ export function App() {
       )}
 
       <main class="check-list">
-        {snapshot.checks.map((snap) => (
-          <CheckRow
-            key={snap.definition.id}
-            snapshot={snap}
-            onOpenFinding={handleOpenFinding}
-            onQuickFix={handleQuickFix}
-            onInstallTool={handleInstallTool}
-            fixingTarget={fixingTarget}
-          />
-        ))}
+        {snapshot.checks
+          .filter((snap) => snap.result.status !== "skipped")
+          .map((snap) => (
+            <CheckRow
+              key={snap.definition.id}
+              snapshot={snap}
+              onOpenFinding={handleOpenFinding}
+              onQuickFix={handleQuickFix}
+              onInstallTool={handleInstallTool}
+              fixingTarget={fixingTarget}
+            />
+          ))}
 
         <ManualChecklist
           items={snapshot.manualChecks ?? []}

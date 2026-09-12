@@ -320,16 +320,24 @@ export class PreFlightPanel {
     );
 
     const activeEcosystems = await detectActiveEcosystems(root);
-    const shouldEnableJsTs =
-      config.enabledPacks.includes("js-ts") ||
-      activeEcosystems.includes("js-ts");
-    const shouldEnableGo =
-      config.enabledPacks.includes("go") || activeEcosystems.includes("go");
-    const shouldEnablePython =
-      config.enabledPacks.includes("python") ||
-      activeEcosystems.includes("python");
-    const shouldEnablePhp =
-      config.enabledPacks.includes("php") || activeEcosystems.includes("php");
+
+    const isPackActive = (
+      packId: "js-ts" | "go" | "python" | "php",
+    ): boolean => {
+      const fileSetting = fileConfig?.ecosystems?.[packId]?.enabled;
+      if (typeof fileSetting === "boolean") {
+        return fileSetting;
+      }
+      if (activeEcosystems.length > 0) {
+        return activeEcosystems.includes(packId);
+      }
+      return config.enabledPacks.includes(packId);
+    };
+
+    const shouldEnableJsTs = isPackActive("js-ts");
+    const shouldEnableGo = isPackActive("go");
+    const shouldEnablePython = isPackActive("python");
+    const shouldEnablePhp = isPackActive("php");
 
     const customChecks = await buildCustomChecks(config, root);
 
@@ -640,10 +648,54 @@ export class PreFlightPanel {
     }
 
     if (shouldWriteStarter) {
+      const activeEcosystems = await detectActiveEcosystems(root);
+      const ecoEntries: string[] = [];
+
+      if (activeEcosystems.includes("python")) {
+        ecoEntries.push(`    "python": {
+      "enabled": true,
+      "format": { "tool": "ruff", "enabled": true },
+      "lint": { "tool": "ruff", "enabled": true },
+      "typecheck": { "tool": "mypy", "enabled": true },
+      "testPairing": { "enabled": true }
+    }`);
+      }
+      if (activeEcosystems.includes("js-ts")) {
+        ecoEntries.push(`    "js-ts": {
+      "enabled": true,
+      "format": { "tool": "prettier", "enabled": true },
+      "lint": { "tool": "eslint", "enabled": true },
+      "typecheck": { "tool": "tsc", "enabled": true },
+      "testPairing": { "enabled": true }
+    }`);
+      }
+      if (activeEcosystems.includes("go")) {
+        ecoEntries.push(`    "go": {
+      "enabled": true,
+      "format": { "tool": "gofmt", "enabled": true },
+      "vet": { "enabled": true },
+      "lint": { "tool": "golangci-lint", "enabled": true },
+      "testPairing": { "enabled": true }
+    }`);
+      }
+      if (activeEcosystems.includes("php")) {
+        ecoEntries.push(`    "php": {
+      "enabled": true,
+      "format": { "tool": "php-cs-fixer", "enabled": true },
+      "analyze": { "tool": "phpstan", "enabled": true },
+      "testPairing": { "enabled": true }
+    }`);
+      }
+
+      const ecosystemsBlock =
+        ecoEntries.length > 0
+          ? `  "ecosystems": {\n${ecoEntries.join(",\n")}\n  },\n`
+          : "";
+
       const template = `{
   "$schema": "https://raw.githubusercontent.com/mewra-lab/mewra-preflight/main/schemas/preflight.schema.json",
   "targetBranch": "main",
-  "universalChecks": {
+${ecosystemsBlock}  "universalChecks": {
     "noDebugStatements": "error",
     "noSecrets": "error",
     "noLocalhostUrls": "error",
