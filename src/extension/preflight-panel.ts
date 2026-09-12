@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { resolve, isAbsolute } from "node:path";
 import { generateNonce } from "./security/nonce.js";
 import { WebviewMessageSchema } from "../shared/messages.js";
 import type { ExtensionMessage } from "../shared/messages.js";
@@ -109,15 +110,28 @@ export class PreFlightPanel {
     } else if (msg.type === "launchPR") {
       await this._launchPR();
     } else if (msg.type === "openFile") {
-      const uri = vscode.Uri.file(msg.path);
-      await vscode.window.showTextDocument(uri, {
-        selection: new vscode.Range(
-          Math.max(0, msg.line - 1),
-          0,
-          Math.max(0, msg.line - 1),
-          0,
-        ),
-      });
+      const root = this._workspaceRoot();
+      if (!root || !msg.path || msg.path === "(diff)") return;
+
+      const fullPath = isAbsolute(msg.path)
+        ? msg.path
+        : resolve(root, msg.path);
+
+      try {
+        const uri = vscode.Uri.file(fullPath);
+        const doc = await vscode.workspace.openTextDocument(uri);
+        const targetLine = Math.max(0, (msg.line > 0 ? msg.line : 1) - 1);
+        await vscode.window.showTextDocument(doc, {
+          viewColumn: vscode.ViewColumn.One,
+          selection: new vscode.Range(targetLine, 0, targetLine, 0),
+          preserveFocus: false,
+          preview: false,
+        });
+      } catch {
+        await vscode.window.showErrorMessage(
+          `Could not open file: ${msg.path}`,
+        );
+      }
     }
   }
 

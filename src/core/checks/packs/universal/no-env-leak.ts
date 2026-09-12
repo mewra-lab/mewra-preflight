@@ -1,12 +1,21 @@
 import type { CheckRunner, PreFlightContext } from "../../check-contract.js";
+import { parseAddedLines } from "../../../diff/parse-patch.js";
 import type {
   GitDiff,
   CheckResult,
   CheckFinding,
 } from "../../../../shared/types.js";
 
-const SECRETS_PATTERN =
-  /(?:SECRET|TOKEN|PASSWORD|API_KEY|PRIVATE_KEY|ACCESS_KEY|CLIENT_SECRET|JWT_SECRET)\s*[:=]\s*["'][^"']{4,}/i;
+// MARK: - Constants
+
+const PATTERNS = [
+  /AKIA[0-9A-Z]{16}/g,
+  /sk-[a-zA-Z0-9]{20,}/g,
+  /ghp_[a-zA-Z0-9]{36}/g,
+  /(password|secret|token)\s*=\s*["'][^"'\s]{8,}["']/gi,
+];
+
+// MARK: - Check Definition
 
 export const noEnvLeak: CheckRunner = {
   id: "universal:no-env-leak",
@@ -14,24 +23,32 @@ export const noEnvLeak: CheckRunner = {
   severity: "error",
   pack: "universal",
 
-  appliesTo(_diff: GitDiff): boolean {
-    return true;
+  appliesTo(diff: GitDiff): boolean {
+    return diff.changedFiles.some((f) => f.status !== "deleted");
   },
 
   async run(diff: GitDiff, _context: PreFlightContext): Promise<CheckResult> {
     const findings: CheckFinding[] = [];
-    for (const line of diff.rawPatch.split("\n")) {
-      if (!line.startsWith("+") || line.startsWith("+++")) continue;
-      if (SECRETS_PATTERN.test(line)) {
-        findings.push({
-          file: "(diff)",
-          line: 0,
-          message:
-            "Possible credential or secret literal detected in added lines.",
-          rule: "no-env-leak",
-        });
+    const additions = parseAddedLines(
+      diff.rawPatch,
+      diff.changedFiles[0]?.path,
+    );
+
+    for (const item of additions) {
+      for (const pattern of PATTERNS) {
+        pattern.lastIndex = 0;
+        if (pattern.test(item.content)) {
+          findings.push({
+            file: item.file,
+            line: item.line,
+            message: "Potential secret or credential pattern detected.",
+            rule: "no-env-leak",
+          });
+          break;
+        }
       }
     }
+
     return { status: findings.length > 0 ? "fail" : "pass", findings };
   },
 };

@@ -1,11 +1,16 @@
 import type { CheckRunner, PreFlightContext } from "../../check-contract.js";
+import { parseAddedLines } from "../../../diff/parse-patch.js";
 import type {
   GitDiff,
   CheckResult,
   CheckFinding,
 } from "../../../../shared/types.js";
 
+// MARK: - Constants
+
 const PATTERN = /console\.(log|warn|error|debug|info|trace|dir)\s*\(/g;
+
+// MARK: - Check Definition
 
 export const noConsoleLog: CheckRunner = {
   id: "universal:no-console-log",
@@ -22,19 +27,24 @@ export const noConsoleLog: CheckRunner = {
 
   async run(diff: GitDiff, _context: PreFlightContext): Promise<CheckResult> {
     const findings: CheckFinding[] = [];
-    for (const line of diff.rawPatch.split("\n")) {
-      if (!line.startsWith("+") || line.startsWith("+++")) continue;
-      let match: RegExpExecArray | null;
+    const additions = parseAddedLines(
+      diff.rawPatch,
+      diff.changedFiles[0]?.path,
+    );
+
+    for (const item of additions) {
       PATTERN.lastIndex = 0;
-      while ((match = PATTERN.exec(line)) !== null) {
+      let match: RegExpExecArray | null;
+      while ((match = PATTERN.exec(item.content)) !== null) {
         findings.push({
-          file: "(diff)",
-          line: 0,
-          message: `Stray console.${match[1] ?? "log"}() detected in diff.`,
+          file: item.file,
+          line: item.line,
+          message: `Stray console.${match[1] ?? "log"}() detected.`,
           rule: "no-console-log",
         });
       }
     }
+
     return { status: findings.length > 0 ? "fail" : "pass", findings };
   },
 };

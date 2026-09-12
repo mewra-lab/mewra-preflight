@@ -398,39 +398,71 @@ body {
 
 .finding {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   padding: 6px 12px 6px 36px;
   cursor: pointer;
   font-size: 11px;
-  transition: background 0.1s;
+  transition: all 0.12s ease;
+  user-select: none;
 }
 
 .finding:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .finding__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-family: var(--pf-mono);
   font-size: 10.5px;
   color: var(--pf-warning);
   background: rgba(251, 191, 36, 0.08);
-  border: 1px solid rgba(251, 191, 36, 0.15);
-  padding: 1px 6px;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  padding: 2px 7px;
   border-radius: var(--pf-radius-sm);
   white-space: nowrap;
   flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.finding:hover .finding__badge {
+  filter: brightness(1.2);
+  border-color: rgba(251, 191, 36, 0.4);
+  box-shadow: 0 1px 6px rgba(251, 191, 36, 0.2);
+}
+
+.finding__badge-arrow {
+  font-size: 9px;
+  opacity: 0.7;
+  transition: transform 0.15s ease;
+}
+
+.finding:hover .finding__badge-arrow {
+  opacity: 1;
+  transform: translate(1px, -1px);
 }
 
 .check-row--fail .finding__badge {
   color: var(--pf-fail);
   background: rgba(244, 63, 94, 0.08);
-  border-color: rgba(244, 63, 94, 0.18);
+  border-color: rgba(244, 63, 94, 0.2);
+}
+
+.check-row--fail .finding:hover .finding__badge {
+  border-color: rgba(244, 63, 94, 0.4);
+  box-shadow: 0 1px 6px rgba(244, 63, 94, 0.2);
 }
 
 .finding__message {
   color: var(--pf-fg);
   word-break: break-word;
+  transition: color 0.12s ease;
+}
+
+.finding:hover .finding__message {
+  color: #ffffff;
 }
 
 .hero-card {

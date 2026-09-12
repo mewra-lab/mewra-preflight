@@ -1,4 +1,5 @@
 import type { CheckRunner, PreFlightContext } from "../../check-contract.js";
+import { parseAddedLines } from "../../../diff/parse-patch.js";
 import type {
   GitDiff,
   CheckResult,
@@ -23,19 +24,24 @@ export const noLocalhostUrls: CheckRunner = {
 
   async run(diff: GitDiff, _context: PreFlightContext): Promise<CheckResult> {
     const findings: CheckFinding[] = [];
-    for (const line of diff.rawPatch.split("\n")) {
-      if (!line.startsWith("+") || line.startsWith("+++")) continue;
-      let match: RegExpExecArray | null;
+    const additions = parseAddedLines(
+      diff.rawPatch,
+      diff.changedFiles[0]?.path,
+    );
+
+    for (const item of additions) {
       LOCALHOST_PATTERN.lastIndex = 0;
-      while ((match = LOCALHOST_PATTERN.exec(line)) !== null) {
+      let match: RegExpExecArray | null;
+      while ((match = LOCALHOST_PATTERN.exec(item.content)) !== null) {
         findings.push({
-          file: "(diff)",
-          line: 0,
+          file: item.file,
+          line: item.line,
           message: `Hardcoded localhost URL detected: ${match[0]}`,
           rule: "no-localhost-urls",
         });
       }
     }
+
     return { status: findings.length > 0 ? "fail" : "pass", findings };
   },
 };

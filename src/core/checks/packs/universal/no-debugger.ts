@@ -1,9 +1,16 @@
 import type { CheckRunner, PreFlightContext } from "../../check-contract.js";
+import { parseAddedLines } from "../../../diff/parse-patch.js";
 import type {
   GitDiff,
   CheckResult,
   CheckFinding,
 } from "../../../../shared/types.js";
+
+// MARK: - Constants
+
+const PATTERN = /\bdebugger\s*;?/g;
+
+// MARK: - Check Definition
 
 export const noDebugger: CheckRunner = {
   id: "universal:no-debugger",
@@ -20,17 +27,23 @@ export const noDebugger: CheckRunner = {
 
   async run(diff: GitDiff, _context: PreFlightContext): Promise<CheckResult> {
     const findings: CheckFinding[] = [];
-    for (const line of diff.rawPatch.split("\n")) {
-      if (!line.startsWith("+") || line.startsWith("+++")) continue;
-      if (/\bdebugger\b/.test(line)) {
+    const additions = parseAddedLines(
+      diff.rawPatch,
+      diff.changedFiles[0]?.path,
+    );
+
+    for (const item of additions) {
+      PATTERN.lastIndex = 0;
+      if (PATTERN.test(item.content)) {
         findings.push({
-          file: "(diff)",
-          line: 0,
-          message: "Stray debugger statement detected in diff.",
+          file: item.file,
+          line: item.line,
+          message: "Stray debugger statement detected.",
           rule: "no-debugger",
         });
       }
     }
+
     return { status: findings.length > 0 ? "fail" : "pass", findings };
   },
 };

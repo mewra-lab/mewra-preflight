@@ -1,4 +1,5 @@
 import type { CheckRunner, PreFlightContext } from "../../check-contract.js";
+import { parseAddedLines } from "../../../diff/parse-patch.js";
 import type {
   GitDiff,
   CheckResult,
@@ -7,7 +8,7 @@ import type {
 
 // MARK: - Constants
 
-const CONFLICT_MARKER_PATTERN = /^(\+{1})(<{7}|={7}|>{7})/;
+const CONFLICT_MARKER_PATTERN = /^(<{7}|={7}|>{7})/;
 
 // MARK: - Check Definition
 
@@ -23,17 +24,22 @@ export const noMergeConflicts: CheckRunner = {
 
   async run(diff: GitDiff, _context: PreFlightContext): Promise<CheckResult> {
     const findings: CheckFinding[] = [];
-    for (const line of diff.rawPatch.split("\n")) {
-      if (!line.startsWith("+") || line.startsWith("+++")) continue;
-      if (CONFLICT_MARKER_PATTERN.test(line)) {
+    const additions = parseAddedLines(
+      diff.rawPatch,
+      diff.changedFiles[0]?.path,
+    );
+
+    for (const item of additions) {
+      if (CONFLICT_MARKER_PATTERN.test(item.content)) {
         findings.push({
-          file: "(diff)",
-          line: 0,
-          message: "Unresolved merge conflict marker detected in diff.",
+          file: item.file,
+          line: item.line,
+          message: "Unresolved merge conflict marker detected.",
           rule: "no-merge-conflicts",
         });
       }
     }
+
     return { status: findings.length > 0 ? "fail" : "pass", findings };
   },
 };

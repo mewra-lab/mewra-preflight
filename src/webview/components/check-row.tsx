@@ -89,12 +89,16 @@ export function CheckRow({ snapshot, onOpenFinding }: CheckRowProps) {
               onClick={() => onOpenFinding?.(f.file, f.line)}
               role="button"
               tabIndex={0}
+              title={`Jump to ${f.file}:${f.line}`}
               onKeyDown={(e) => {
                 if (e.key === "Enter") onOpenFinding?.(f.file, f.line);
               }}
             >
               <span class="finding__badge">
-                {f.file}:{f.line}
+                <span class="finding__badge-text">
+                  {f.file}:{f.line}
+                </span>
+                <span class="finding__badge-arrow">↗</span>
               </span>
               <span class="finding__message">{f.message}</span>
             </li>
