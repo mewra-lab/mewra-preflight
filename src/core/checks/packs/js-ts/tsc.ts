@@ -19,19 +19,22 @@ export const tscCheck: CheckRunner = {
 
   appliesTo(diff: GitDiff): boolean {
     return diff.changedFiles.some(
-      (f) => f.status !== "deleted" && /\.tsx?$/.test(f.path),
+      (f) => f.status !== "deleted" && /\.(tsx?|vue)$/.test(f.path),
     );
   },
 
   async run(diff: GitDiff, context: PreFlightContext): Promise<CheckResult> {
-    const tool = await context.resolveTool("tsc");
+    const hasVue = diff.changedFiles.some((f) => f.path.endsWith(".vue"));
+    const tool =
+      (hasVue ? await context.resolveTool("vue-tsc") : null) ??
+      (await context.resolveTool("tsc"));
 
     if (!tool) {
       return {
         status: "not-configured",
         findings: [],
         message:
-          "TypeScript compiler (tsc) is not installed in local node_modules or PATH.",
+          "TypeScript compiler (tsc or vue-tsc) is not installed in local node_modules or PATH.",
       };
     }
 

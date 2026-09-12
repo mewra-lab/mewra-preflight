@@ -44,6 +44,20 @@ describe("universal pack — no-console-log", () => {
   });
 });
 
+describe("universal pack — vue file appliesTo", () => {
+  it("applies no-console-log and no-debugger to .vue files", () => {
+    const checks = buildUniversalPack();
+    const noConsole = checks.find((c) => c.id === "universal:no-console-log")!;
+    const noDbg = checks.find((c) => c.id === "universal:no-debugger")!;
+
+    const vueDiff = makeDiff("", [
+      { path: "src/views/Home.vue", status: "modified" },
+    ]);
+    expect(noConsole.appliesTo(vueDiff)).toBe(true);
+    expect(noDbg.appliesTo(vueDiff)).toBe(true);
+  });
+});
+
 describe("universal pack — no-debugger", () => {
   it("fails when debugger statement added", async () => {
     const checks = buildUniversalPack();

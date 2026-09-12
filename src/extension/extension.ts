@@ -22,7 +22,6 @@ const mcpHandler = new PreFlightMcpHandler(() => [
   ...registry.getContributedChecks(),
 ]);
 
-let panel: PreFlightPanel | undefined;
 let statusBarItem: vscode.StatusBarItem | undefined;
 
 function updateStatusBar(
@@ -61,20 +60,6 @@ function updateStatusBar(
   }
 }
 
-function getOrCreatePanel(extensionUri: vscode.Uri): PreFlightPanel {
-  if (!panel) {
-    panel = PreFlightPanel.create(
-      extensionUri,
-      registry,
-      mcpHandler,
-      (status) => {
-        updateStatusBar(status);
-      },
-    );
-  }
-  return panel;
-}
-
 // MARK: - Lifecycle
 
 export function activate(context: vscode.ExtensionContext): MewraPreFlightAPI {
@@ -90,17 +75,41 @@ export function activate(context: vscode.ExtensionContext): MewraPreFlightAPI {
 
   context.subscriptions.push(
     vscode.commands.registerCommand("mewra-preflight.openDashboard", () => {
-      getOrCreatePanel(context.extensionUri).reveal();
+      const p = PreFlightPanel.createOrShow(
+        context.extensionUri,
+        registry,
+        mcpHandler,
+        (status) => {
+          updateStatusBar(status);
+        },
+      );
+      p.reveal();
+      p.runPipeline();
     }),
 
     vscode.commands.registerCommand("mewra-preflight.runPipeline", () => {
-      const p = getOrCreatePanel(context.extensionUri);
+      const p = PreFlightPanel.createOrShow(
+        context.extensionUri,
+        registry,
+        mcpHandler,
+        (status) => {
+          updateStatusBar(status);
+        },
+      );
       p.reveal();
       p.runPipeline();
     }),
 
     vscode.commands.registerCommand("mewra-preflight.launchPR", () => {
-      getOrCreatePanel(context.extensionUri).launchPR();
+      const p = PreFlightPanel.createOrShow(
+        context.extensionUri,
+        registry,
+        mcpHandler,
+        (status) => {
+          updateStatusBar(status);
+        },
+      );
+      p.launchPR();
     }),
   );
 
@@ -115,8 +124,7 @@ export function activate(context: vscode.ExtensionContext): MewraPreFlightAPI {
 }
 
 export function deactivate(): void {
-  panel?.dispose();
-  panel = undefined;
+  PreFlightPanel.currentPanel?.dispose();
   statusBarItem?.dispose();
   statusBarItem = undefined;
   registry.clear();

@@ -19,7 +19,37 @@ export function PrButton({ blocked, onLaunch }: PrButtonProps) {
           : "Create Pull Request in browser"
       }
     >
-      <span class="pr-button__icon">{blocked ? "🔒" : "↗"}</span>
+      <span class="pr-button__icon">
+        {blocked ? (
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        ) : (
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="7" y1="17" x2="17" y2="7" />
+            <polyline points="7 7 17 7 17 17" />
+          </svg>
+        )}
+      </span>
       <span>{blocked ? "Resolve Errors to Open PR" : "Open Pull Request"}</span>
     </button>
   );

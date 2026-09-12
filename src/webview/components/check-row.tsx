@@ -12,18 +12,95 @@ type CheckRowProps = {
 
 function StatusIcon({ status }: { status: CheckStatus }) {
   if (status === "pass") {
-    return <span class="status-indicator status-indicator--pass">✓</span>;
+    return (
+      <span class="status-indicator status-indicator--pass">
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </span>
+    );
   }
   if (status === "fail") {
-    return <span class="status-indicator status-indicator--fail">✕</span>;
+    return (
+      <span class="status-indicator status-indicator--fail">
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </span>
+    );
   }
   if (status === "warning") {
-    return <span class="status-indicator status-indicator--warning">▲</span>;
+    return (
+      <span class="status-indicator status-indicator--warning">
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+          <line x1="12" y1="9" x2="12" y2="13" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+      </span>
+    );
   }
   if (status === "running") {
-    return <span class="status-indicator status-indicator--running">⟳</span>;
+    return (
+      <span class="status-indicator status-indicator--running">
+        <svg
+          class="spinner-svg"
+          width="10"
+          height="10"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="3"
+          stroke-linecap="round"
+        >
+          <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+        </svg>
+      </span>
+    );
   }
-  return <span class="status-indicator status-indicator--neutral">—</span>;
+  return (
+    <span class="status-indicator status-indicator--neutral">
+      <svg
+        width="10"
+        height="10"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="3"
+        stroke-linecap="round"
+      >
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+    </span>
+  );
 }
 
 // MARK: - CheckRow Component
@@ -71,7 +148,24 @@ export function CheckRow({ snapshot, onOpenFinding }: CheckRowProps) {
             </span>
           )}
           {hasFindings && (
-            <span class="check-row__toggle-icon">{expanded ? "▾" : "▸"}</span>
+            <span class="check-row__toggle-icon">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                style={{
+                  transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
+                  transition: "transform 0.15s ease",
+                }}
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </span>
           )}
         </div>
       </div>
@@ -98,7 +192,21 @@ export function CheckRow({ snapshot, onOpenFinding }: CheckRowProps) {
                 <span class="finding__badge-text">
                   {f.file}:{f.line}
                 </span>
-                <span class="finding__badge-arrow">↗</span>
+                <span class="finding__badge-arrow">
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line x1="7" y1="17" x2="17" y2="7" />
+                    <polyline points="7 7 17 7 17 17" />
+                  </svg>
+                </span>
               </span>
               <span class="finding__message">{f.message}</span>
             </li>

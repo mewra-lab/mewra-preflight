@@ -17,4 +17,16 @@ await cp(
   join(dest, "mewra-dark.svg"),
 );
 await cp(join(root, "assets", "brand", "icon.png"), join(dest, "icon.png"));
+await cp(
+  join(root, "assets", "brand", "preflight-icon.svg"),
+  join(dest, "preflight-icon.svg"),
+);
+await cp(
+  join(root, "assets", "brand", "preflight-icon-dark.svg"),
+  join(dest, "preflight-icon-dark.svg"),
+);
+await cp(
+  join(root, "assets", "brand", "preflight-icon-light.svg"),
+  join(dest, "preflight-icon-light.svg"),
+);
 await cp(join(root, "src", "webview", "styles.css"), join(dest, "styles.css"));

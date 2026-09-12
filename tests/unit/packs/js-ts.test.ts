@@ -81,6 +81,26 @@ describe("js-ts pack — graceful degradation", () => {
   });
 });
 
+describe("js-ts pack — vue and polyglot support", () => {
+  it("applies prettier, eslint, tsc, and test-pairing to .vue files", () => {
+    const checks = buildJsTsPack();
+    const prettier = checks.find((c) => c.id === "js-ts:prettier")!;
+    const eslint = checks.find((c) => c.id === "js-ts:eslint")!;
+    const tsc = checks.find((c) => c.id === "js-ts:tsc")!;
+    const pairing = checks.find((c) => c.id === "js-ts:test-pairing")!;
+
+    const vueDiff = makeDiff([{ path: "src/App.vue", status: "modified" }]);
+    expect(prettier.appliesTo(vueDiff)).toBe(true);
+    expect(eslint.appliesTo(vueDiff)).toBe(true);
+    expect(tsc.appliesTo(vueDiff)).toBe(true);
+
+    const addedVueDiff = makeDiff([
+      { path: "src/components/Btn.vue", status: "added" },
+    ]);
+    expect(pairing.appliesTo(addedVueDiff)).toBe(true);
+  });
+});
+
 describe("js-ts pack — test-pairing", () => {
   it("flags missing test for newly added src source file", async () => {
     const checks = buildJsTsPack();

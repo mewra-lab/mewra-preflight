@@ -24,6 +24,7 @@ export type StatusChangeCallback = (
 
 export class PreFlightPanel {
   static readonly viewType = "mewra-preflight.dashboard";
+  static currentPanel: PreFlightPanel | undefined;
 
   private readonly _panel: vscode.WebviewPanel;
   private readonly _extensionUri: vscode.Uri;
@@ -31,13 +32,22 @@ export class PreFlightPanel {
   private readonly _mcpHandler: PreFlightMcpHandler;
   private readonly _onStatusChange: StatusChangeCallback | undefined;
   private _disposables: vscode.Disposable[] = [];
+  private _isDisposed = false;
 
-  static create(
+  static createOrShow(
     extensionUri: vscode.Uri,
     registry: CheckRegistry,
     mcpHandler: PreFlightMcpHandler,
     onStatusChange?: StatusChangeCallback,
   ): PreFlightPanel {
+    if (
+      PreFlightPanel.currentPanel &&
+      !PreFlightPanel.currentPanel._isDisposed
+    ) {
+      PreFlightPanel.currentPanel.reveal();
+      return PreFlightPanel.currentPanel;
+    }
+
     const panel = vscode.window.createWebviewPanel(
       PreFlightPanel.viewType,
       "Mewra PreFlight",
@@ -45,16 +55,22 @@ export class PreFlightPanel {
       {
         enableScripts: true,
         retainContextWhenHidden: true,
-        localResourceRoots: [vscode.Uri.joinPath(extensionUri, "dist")],
+        localResourceRoots: [
+          vscode.Uri.joinPath(extensionUri, "dist"),
+          vscode.Uri.joinPath(extensionUri, "assets"),
+        ],
       },
     );
-    return new PreFlightPanel(
+
+    PreFlightPanel.currentPanel = new PreFlightPanel(
       panel,
       extensionUri,
       registry,
       mcpHandler,
       onStatusChange,
     );
+
+    return PreFlightPanel.currentPanel;
   }
 
   private constructor(
@@ -105,7 +121,7 @@ export class PreFlightPanel {
 
     const msg = parsed.data;
 
-    if (msg.type === "runPipeline") {
+    if (msg.type === "ready" || msg.type === "runPipeline") {
       await this._runPipeline();
     } else if (msg.type === "launchPR") {
       await this._launchPR();
@@ -208,6 +224,7 @@ export class PreFlightPanel {
   }
 
   private _post(message: ExtensionMessage): void {
+    if (this._isDisposed) return;
     void this._panel.webview.postMessage(message);
   }
 
@@ -220,6 +237,7 @@ export class PreFlightPanel {
   }
 
   reveal(): void {
+    if (this._isDisposed) return;
     this._panel.reveal(vscode.ViewColumn.Beside);
   }
 
@@ -261,8 +279,21 @@ export class PreFlightPanel {
   }
 
   dispose(): void {
-    this._panel.dispose();
+    if (this._isDisposed) return;
+    this._isDisposed = true;
+
+    if (PreFlightPanel.currentPanel === this) {
+      PreFlightPanel.currentPanel = undefined;
+    }
+
+    this._onStatusChange?.("idle");
+
     for (const d of this._disposables) d.dispose();
     this._disposables = [];
+
+    try {
+      this._panel.dispose();
+    } catch {
+          }
   }
 }

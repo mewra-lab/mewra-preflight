@@ -96,7 +96,6 @@ export function App() {
       <div class="glass-shell">
         <header class="navbar">
           <div class="navbar__brand">
-            <span class="navbar__icon">🚀</span>
             <span class="navbar__title">Mewra PreFlight</span>
           </div>
         </header>
@@ -109,7 +108,9 @@ export function App() {
             and credentials.
           </p>
           <button class="glass-btn glass-btn--primary" onClick={handleRun}>
-            <span>▶</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="6 3 20 12 6 21 6 3" />
+            </svg>
             <span>Run Pipeline</span>
           </button>
         </div>
@@ -122,17 +123,44 @@ export function App() {
       <div class="glass-shell">
         <header class="navbar">
           <div class="navbar__brand">
-            <span class="navbar__icon">🚀</span>
             <span class="navbar__title">Mewra PreFlight</span>
           </div>
           <button class="glass-btn glass-btn--ghost" onClick={handleRun}>
-            <span>↻</span>
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+              <path d="M21 3v5h-5" />
+              <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+              <path d="M3 21v-5h5" />
+            </svg>
             <span>Re-run</span>
           </button>
         </header>
 
         <div class="error-panel">
-          <span class="error-panel__icon">⚠</span>
+          <svg
+            class="error-panel__icon"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
           <h3 class="error-panel__title">Pipeline Error</h3>
           <p class="error-panel__message">{state.message}</p>
         </div>
@@ -149,7 +177,6 @@ export function App() {
     <div class="glass-shell">
       <header class="navbar">
         <div class="navbar__brand">
-          <span class="navbar__icon">🚀</span>
           <span class="navbar__title">PreFlight</span>
         </div>
 
@@ -162,9 +189,22 @@ export function App() {
           onClick={handleRun}
           disabled={isRunning}
         >
-          <span class={isRunning ? "spinner-icon" : ""}>
-            {isRunning ? "⟳" : "↻"}
-          </span>
+          <svg
+            class={isRunning ? "spinner-svg" : ""}
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+            <path d="M21 3v5h-5" />
+            <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+            <path d="M3 21v-5h5" />
+          </svg>
           <span>{isRunning ? "Running" : "Re-run"}</span>
         </button>
       </header>
@@ -172,9 +212,37 @@ export function App() {
       {snapshot.diff && (
         <div class="diff-strip">
           <div class="diff-strip__info">
-            <span class="diff-strip__icon">⎇</span>
+            <svg
+              class="diff-strip__icon"
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="6" y1="3" x2="6" y2="15" />
+              <circle cx="18" cy="6" r="3" />
+              <circle cx="6" cy="18" r="3" />
+              <path d="M18 9a9 9 0 0 1-9 9" />
+            </svg>
             <span class="diff-strip__branch">{snapshot.diff.headBranch}</span>
-            <span class="diff-strip__arrow">→</span>
+            <svg
+              class="diff-strip__arrow"
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
             <span class="diff-strip__target">{snapshot.diff.baseBranch}</span>
           </div>
           <div class="diff-strip__stats">

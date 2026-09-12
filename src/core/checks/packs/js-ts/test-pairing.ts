@@ -9,7 +9,7 @@ import type {
 
 // MARK: - Constants
 
-const SOURCE_RE = /^src\/.+\.(ts|tsx|js|jsx)$/;
+const SOURCE_RE = /^src\/.+\.(ts|tsx|js|jsx|vue|svelte)$/;
 const EXCLUDE_RE = /(\.d\.ts|\.test\.|\.spec\.|index\.(ts|tsx|js|jsx))$/;
 
 // MARK: - Helpers
@@ -60,6 +60,7 @@ export const testPairingCheck: CheckRunner = {
         `${base}.spec.ts`,
         `${base}.spec.tsx`,
         `${base}.test.js`,
+        `${base}.spec.js`,
       ];
 
       const matchedInDiff = Array.from(diffPaths).some((p) =>
@@ -73,7 +74,9 @@ export const testPairingCheck: CheckRunner = {
       let foundOnDisk = false;
       const diskCandidates = [
         resolve(context.workspaceRoot, "tests", "unit", `${base}.test.ts`),
+        resolve(context.workspaceRoot, "tests", "unit", `${base}.spec.ts`),
         resolve(context.workspaceRoot, "tests", `${base}.test.ts`),
+        resolve(context.workspaceRoot, "tests", `${base}.spec.ts`),
         resolve(context.workspaceRoot, source.path.replace(ext, `.test${ext}`)),
       ];
 

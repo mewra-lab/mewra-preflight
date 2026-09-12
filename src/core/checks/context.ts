@@ -26,19 +26,43 @@ export function createPreFlightContext(
     workspaceRoot,
 
     async resolveTool(binName: string): Promise<string | null> {
-      const localBin = resolve(workspaceRoot, "node_modules", ".bin", binName);
-      if (await isExecutable(localBin)) {
-        return localBin;
+      let currentDir = workspaceRoot;
+      while (true) {
+        const localBin = resolve(currentDir, "node_modules", ".bin", binName);
+        if (await isExecutable(localBin)) {
+          return localBin;
+        }
+        const parent = resolve(currentDir, "..");
+        if (parent === currentDir) break;
+        currentDir = parent;
       }
 
       const lookupCmd = process.platform === "win32" ? "where" : "which";
       try {
         const { stdout } = await execFileAsync(lookupCmd, [binName]);
         const resolved = stdout.trim().split("\n")[0]?.trim();
-        return resolved && resolved.length > 0 ? resolved : null;
+        if (resolved && resolved.length > 0) return resolved;
       } catch {
-        return null;
+              }
+
+      if (process.platform !== "win32") {
+        const home = process.env.HOME ?? "";
+        const commonPaths = [
+          `/opt/homebrew/bin/${binName}`,
+          `/usr/local/bin/${binName}`,
+          `${home}/.nvm/current/bin/${binName}`,
+          `${home}/.pnpm/${binName}`,
+          `${home}/.local/bin/${binName}`,
+          `/usr/bin/${binName}`,
+        ];
+        for (const p of commonPaths) {
+          if (await isExecutable(p)) {
+            return p;
+          }
+        }
       }
+
+      return null;
     },
 
     async runCommand(

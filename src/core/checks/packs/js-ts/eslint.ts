@@ -24,7 +24,8 @@ function changedJsTs(diff: GitDiff): string[] {
   return diff.changedFiles
     .filter(
       (f) =>
-        f.status !== "deleted" && /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(f.path),
+        f.status !== "deleted" &&
+        /\.(ts|tsx|js|jsx|mjs|cjs|vue|svelte|astro)$/.test(f.path),
     )
     .map((f) => f.path);
 }

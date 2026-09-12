@@ -3,7 +3,8 @@ import type { GitDiff, CheckResult } from "../../../../shared/types.js";
 
 // MARK: - Constants
 
-const JS_TS_EXTENSIONS = /\.(ts|tsx|js|jsx|mjs|cjs|json|css|md)$/;
+const JS_TS_EXTENSIONS =
+  /\.(ts|tsx|js|jsx|mjs|cjs|json|css|scss|less|html|vue|svelte|astro|md)$/;
 
 // MARK: - Helpers
 
