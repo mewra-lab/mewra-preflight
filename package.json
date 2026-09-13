@@ -2,7 +2,7 @@
   "name": "mewra-preflight",
   "displayName": "Mewra PreFlight — Pre-Push Sanity Pipeline",
   "description": "Run diff-scoped checks before every push. One dashboard. One button to open your PR.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "mewra",
   "license": "MIT",
   "pricing": "Free",
@@ -49,19 +49,16 @@
       {
         "command": "mewra-preflight.runPipeline",
         "title": "Run PreFlight Pipeline",
-        "icon": "$(rocket)",
         "category": "Mewra PreFlight"
       },
       {
         "command": "mewra-preflight.launchPR",
         "title": "Launch Pull Request",
-        "icon": "$(git-pull-request)",
         "category": "Mewra PreFlight"
       },
       {
         "command": "mewra-preflight.openConfig",
         "title": "Open Configuration (.mewra-preflight.json)",
-        "icon": "$(gear)",
         "category": "Mewra PreFlight"
       }
     ],
@@ -169,7 +166,7 @@
     "jsonValidation": [
       {
         "fileMatch": ".mewra-preflight.json",
-        "url": "./schemas/preflight.schema.json"
+        "url": "schemas/preflight.schema.json"
       }
     ]
   },

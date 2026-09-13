@@ -118,8 +118,6 @@ All checks green. One click to push your branch and open your PR in the browser.
   ```
 - **UI**: Search for `Mewra PreFlight` in the Extensions view (`Ctrl+Shift+X` / `Cmd+Shift+X`).
 
-Marketplace link: [marketplace.visualstudio.com/items?itemName=mewra.mewra-preflight](https://marketplace.visualstudio.com/items?itemName=mewra.mewra-preflight)
-
 ### From a release VSIX
 
 1. Download `mewra-preflight-x.y.z.vsix` from [GitHub Releases](https://github.com/mewra-lab/mewra-preflight/releases).
@@ -156,13 +154,13 @@ Configure via VS Code Settings (`settings.json`):
 
 ### 1. Universal Pack (Always active)
 
-| Check                      | Severity  | What it detects                                                             |
-| :------------------------- | :-------- | :-------------------------------------------------------------------------- |
-| **No debug statements**    | `error`   | `console.log`, `debugger`, `print()`, `var_dump()` in added diff lines      |
-| **No secrets / tokens**    | `error`   | Accidentally staged API keys, private tokens, or `.env` credential patterns |
-| **No hardcoded localhost** | `error`   | Added URLs matching `http://localhost:*` or `http://127.0.0.1:*`            |
-| **No merge conflicts**     | `error`   | Unresolved conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`)               |
-| **Large file warning**     | `warning` | Newly added files exceeding threshold (default 1 MB)                        |
+| Check                      | Severity  | What it detects                                                        |
+| :------------------------- | :-------- | :--------------------------------------------------------------------- |
+| **No debug statements**    | `error`   | `console.log`, `debugger`, `print()`, `var_dump()` in added diff lines |
+| **No secrets / tokens**    | `error`   | Accidentally staged private keys, tokens, or credential file patterns  |
+| **No hardcoded localhost** | `error`   | Added URLs matching `localhost` or `127.0.0.1`                         |
+| **No merge conflicts**     | `error`   | Unresolved conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`)          |
+| **Large file warning**     | `warning` | Newly added files exceeding threshold (default 1 MB)                   |
 
 ### 2. Polyglot Language Packs
 
@@ -230,7 +228,7 @@ Customize your checks, define manual checklist items, or add custom tools:
 
 ## Model Context Protocol (MCP) Server
 
-Mewra PreFlight provides a built-in MCP server for AI coding assistants (Claude Code, Codex, Cursor, OpenCode):
+Mewra PreFlight provides a built-in MCP server for AI coding assistants and agent workflows:
 
 - **`get_preflight_status`** — Retrieves the live pipeline snapshot (checks, statuses, blockers).
 - **`get_check_findings`** — Retrieves line-level findings for a specific check.
@@ -267,7 +265,7 @@ Mewra PreFlight is designed as the orchestration host for the Mewra suite:
 
 | Version   | Status      | Scope                                                                                                                                                                                                                                                                                                                               |
 | :-------- | :---------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **0.1.0** | **Current** | Core diff-scoped runner (branch, staged, working tree), Universal pack (secrets, console.log, debuggers, localhost, conflicts, file size), Polyglot packs (JS/TS, Python, Go, PHP), Community JSON custom packs, Interactive manual checklist with file triggers, Monorepo resolution, Built-in Model Context Protocol (MCP) server |
+| **0.1.1** | **Current** | Core diff-scoped runner (branch, staged, working tree), Universal pack (secrets, console.log, debuggers, localhost, conflicts, file size), Polyglot packs (JS/TS, Python, Go, PHP), Community JSON custom packs, Interactive manual checklist with file triggers, Monorepo resolution, Built-in Model Context Protocol (MCP) server |
 | **0.2.0** | Planned     | **Mewra Pounce integration** (surface blast radius & impacted API routes directly in PreFlight dashboard; auto-attach Mermaid call trace to PR draft), per-folder pack overrides (`.preflightignore`)                                                                                                                               |
 | **0.3.0** | Planned     | **First-party contributed extension packs**: Dependency Guard (OSV/Trivy CVE scan on lockfiles), ORM Cost Sentry (N+1 query & risky migration detection), Style Guardian (team AST conventions & Tailwind conflicts), Local trend & history tracking                                                                                |
 | **1.0.0** | Future      | **Mewra Drift integration** (API contract drift detection), automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX                                                                                                                                                                  |
