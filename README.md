@@ -8,8 +8,6 @@
   <a href="https://preflight.mewra.app"><img src="https://img.shields.io/badge/website-preflight.mewra.app-6366f1" alt="Website" /></a>
   <a href="https://github.com/mewra-lab/mewra-preflight"><img src="https://img.shields.io/badge/GitHub-mewra--lab%2Fmewra--preflight-181717?logo=github" alt="GitHub Repository" /></a>
   <a href="https://github.com/mewra-lab/mewra-preflight/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=mewra.mewra-preflight"><img src="https://img.shields.io/badge/VS_Code-Marketplace-007ACC?logo=visualstudiocode" alt="VS Code Marketplace" /></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=mewra.mewra-preflight"><img src="https://img.shields.io/visual-studio-marketplace/v/mewra.mewra-preflight?color=success&label=version" alt="Marketplace Version" /></a>
 </p>
 
 > **Run diff-scoped checks before every push. One dashboard. One button to open your PR.**

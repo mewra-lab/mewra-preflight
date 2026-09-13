@@ -40,10 +40,7 @@
       {
         "command": "mewra-preflight.openDashboard",
         "title": "Open Dashboard",
-        "icon": {
-          "dark": "./assets/brand/preflight-icon-dark.svg",
-          "light": "./assets/brand/preflight-icon-light.svg"
-        },
+        "icon": "$(dashboard)",
         "category": "Mewra PreFlight"
       },
       {
@@ -166,20 +163,6 @@
         }
       }
     },
-    "mcpServerDefinitionProviders": [
-      {
-        "id": "mewra-preflight",
-        "label": "Mewra PreFlight"
-      }
-    ],
-    "languages": [
-      {
-        "id": "jsonc",
-        "filenames": [
-          ".mewra-preflight.json"
-        ]
-      }
-    ],
     "jsonValidation": [
       {
         "fileMatch": ".mewra-preflight.json",
@@ -223,8 +206,5 @@
     "prettier": "^3.9.6",
     "typescript": "^7.0.2",
     "vitest": "^5.0.0"
-  },
-  "activationEvents": [
-    "onStartupFinished"
-  ]
+  }
 }
