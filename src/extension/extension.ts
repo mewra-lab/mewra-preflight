@@ -131,29 +131,6 @@ export function activate(context: vscode.ExtensionContext): MewraPreFlightAPI {
     }),
   );
 
-  const lmApi = (
-    vscode as unknown as {
-      lm?: {
-        registerMcpServerDefinitionProvider?: (
-          id: string,
-          provider: unknown,
-        ) => vscode.Disposable;
-      };
-    }
-  ).lm;
-
-  if (typeof lmApi?.registerMcpServerDefinitionProvider === "function") {
-    const mcpDisposable = lmApi.registerMcpServerDefinitionProvider(
-      "mewra-preflight",
-      {
-        provideMcpServerDefinitions() {
-          return [];
-        },
-      },
-    );
-    context.subscriptions.push(mcpDisposable);
-  }
-
   return {
     registerCheck(check: CheckRunner): vscode.Disposable {
       const disposable = registry.register(check);

@@ -166,7 +166,7 @@
     "jsonValidation": [
       {
         "fileMatch": ".mewra-preflight.json",
-        "url": "schemas/preflight.schema.json"
+        "url": "./schemas/preflight.schema.json"
       }
     ]
   },
