@@ -13,6 +13,7 @@ coverage/**
 tsconfig.json
 pnpm-lock.yaml
 pnpm-workspace.yaml
+skills-lock.json
 AGENTS.md
 CONTRIBUTING.md
 SECURITY.md
@@ -21,3 +22,5 @@ SPEC.md
 **/*.map
 node_modules/**
 *.vsix
+landing/**
+

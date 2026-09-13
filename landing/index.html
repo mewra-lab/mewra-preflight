@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mewra PreFlight — In-Editor Pre-Push Sanity Pipeline</title>
+    <meta
+      name="description"
+      content="Run diff-scoped linters, formatters, type-checks, secret scans, and manual checklists before every push. One sidebar dashboard in VS Code. One click to open your PR."
+    />
+    <meta
+      property="og:title"
+      content="Mewra PreFlight — Pre-Push Sanity Pipeline"
+    />
+    <meta
+      property="og:description"
+      content="Diff-scoped code checks inside VS Code. Block errors before push, never break CI."
+    />
+    <meta property="og:image" content="./assets/pass.png" />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/png" href="./assets/icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="glow-bg"></div>
+
+    <!-- MARK: - Header Navbar -->
+    <header class="navbar">
+      <div class="nav-container">
+        <a href="#" class="brand">
+          <img
+            src="./assets/icon.png"
+            alt="Mewra PreFlight"
+            class="brand-icon"
+          />
+          <span class="brand-name">Mewra PreFlight</span>
+        </a>
+        <div class="nav-links">
+          <a href="#demo">Live Demo</a>
+          <a href="#why">Why In-Editor?</a>
+          <a href="#ecosystems">Ecosystems</a>
+          <a href="#mcp">AI / MCP</a>
+          <a href="#roadmap">Roadmap</a>
+          <a
+            href="https://github.com/mewra-lab/mewra-preflight"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn-github"
+          >
+            <svg height="18" width="18" viewBox="0 0 16 16" fill="currentColor">
+              <path
+                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+              />
+            </svg>
+            GitHub
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- MARK: - Hero Section -->
+      <section class="hero">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          <span>v0.1.0 • Open Source VS Code Extension</span>
+        </div>
+        <h1 class="hero-title">
+          Catch regressions in your diff,
+          <span class="gradient-text">not in CI or production.</span>
+        </h1>
+        <p class="hero-subtitle">
+          Mewra PreFlight is the pre-push control tower for VS Code. It runs
+          diff-scoped linters, formatters, type-checkers, secret scans, and
+          manual checklists across your stack — unlocking a one-click PR launch
+          only when your changes are clean.
+        </p>
+
+        <div class="hero-actions">
+          <a
+            href="vscode:extension/mewra.mewra-preflight"
+            class="btn-primary"
+            id="install-btn"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Install in VS Code
+          </a>
+
+          <div class="command-snippet">
+            <code>ext install mewra.mewra-preflight</code>
+            <button class="copy-btn" id="copy-btn" title="Copy to clipboard">
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path
+                  d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                />
+              </svg>
+              <span id="copy-text">Copy</span>
+            </button>
+          </div>
+
+          <a
+            href="https://github.com/mewra-lab/mewra-preflight"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn-secondary"
+          >
+            Source Code ↗
+          </a>
+        </div>
+      </section>
+
+      <!-- MARK: - Interactive Demo Showcase -->
+      <section class="demo-showcase" id="demo">
+        <div class="showcase-header">
+          <h2>The In-Editor Control Tower</h2>
+          <p>
+            Real VS Code Extension Development Host execution — click tabs to
+            see each pipeline state.
+          </p>
+        </div>
+
+        <div class="demo-tabs">
+          <button class="tab-btn tab-failed active" data-tab="failed">
+            <span class="status-dot"></span>
+            1. Blockers Caught & QuickFix
+          </button>
+          <button class="tab-btn tab-warning" data-tab="warning">
+            <span class="status-dot"></span>
+            2. Non-Blocking Warnings
+          </button>
+          <button class="tab-btn tab-pass" data-tab="pass">
+            <span class="status-dot"></span>
+            3. Clean Pipeline & Launch PR
+          </button>
+        </div>
+
+        <div class="demo-window">
+          <div class="window-header">
+            <div class="window-controls">
+              <span class="control-dot red"></span>
+              <span class="control-dot yellow"></span>
+              <span class="control-dot green"></span>
+            </div>
+            <div class="window-title">
+              Mewra PreFlight — VS Code Webview Panel
+            </div>
+            <div class="window-shortcut">Shortcut: Alt+Shift+P</div>
+          </div>
+
+          <div class="window-body">
+            <img
+              id="preview-img"
+              src="./assets/failed.png"
+              alt="Mewra PreFlight: Failed Check with In-Editor QuickFix"
+              class="demo-img"
+            />
+          </div>
+
+          <div class="demo-context-card">
+            <div class="context-left">
+              <h4 id="context-title">
+                Blockers Caught Early with Clickable Findings & One-Click
+                QuickFix
+              </h4>
+              <p id="context-desc">
+                PreFlight detects that app.tsx is unformatted. A single click on
+                'Fix' repairs the file. Missing tools (ESLint) degrade
+                gracefully to 'not-configured' with an Install button instead of
+                crashing.
+              </p>
+            </div>
+            <div class="context-tags" id="context-tags">
+              <span class="tag rose">1 Blocker (Red)</span>
+              <span class="tag neutral">Prettier Fix All</span>
+              <span class="tag neutral">ESLint (Not Configured)</span>
+              <span class="tag rose">PR Launch Locked</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MARK: - Comparison Section -->
+      <section class="comparison-section" id="why">
+        <div class="section-head">
+          <h2>Why In-Editor Diff Sanity Beats Pre-Push Git Hooks</h2>
+          <p>
+            Traditional pre-push hooks are friction-heavy terminal scripts.
+            PreFlight gives you instant, visual feedback before you push.
+          </p>
+        </div>
+
+        <div class="comparison-grid">
+          <div class="comp-card">
+            <div class="comp-title" style="color: var(--accent-rose)">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+              Traditional Git Pre-Push Hooks
+            </div>
+            <ul class="comp-list">
+              <li class="comp-item">
+                <span class="icon">❌</span>
+                <div>
+                  <strong>Runs too late:</strong> Triggers only after typing
+                  <code>git push</code> in your shell, jarring you out of your
+                  workflow.
+                </div>
+              </li>
+              <li class="comp-item">
+                <span class="icon">❌</span>
+                <div>
+                  <strong>Terminal wall of text:</strong> Unclickable file paths
+                  and lines with zero inline quick-fixes.
+                </div>
+              </li>
+              <li class="comp-item">
+                <span class="icon">❌</span>
+                <div>
+                  <strong>Fragile scripts:</strong> If a teammate doesn't have a
+                  binary installed globally, the hook crashes their push
+                  entirely.
+                </div>
+              </li>
+              <li class="comp-item">
+                <span class="icon">❌</span>
+                <div>
+                  <strong>Slow entire-repo scans:</strong> Often re-checks
+                  untouched code, dragging push latency to 30+ seconds.
+                </div>
+              </li>
+              <li class="comp-item">
+                <span class="icon">❌</span>
+                <div>
+                  <strong>Bypassed with <code>--no-verify</code>:</strong>
+                  Developers get frustrated and skip verification altogether.
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="comp-card preflight">
+            <div class="comp-title" style="color: var(--accent-emerald)">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="9 11 12 14 22 4" />
+                <path
+                  d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"
+                />
+              </svg>
+              Mewra PreFlight Control Tower
+            </div>
+            <ul class="comp-list">
+              <li class="comp-item">
+                <span class="icon">✅</span>
+                <div>
+                  <strong>In-editor on demand:</strong> Trigger with
+                  <code>Alt+Shift+P</code> whenever you're ready to review your
+                  progress.
+                </div>
+              </li>
+              <li class="comp-item">
+                <span class="icon">✅</span>
+                <div>
+                  <strong>Direct file:line navigation:</strong> Click any
+                  finding to open the exact file and line in your active editor.
+                </div>
+              </li>
+              <li class="comp-item">
+                <span class="icon">✅</span>
+                <div>
+                  <strong>Bring Your Own Tool (BYOT):</strong> Resolves
+                  <code>node_modules</code>, <code>.venv</code>, or
+                  <code>vendor</code>. Missing tools show
+                  <code>not-configured</code> with an <em>Install</em> button.
+                </div>
+              </li>
+              <li class="comp-item">
+                <span class="icon">✅</span>
+                <div>
+                  <strong>Strictly diff-scoped:</strong> Only analyzes modified
+                  lines against <code>main</code>, finishing in milliseconds
+                  (1ms–400ms).
+                </div>
+              </li>
+              <li class="comp-item">
+                <span class="icon">✅</span>
+                <div>
+                  <strong>One-click PR Launcher:</strong> Pushes your branch and
+                  drafts a structured PR description on GitHub or GitLab
+                  automatically.
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- MARK: - Ecosystems Section -->
+      <section class="ecosystem-section" id="ecosystems">
+        <div class="section-head">
+          <h2>Polyglot Ecosystem Packs</h2>
+          <p>
+            Zero configuration required. PreFlight detects active languages and
+            runs project-local tooling.
+          </p>
+        </div>
+
+        <div class="eco-grid">
+          <!-- JS/TS -->
+          <div class="eco-card">
+            <div class="eco-head">
+              <div class="eco-title">
+                <span>TypeScript / JavaScript</span>
+              </div>
+              <span class="eco-badge">Built-in Pack</span>
+            </div>
+            <table class="tool-table">
+              <tr>
+                <td class="tool-name">Prettier</td>
+                <td class="tool-cmd">prettier --check</td>
+              </tr>
+              <tr>
+                <td class="tool-name">ESLint</td>
+                <td class="tool-cmd">eslint --format json</td>
+              </tr>
+              <tr>
+                <td class="tool-name">TypeScript</td>
+                <td class="tool-cmd">tsc --noEmit (diff-filtered)</td>
+              </tr>
+              <tr>
+                <td class="tool-name">Test Pairing</td>
+                <td class="tool-cmd">*.ts ➔ *.test.ts</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Python -->
+          <div class="eco-card">
+            <div class="eco-head">
+              <div class="eco-title">
+                <span>Python</span>
+              </div>
+              <span class="eco-badge">Built-in Pack</span>
+            </div>
+            <table class="tool-table">
+              <tr>
+                <td class="tool-name">Ruff / Black</td>
+                <td class="tool-cmd">ruff format / black</td>
+              </tr>
+              <tr>
+                <td class="tool-name">Ruff / Flake8</td>
+                <td class="tool-cmd">ruff check / flake8</td>
+              </tr>
+              <tr>
+                <td class="tool-name">MyPy</td>
+                <td class="tool-cmd">mypy &lt;diff-files&gt;</td>
+              </tr>
+              <tr>
+                <td class="tool-name">Test Pairing</td>
+                <td class="tool-cmd">&lt;mod&gt;.py ➔ test_&lt;mod&gt;.py</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Go -->
+          <div class="eco-card">
+            <div class="eco-head">
+              <div class="eco-title">
+                <span>Go</span>
+              </div>
+              <span class="eco-badge">Built-in Pack</span>
+            </div>
+            <table class="tool-table">
+              <tr>
+                <td class="tool-name">gofmt</td>
+                <td class="tool-cmd">gofmt -l &lt;diff-files&gt;</td>
+              </tr>
+              <tr>
+                <td class="tool-name">go vet</td>
+                <td class="tool-cmd">go vet ./... (packages)</td>
+              </tr>
+              <tr>
+                <td class="tool-name">golangci-lint</td>
+                <td class="tool-cmd">golangci-lint run</td>
+              </tr>
+              <tr>
+                <td class="tool-name">Test Pairing</td>
+                <td class="tool-cmd">*.go ➔ *_test.go</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- PHP -->
+          <div class="eco-card">
+            <div class="eco-head">
+              <div class="eco-title">
+                <span>PHP</span>
+              </div>
+              <span class="eco-badge">Built-in Pack</span>
+            </div>
+            <table class="tool-table">
+              <tr>
+                <td class="tool-name">PHP-CS-Fixer</td>
+                <td class="tool-cmd">php-cs-fixer --dry-run</td>
+              </tr>
+              <tr>
+                <td class="tool-name">PHPStan / Psalm</td>
+                <td class="tool-cmd">phpstan analyse</td>
+              </tr>
+              <tr>
+                <td class="tool-name">Test Pairing</td>
+                <td class="tool-cmd">Class.php ➔ ClassTest.php</td>
+              </tr>
+              <tr>
+                <td class="tool-name">Composer</td>
+                <td class="tool-cmd">vendor/bin resolution</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- MARK: - Universal Guardrails & BYOT -->
+      <section class="features-section">
+        <div class="section-head">
+          <h2>Language-Agnostic Guardrails & Custom Checks</h2>
+          <p>
+            Common developer pitfalls caught automatically over added diff lines
+            only.
+          </p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon-wrapper">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <h3>Universal Secret & Leak Guard</h3>
+            <p>
+              Scans only newly added git diff lines for accidentally staged
+              credentials, OpenAI/AWS tokens, private keys, or
+              <code>.env</code> file content before it reaches your repository.
+            </p>
+            <div class="guard-pill-list">
+              <span class="guard-pill">API Keys</span>
+              <span class="guard-pill">JWT Tokens</span>
+              <span class="guard-pill">Private Certificates</span>
+              <span class="guard-pill">.env Staged Lines</span>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-wrapper">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <h3>Clean Code Sanity Checks</h3>
+            <p>
+              Catch stray debugging leftovers before code review:
+              <code>console.log</code>, <code>debugger</code>,
+              <code>print()</code>, <code>dd()</code>, <code>var_dump()</code>,
+              hardcoded <code>localhost:*</code> URLs, and unresolved merge
+              markers.
+            </p>
+            <div class="guard-pill-list">
+              <span class="guard-pill">No console.log</span>
+              <span class="guard-pill">No debugger</span>
+              <span class="guard-pill">No Localhost URLs</span>
+              <span class="guard-pill">Merge Conflicts</span>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-wrapper">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="9 11 12 14 22 4" />
+                <path
+                  d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"
+                />
+              </svg>
+            </div>
+            <h3>File-Triggered Manual Checklists</h3>
+            <p>
+              Define team verification items that only appear when relevant
+              files are touched. Did you touch
+              <code>prisma/migrations/**</code>? PreFlight automatically
+              displays: <em>"Applied DB migration to dev cluster"</em>.
+            </p>
+            <div class="guard-pill-list">
+              <span class="guard-pill">Conditional Glob Triggers</span>
+              <span class="guard-pill">Human Verification</span>
+              <span class="guard-pill">Agent Checkable</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MARK: - MCP & AI Coding Agents -->
+      <section class="mcp-section" id="mcp">
+        <div class="mcp-card">
+          <div class="mcp-info">
+            <h3>Native Model Context Protocol (MCP) Server</h3>
+            <p>
+              PreFlight exposes a native VS Code MCP server. AI coding agents
+              running in your editor can inspect pipeline diagnostics, run
+              verification loops, and confirm code cleanliness without terminal
+              scraping.
+            </p>
+            <div class="agent-badges">
+              <span class="agent-badge">Claude Code</span>
+              <span class="agent-badge">Cursor</span>
+              <span class="agent-badge">OpenCode</span>
+              <span class="agent-badge">Codex</span>
+            </div>
+            <p
+              style="
+                font-size: 0.9rem;
+                color: var(--text-muted);
+                margin-bottom: 0;
+              "
+            >
+              Exposes strictly scoped tools: <code>get_preflight_status</code>,
+              <code>get_check_findings</code>, <code>run_check</code>, and
+              <code>mark_manual_check</code>. Arbitrary shell execution is
+              completely locked down.
+            </p>
+          </div>
+
+          <div class="code-box">
+            <pre><code><span class="comment">// AI Agent calls PreFlight MCP Server</span>
+<span class="kw">const</span> status = <span class="kw">await</span> mcp.<span class="fn">get_preflight_status</span>();
+
+<span class="kw">if</span> (!status.isClean) {
+  <span class="kw">const</span> findings = <span class="kw">await</span> mcp.<span class="fn">get_check_findings</span>(<span class="str">"prettier"</span>);
+  <span class="comment">// Agent fixes src/webview/app.tsx:1</span>
+  <span class="kw">await</span> editor.applyEdit(findings);
+
+  <span class="comment">// Re-verify immediately</span>
+  <span class="kw">const</span> result = <span class="kw">await</span> mcp.<span class="fn">run_check</span>(<span class="str">"prettier"</span>);
+  <span class="comment">// result: { status: "pass", findings: [] }</span>
+}</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- MARK: - Roadmap & Companion Extensions -->
+      <section class="roadmap-section" id="roadmap">
+        <div class="section-head">
+          <h2>Mewra Suite Synergy & Roadmap</h2>
+          <p>
+            PreFlight acts as the host for first-party companion extensions and
+            upcoming releases.
+          </p>
+        </div>
+
+        <div class="roadmap-table-wrapper">
+          <table class="roadmap-table">
+            <thead>
+              <tr>
+                <th>Version</th>
+                <th>Status</th>
+                <th>Scope & Companion Integrations</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="ver">v0.1.0</td>
+                <td><span class="badge-status current">Current</span></td>
+                <td>
+                  <strong>Diff-scoped Host & Built-in Packs</strong>: Universal
+                  guardrails, Polyglot packs (JS/TS, Python, Go, PHP), Community
+                  JSON packs, Interactive manual checklists, Native Model
+                  Context Protocol (MCP) server.
+                </td>
+              </tr>
+              <tr>
+                <td class="ver">v0.2.0</td>
+                <td><span class="badge-status planned">Planned</span></td>
+                <td>
+                  <strong
+                    ><a
+                      href="https://pounce.mewra.app"
+                      style="color: #818cf8; text-decoration: underline"
+                      >Mewra Pounce</a
+                    >
+                    Integration</strong
+                  >: Surface blast radius & impacted API routes directly in the
+                  PreFlight dashboard; auto-attach Mermaid reverse call
+                  hierarchy diagrams to PR drafts;
+                  <code>.preflightignore</code> file support.
+                </td>
+              </tr>
+              <tr>
+                <td class="ver">v0.3.0</td>
+                <td><span class="badge-status planned">Planned</span></td>
+                <td>
+                  <strong>First-Party Contributed Packs</strong>:
+                  <em>Mewra Dependency Guard</em> (OSV/Trivy lockfile CVE
+                  scans), <em>ORM Cost Sentry</em> (N+1 query & unindexed
+                  migration alerts), <em>Mewra Style Guardian</em> (AST token &
+                  Tailwind conflict checks), Local trend & history tracking.
+                </td>
+              </tr>
+              <tr>
+                <td class="ver">v1.0.0</td>
+                <td><span class="badge-status future">Future</span></td>
+                <td>
+                  <strong>Mewra Drift & Git Hooks</strong>: API contract drift
+                  detection (OpenAPI vs implementation), automated one-click
+                  <code>.git/hooks/pre-push</code> headless CLI installer, first
+                  official production-stable release across VS Code Marketplace
+                  and Open VSX.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- MARK: - CTA Section -->
+      <section class="cta-section">
+        <h2>Keep your git history clean.</h2>
+        <p>
+          Install Mewra PreFlight in VS Code today and never push broken code or
+          forgotten console.logs again.
+        </p>
+
+        <div class="hero-actions">
+          <a href="vscode:extension/mewra.mewra-preflight" class="btn-primary">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Install in VS Code
+          </a>
+
+          <div class="command-snippet">
+            <code>code --install-extension mewra.mewra-preflight</code>
+            <button class="copy-btn" id="copy-cli-btn" title="Copy CLI command">
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path
+                  d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                />
+              </svg>
+              <span id="copy-cli-text">Copy</span>
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- MARK: - Footer -->
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-left">
+          <img
+            src="./assets/icon.png"
+            alt="Mewra Logo"
+            style="width: 24px; height: 24px; border-radius: 6px"
+          />
+          <span>Mewra PreFlight — Released under the MIT License</span>
+        </div>
+        <div class="footer-links">
+          <a
+            href="https://marketplace.visualstudio.com/items?itemName=mewra.mewra-preflight"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Marketplace</a
+          >
+          <a
+            href="https://pounce.mewra.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Mewra Pounce</a
+          >
+          <a
+            href="https://github.com/mewra-lab/mewra-preflight"
+            target="_blank"
+            rel="noopener noreferrer"
+            >GitHub</a
+          >
+          <a
+            href="https://github.com/mewra-lab/mewra-preflight/blob/main/PRIVACY.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Privacy</a
+          >
+          <a
+            href="https://github.com/mewra-lab/mewra-preflight/blob/main/SECURITY.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Security</a
+          >
+        </div>
+      </div>
+    </footer>
+
+    <script src="./script.js"></script>
+  </body>
+</html>

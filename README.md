@@ -61,6 +61,51 @@ PR button → blocked until errors & required checklists are resolved.
 
 ---
 
+## Visual Demo & Workflow
+
+### 1. Instant Diff-Scoped Sanity Check (`Alt+Shift+P`)
+
+Catch issues before git push. Findings link directly to the exact file and line, and provide one-click QuickFixes.
+
+<p align="center">
+  <img src="./assets/failed.png" width="100%" alt="Mewra PreFlight: Failed Check with In-Editor QuickFix" />
+</p>
+
+- **Status Bar Integration**: Visual badge indicator (`PreFlight: Failed`) with real-time status.
+- **In-Editor Findings**: Clickable file:line diagnostics (`src/webview/app.tsx:1 ↗`).
+- **One-Click QuickFix**: Directly re-formats via Prettier (`Fix` / `Fix All`) without terminal commands.
+- **Graceful Degradation**: Missing tools (e.g. ESLint not in `node_modules` or `PATH`) surface as neutral `not-configured` with a one-click `Install` button, never crashing or failing your build.
+- **Gatekeeper Lock**: The **Push & Create PR** button is safely locked until blocking errors are resolved.
+
+---
+
+### 2. Non-Blocking Warnings & Review
+
+Handle informational warnings and file-triggered human checklists without blocking urgent pushes.
+
+<p align="center">
+  <img src="./assets/warning.png" width="100%" alt="Mewra PreFlight: Non-Blocking Warnings & Review" />
+</p>
+
+- **Target Branch Switching**: Seamlessly compare against `main`, `develop`, or custom release branches.
+- **Scope Toggles**: Switch between `Branch` (all branch commits vs target), `Staged` (index only), or `Working Tree` (uncommitted edits).
+- **Non-blocking Diagnostics**: Warnings (e.g. missing test pairing) are highlighted for review while keeping the PR button accessible.
+
+---
+
+### 3. Green Pipeline & One-Click PR Launch
+
+All checks green. One click to push your branch and open your PR in the browser.
+
+<p align="center">
+  <img src="./assets/pass.png" width="100%" alt="Mewra PreFlight: Green Pipeline Ready to Push" />
+</p>
+
+- **All Clear Indicator**: Status bar and header show `✓ PreFlight: Ready` / `Passed`.
+- **One-Click PR Launcher**: The emerald **↗ Push & Create PR** button pushes your commits to the remote and generates a pre-filled PR draft on GitHub or GitLab with test pairing and check summaries.
+
+---
+
 ## Install
 
 ### From the VS Code Marketplace
