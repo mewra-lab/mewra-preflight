@@ -1,19 +1,19 @@
 # Spec: Mewra PreFlight — Configurable In-Editor Pre-Push Pipeline
 
-> Part of the Mewra Ecosystem (alongside `mewra` core, `mewra-pounce`, `moondi`, `mewra.app`)
+> Part of the Mewra developer tooling ecosystem (alongside `mewra-pounce`, `mewra.app`)
 
 ---
 
 ## 0. Naming
 
-| Item                                        | Chosen value                                 | Notes                                                                     |
-| ------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------- |
-| **Internal codename**                       | `preflight`                                  | Matches the single-word codename convention (`mewra`, `pounce`, `moondi`) |
-| **Product/Service name**                    | **Mewra PreFlight**                          | The pre-push "control tower" of the Mewra suite                           |
-| **Extension display name (Marketplace)**    | `Mewra PreFlight — Pre-Push Sanity Pipeline` |                                                                           |
-| **Extension identifier (`publisher.name`)** | `mewra.mewra-preflight`                      | Matches `mewra.mewra-pounce` under publisher `mewra`                      |
-| **Repo**                                    | `github.com/mewra-lab/mewra-preflight`       | Organization `mewra-lab`                                                  |
-| **Docs subdomain (future)**                 | `preflight.mewra.app`                        |                                                                           |
+| Item                                        | Chosen value                                 | Notes                                                               |
+| ------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------- |
+| **Internal codename**                       | `preflight`                                  | Matches the single-word codename convention (`pounce`, `preflight`) |
+| **Product/Service name**                    | **Mewra PreFlight**                          | The pre-push "control tower" of the Mewra suite                     |
+| **Extension display name (Marketplace)**    | `Mewra PreFlight — Pre-Push Sanity Pipeline` |                                                                     |
+| **Extension identifier (`publisher.name`)** | `mewra.mewra-preflight`                      | Matches `mewra.mewra-pounce` under publisher `mewra`                |
+| **Repo**                                    | `github.com/mewra-lab/mewra-preflight`       | Organization `mewra-lab`                                            |
+| **Docs subdomain (future)**                 | `preflight.mewra.app`                        |                                                                     |
 
 ```json
 {
@@ -367,13 +367,12 @@ The generated PR body is assembled from:
 
 ## 11. Roadmap
 
-| Version      | Scope                                                                                                                                         |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| **v1 (MVP)** | Core engine + Check Contract + JS/TS pack + universal checks + PR launcher                                                                    |
-| **v1.1**     | Go and Python packs                                                                                                                           |
-| **v1.2**     | PHP pack, community JSON-based pack format (no-code tool registration)                                                                        |
-| **v2**       | First-party contributed checks ship as their own Mewra extensions: Dependency Guard (OSV+Trivy), ORM Cost Sentry, Style Guardian, Mewra Drift |
-| **v2.1**     | Per-check history/trend (e.g. "ESLint warnings trending down over last 10 PRs") stored locally                                                |
+| Version   | Status      | Scope                                                                                                                                                                                                                                                                                                                               |
+| :-------- | :---------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **0.1.0** | **Current** | Core diff-scoped runner (branch, staged, working tree), Universal pack (secrets, console.log, debuggers, localhost, conflicts, file size), Polyglot packs (JS/TS, Python, Go, PHP), Community JSON custom packs, Interactive manual checklist with file triggers, Monorepo resolution, Built-in Model Context Protocol (MCP) server |
+| **0.2.0** | Planned     | **Mewra Pounce integration** (surface blast radius & impacted API routes directly in PreFlight dashboard; auto-attach Mermaid call trace to PR draft), per-folder pack overrides (`.preflightignore`)                                                                                                                               |
+| **0.3.0** | Planned     | **First-party contributed extension packs**: Dependency Guard (OSV/Trivy CVE scan), ORM Cost Sentry (N+1 query & risky migration detection), Style Guardian (team AST conventions), Local trend & history tracking                                                                                                                  |
+| **1.0.0** | Future      | **Mewra Drift integration** (API contract drift detection), automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX                                                                                                                                                                  |
 
 ---
 

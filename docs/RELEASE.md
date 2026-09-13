@@ -11,12 +11,10 @@
 Semantic Versioning:
 
 ```text
-0.1.0  — scaffold / internal alpha
-0.2.0  — diff + runner + universal pack alpha
-0.3.0  — js-ts pack + PR launcher
-0.4.0  — performance polish + settings UX
-0.5.0  — public beta
-1.0.0  — first stable release
+0.1.0  — initial release: diff-scoped runner, polyglot packs (JS/TS, Python, Go, PHP), universal checks, custom packs, interactive manual checklist, MCP server
+0.2.0  — Mewra Pounce integration (blast radius & affected routes in dashboard/PR), .preflightignore per-folder pack overrides
+0.3.0  — first-party contributed packs: Dependency Guard (OSV/Trivy CVE scan), ORM Cost Sentry, Style Guardian; local trend & history tracking
+1.0.0  — Mewra Drift integration, automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX
 ```
 
 ## 3. Pre-release checks

@@ -9,11 +9,14 @@
   <a href="https://github.com/mewra-lab/mewra-preflight"><img src="https://img.shields.io/badge/GitHub-mewra--lab%2Fmewra--preflight-181717?logo=github" alt="GitHub Repository" /></a>
   <a href="https://github.com/mewra-lab/mewra-preflight/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a>
   <a href="https://marketplace.visualstudio.com/items?itemName=mewra.mewra-preflight"><img src="https://img.shields.io/badge/VS_Code-Marketplace-007ACC?logo=visualstudiocode" alt="VS Code Marketplace" /></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=mewra.mewra-preflight"><img src="https://img.shields.io/visual-studio-marketplace/v/mewra.mewra-preflight?color=success&label=version" alt="Marketplace Version" /></a>
 </p>
 
 > **Run diff-scoped checks before every push. One dashboard. One button to open your PR.**
 
-Mewra PreFlight is an open-source VS Code extension that runs a pre-push sanity pipeline scoped to your git diff. It surfaces Prettier, ESLint, and TypeScript issues in a live dashboard, and unlocks a PR launch button only when everything passes.
+Mewra PreFlight is an open-source VS Code extension that runs an in-editor pre-push sanity pipeline scoped to your git diff. It surfaces linter, formatter, type-checker, and security issues across your project in a live dashboard, and unlocks a one-click PR launch button once the pipeline is clean.
+
+PreFlight acts as the **control tower** of the Mewra developer tooling ecosystem, orchestrating built-in polyglot checks, project-defined manual checklists, community JSON checks, and companion extensions like [Mewra Pounce](https://marketplace.visualstudio.com/items?itemName=mewra.mewra-pounce) (blast radius analysis).
 
 Website: [preflight.mewra.app](https://preflight.mewra.app) · Part of the [Mewra](https://github.com/mewra-lab) developer tooling ecosystem.  
 Source code: [github.com/mewra-lab/mewra-preflight](https://github.com/mewra-lab/mewra-preflight)
@@ -22,42 +25,39 @@ Source code: [github.com/mewra-lab/mewra-preflight](https://github.com/mewra-lab
 
 ## Why
 
-Pre-push hooks catch issues too late — they block the push, force you back to the terminal, and break flow. Mewra PreFlight gives you the same signal in VS Code, without a hook, before you're even ready to push.
+Pre-push hooks catch issues too late — they block the push in the terminal, force you out of your editor, and break your flow. Mewra PreFlight gives you real-time feedback inside VS Code before you even hit push.
 
 ```text
 You hit Alt+Shift+P
 
-PreFlight checks:  ✓ Prettier           (3ms)
-                   ✗ TypeScript         (412ms)
+PreFlight checks:  ✓ Prettier                 (12ms)
+                   ✗ TypeScript               (412ms)
                      src/api.ts:88 — Argument is not assignable
-                   ✗ No console.log
-                     (diff):0 — Stray console.log() detected
+                   ✗ No console.log           (4ms)
+                     src/routes.ts:14 — Stray console.log() detected
+                   ⚪ Golangci-lint            (not configured)
+                   [ ] Apply DB migration to dev cluster (prisma/schema.prisma touched)
 
-PR button → blocked until errors are fixed.
+PR button → blocked until errors & required checklists are resolved.
 ```
 
 ---
 
 ## Features
 
-- **Diff-scoped** — only checks files you changed vs. `main` (or your configured target branch)
-- **Live dashboard** — each check updates in real-time as it runs
-- **Graceful degradation** — missing tools show `not-configured`, not errors
-- **PR launch button** — one click to open your PR in the browser, blocked until pipeline is clean
-- **Built-in check packs** — Universal (no console.log, no debugger, no credential leak) + JS/TS (Prettier, ESLint, TypeScript)
-- **Local-first** — no AI, no network calls, no telemetry, zero cloud dependency
-
----
-
-## Demo
-
-| Action                | Result                                      |
-| --------------------- | ------------------------------------------- |
-| `Alt+Shift+P`         | Dashboard opens with live check status      |
-| Check fails           | Finding list expands with file:line details |
-| Click a finding       | Jumps to that file and line in editor       |
-| All checks pass       | PR button turns green                       |
-| _↗ Open Pull Request_ | Opens PR creation page in browser           |
+- **Diff-scoped execution** — Analyzes only files modified in your git diff vs `main` (or your target branch), keeping checks instantaneous even on huge monorepos.
+- **Polyglot ecosystem packs** — Built-in detection and runners for:
+  - **JavaScript & TypeScript**: Prettier, ESLint, `tsc --noEmit`, test-file pairing.
+  - **Python**: Ruff format, Black, Ruff check, Flake8, MyPy, test-file pairing.
+  - **Go**: `gofmt`, `go vet`, `golangci-lint`, test-file pairing.
+  - **PHP**: `php-cs-fixer`, `phpstan`, Psalm, test-file pairing.
+- **Universal sanity checks** — Built-in guards detecting stray `console.log` / debuggers, exposed secrets/API keys, hardcoded localhost URLs, git merge conflict markers, and oversized binary files.
+- **Interactive manual checklist** — Human verification checklist items that trigger conditionally when specific files are touched (e.g. verifying database migrations when schema files are modified).
+- **Custom community JSON packs** — Easily define project-specific linters or script validations in `.mewra-preflight.json` without writing extension code.
+- **AI coding agent MCP server** — Built-in Model Context Protocol (MCP) server exposing pipeline status, findings, and check execution to AI agents (Claude Code, Codex, Cursor, OpenCode).
+- **One-click PR launcher** — Auto-assembles a rich pull request draft with commit summaries, test-pairing coverage, and check results for GitHub or GitLab.
+- **Graceful degradation (BYOT)** — Never bundles bulky toolchains. Uses your project's local versions (`node_modules`, `.venv`, `vendor`, global `PATH`). Missing tools show `not-configured` rather than failing.
+- **100% local & private** — No telemetry, no external network calls, no cloud dependencies.
 
 ---
 
@@ -65,61 +65,175 @@ PR button → blocked until errors are fixed.
 
 ### From the VS Code Marketplace
 
-Search `Mewra PreFlight` in the Extensions panel (`Ctrl+Shift+X` / `Cmd+Shift+X`), or paste:
+- **Quick Open**: Press `Ctrl+P` (or `Cmd+P` on macOS) and paste:
+  ```text
+  ext install mewra.mewra-preflight
+  ```
+- **Terminal CLI**:
+  ```bash
+  code --install-extension mewra.mewra-preflight
+  ```
+- **UI**: Search for `Mewra PreFlight` in the Extensions view (`Ctrl+Shift+X` / `Cmd+Shift+X`).
 
-```bash
-ext install mewra.mewra-preflight
-```
+Marketplace link: [marketplace.visualstudio.com/items?itemName=mewra.mewra-preflight](https://marketplace.visualstudio.com/items?itemName=mewra.mewra-preflight)
 
 ### From a release VSIX
 
-1. Download `mewra-preflight-x.y.z.vsix` from [GitHub Releases](https://github.com/mewra-lab/mewra-preflight/releases)
-2. In VS Code: Extensions panel → `···` → `Install from VSIX…`
+1. Download `mewra-preflight-x.y.z.vsix` from [GitHub Releases](https://github.com/mewra-lab/mewra-preflight/releases).
+2. In VS Code: Extensions view → `···` (Views and More Actions) → `Install from VSIX…`.
 
 ---
 
 ## Commands
 
-| Command                         | Title               | Default keybinding |
-| ------------------------------- | ------------------- | ------------------ |
-| `mewra-preflight.runPipeline`   | Run Pipeline        | `Alt+Shift+P`      |
-| `mewra-preflight.openDashboard` | Open Dashboard      | —                  |
-| `mewra-preflight.launchPR`      | Launch Pull Request | Dashboard button   |
+| Command                         | Title                  | Default keybinding | Description                                        |
+| :------------------------------ | :--------------------- | :----------------- | :------------------------------------------------- |
+| `mewra-preflight.runPipeline`   | Run PreFlight Pipeline | `Alt+Shift+P`      | Re-scans git diff and runs all enabled checks      |
+| `mewra-preflight.openDashboard` | Open Dashboard         | —                  | Focuses or reveals the PreFlight Webview panel     |
+| `mewra-preflight.launchPR`      | Launch Pull Request    | Dashboard button   | Pushes current branch and opens PR creation URL    |
+| `mewra-preflight.openConfig`    | Open Configuration     | —                  | Opens `.mewra-preflight.json` in the active editor |
 
 ---
 
 ## Settings
 
-| Setting                             | Default                 | Description                                    |
-| ----------------------------------- | ----------------------- | ---------------------------------------------- |
-| `mewraPreflight.targetBranch`       | `"main"`                | Branch to diff against                         |
-| `mewraPreflight.enabledPacks`       | `["universal","js-ts"]` | Active check packs                             |
-| `mewraPreflight.blockingOnWarnings` | `false`                 | Warnings block PR button                       |
-| `mewraPreflight.gitHost`            | `"github"`              | Git platform for PR URL (`github` or `gitlab`) |
+Configure via VS Code Settings (`settings.json`):
+
+| Setting                             | Type       | Default                                         | Description                                                                 |
+| :---------------------------------- | :--------- | :---------------------------------------------- | :-------------------------------------------------------------------------- |
+| `mewraPreflight.targetBranch`       | `string`   | `"main"`                                        | Base branch to diff against                                                 |
+| `mewraPreflight.diffScope`          | `string`   | `"branch"`                                      | Scope to analyze: `"branch"` (vs target branch), `"staged"`, or `"working"` |
+| `mewraPreflight.enabledPacks`       | `string[]` | `["universal", "js-ts", "go", "python", "php"]` | Active ecosystem check packs                                                |
+| `mewraPreflight.blockingOnWarnings` | `boolean`  | `false`                                         | When true, warning-severity findings also block PR launch                   |
+| `mewraPreflight.gitHost`            | `string`   | `"github"`                                      | Hosting platform for PR generation (`"github"` or `"gitlab"`)               |
 
 ---
 
-## Check Packs
+## Check Packs & Tool Contracts
 
-### Universal (always active)
+### 1. Universal Pack (Always active)
 
-| Check              | What it detects                     |
-| ------------------ | ----------------------------------- |
-| No console.log     | Stray `console.*()` calls in diff   |
-| No debugger        | Stray `debugger` statements in diff |
-| No credential leak | Hardcoded secrets in added lines    |
+| Check                      | Severity  | What it detects                                                             |
+| :------------------------- | :-------- | :-------------------------------------------------------------------------- |
+| **No debug statements**    | `error`   | `console.log`, `debugger`, `print()`, `var_dump()` in added diff lines      |
+| **No secrets / tokens**    | `error`   | Accidentally staged API keys, private tokens, or `.env` credential patterns |
+| **No hardcoded localhost** | `error`   | Added URLs matching `http://localhost:*` or `http://127.0.0.1:*`            |
+| **No merge conflicts**     | `error`   | Unresolved conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`)               |
+| **Large file warning**     | `warning` | Newly added files exceeding threshold (default 1 MB)                        |
 
-### JS/TS
+### 2. Polyglot Language Packs
 
-| Check      | Tool                   | Behavior when tool missing |
-| ---------- | ---------------------- | -------------------------- |
-| Prettier   | `prettier --check`     | `not-configured`           |
-| ESLint     | `eslint --format json` | `not-configured`           |
-| TypeScript | `tsc --noEmit`         | `not-configured`           |
+| Pack        | Tool            | Resolution order                    | Command / Behavior                                       |
+| :---------- | :-------------- | :---------------------------------- | :------------------------------------------------------- |
+| **JS / TS** | Prettier        | `node_modules/.bin/prettier` → PATH | `prettier --check <files>`                               |
+|             | ESLint          | `node_modules/.bin/eslint` → PATH   | `eslint --format json <files>`                           |
+|             | TypeScript      | `node_modules/.bin/tsc` → PATH      | `tsc --noEmit` (filtered to diff lines)                  |
+|             | Test Pairing    | Built-in                            | Checks whether new source files have matching test files |
+| **Python**  | Ruff / Black    | `.venv/bin` → `venv/bin` → PATH     | `ruff format --check <files>` or `black --check <files>` |
+|             | Ruff / Flake8   | `.venv/bin` → `venv/bin` → PATH     | `ruff check <files>` or `flake8 <files>`                 |
+|             | MyPy            | `.venv/bin` → `venv/bin` → PATH     | `mypy <files>`                                           |
+|             | Test Pairing    | Built-in                            | Checks whether new modules have `test_<module>.py`       |
+| **Go**      | gofmt           | GOROOT / PATH                       | `gofmt -l <files>`                                       |
+|             | go vet          | GOROOT / PATH                       | `go vet ./...` (scoped to changed packages)              |
+|             | golangci-lint   | PATH                                | `golangci-lint run <packages>`                           |
+|             | Test Pairing    | Built-in                            | Checks whether new `*.go` files have `*_test.go`         |
+| **PHP**     | php-cs-fixer    | `vendor/bin` → PATH                 | `php-cs-fixer fix --dry-run --diff <files>`              |
+|             | phpstan / psalm | `vendor/bin` → PATH                 | `phpstan analyse <files>`                                |
+|             | Test Pairing    | Built-in                            | Checks whether new classes have `*Test.php`              |
 
 ---
 
-## Development
+## Configuration (`.mewra-preflight.json`)
+
+Customize your checks, define manual checklist items, or add custom tools:
+
+```jsonc
+{
+  "$schema": "./schemas/preflight.schema.json",
+  "targetBranch": "main",
+  "ecosystems": {
+    "js-ts": { "enabled": true },
+    "python": { "enabled": true },
+    "go": { "enabled": true },
+    "php": { "enabled": false },
+  },
+  "universalChecks": {
+    "noDebugStatements": "error",
+    "noSecrets": "error",
+    "noLocalhostUrls": "error",
+    "largeFileThresholdMb": 1,
+  },
+  "customChecks": [
+    {
+      "id": "custom:shellcheck",
+      "label": "ShellCheck",
+      "severity": "warning",
+      "filePatterns": ["**/*.sh"],
+      "command": "shellcheck {files}",
+    },
+  ],
+  "manualChecklist": [
+    {
+      "id": "manual-migration",
+      "label": "Applied DB migration to dev cluster",
+      "condition": { "modifiedFilesMatch": "prisma/migrations/**" },
+      "agentCheckable": true,
+    },
+  ],
+}
+```
+
+---
+
+## Model Context Protocol (MCP) Server
+
+Mewra PreFlight provides a built-in MCP server for AI coding assistants (Claude Code, Codex, Cursor, OpenCode):
+
+- **`get_preflight_status`** — Retrieves the live pipeline snapshot (checks, statuses, blockers).
+- **`get_check_findings`** — Retrieves line-level findings for a specific check.
+- **`run_check`** — Re-runs a specific registered check to verify code fixes.
+- **`mark_manual_check`** — Allows an agent to toggle an `agentCheckable` checklist item upon verified criteria.
+
+---
+
+## The Mewra Tooling Ecosystem
+
+Mewra PreFlight is designed as the orchestration host for the Mewra suite:
+
+```text
+┌──────────────────────────────────────────────────────────┐
+│                   🚀 MEWRA PREFLIGHT                     │
+│                    (Sanity Pipeline)                     │
+└────────────┬─────────────┬─────────────┬─────────────┬───┘
+             │             │             │             │
+      ┌──────▼──────┐ ┌────▼───────┐ ┌───▼────────┐ ┌──▼───────────┐
+      │mewra-pounce │ │ Dependency │ │  ORM Cost  │ │Style Guardian │
+      │Blast Radius │ │   Guard    │ │   Sentry   │ │AST Conventions│
+      └─────────────┘ └────────────┘ └────────────┘ └───────────────┘
+```
+
+- **[Mewra Pounce](https://marketplace.visualstudio.com/items?itemName=mewra.mewra-pounce)** (`mewra.mewra-pounce`): Traces reverse call hierarchy and surfaces blast radius directly in the PreFlight dashboard (affected public API routes, background workers, and jobs).
+- **Mewra Dependency Guard**: Lockfile vulnerability scanning powered by OSV and Trivy.
+- **ORM Cost Sentry**: Detects N+1 query patterns and unindexed migration risks across Prisma, Drizzle, and SQLAlchemy.
+- **Mewra Style Guardian**: Enforces AST design tokens and catches Tailwind CSS conflicts.
+- **Mewra Drift**: Detects contract drift between API implementations and schemas.
+
+---
+
+## Roadmap
+
+| Version   | Status      | Scope                                                                                                                                                                                                                                                                                                                               |
+| :-------- | :---------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **0.1.0** | **Current** | Core diff-scoped runner (branch, staged, working tree), Universal pack (secrets, console.log, debuggers, localhost, conflicts, file size), Polyglot packs (JS/TS, Python, Go, PHP), Community JSON custom packs, Interactive manual checklist with file triggers, Monorepo resolution, Built-in Model Context Protocol (MCP) server |
+| **0.2.0** | Planned     | **Mewra Pounce integration** (surface blast radius & impacted API routes directly in PreFlight dashboard; auto-attach Mermaid call trace to PR draft), per-folder pack overrides (`.preflightignore`)                                                                                                                               |
+| **0.3.0** | Planned     | **First-party contributed extension packs**: Dependency Guard (OSV/Trivy CVE scan on lockfiles), ORM Cost Sentry (N+1 query & risky migration detection), Style Guardian (team AST conventions & Tailwind conflicts), Local trend & history tracking                                                                                |
+| **1.0.0** | Future      | **Mewra Drift integration** (API contract drift detection), automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX                                                                                                                                                                  |
+
+---
+
+## Developing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for full development guidelines.
 
 ```bash
 git clone https://github.com/mewra-lab/mewra-preflight.git
@@ -128,18 +242,45 @@ pnpm install
 pnpm build
 ```
 
-Press `F5` to launch the Extension Development Host. Full quality gate:
+Press `F5` in VS Code to launch the Extension Development Host.
+
+**Quality gate:**
 
 ```bash
 pnpm validate
 ```
 
-See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for contribution guidelines.
+Runs: formatting check → TypeScript compilation check → unit test suite → production build.
 
 ---
 
+## Documentation
+
+- [`SPEC.md`](./SPEC.md) — Full product and technical specification
+- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — Architecture, data flow, and trust boundaries
+- [`docs/GIT-WORKFLOW.md`](./docs/GIT-WORKFLOW.md) — Git, branch, Conventional Commits & PR workflow
+- [`docs/UX.md`](./docs/UX.md) — Webview UX, interaction patterns, and design tokens
+- [`docs/TESTING.md`](./docs/TESTING.md) — Unit and extension testing strategy
+- [`docs/RELEASE.md`](./docs/RELEASE.md) — Release and packaging guidelines
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md) — Contributing guide and PR rules
+- [`SECURITY.md`](./SECURITY.md) — Security policy and threat model
+- [`PRIVACY.md`](./PRIVACY.md) — Local-first privacy statement
+
+---
+
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) and [docs/GIT-WORKFLOW.md](./docs/GIT-WORKFLOW.md) before submitting a Pull Request.
+
+## Security
+
+Please report security issues privately. See [SECURITY.md](./SECURITY.md).
+
+## Privacy
+
+Mewra PreFlight is 100% local. See [PRIVACY.md](./PRIVACY.md).
+
 ## License
 
-MIT — see [`LICENSE`](./LICENSE).
-
+[MIT](./LICENSE) — Copyright (c) Mewra Lab.
 Part of the [Mewra](https://github.com/mewra-lab) open-source developer tooling ecosystem.
