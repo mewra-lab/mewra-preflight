@@ -206,23 +206,26 @@ pre {
   justify-content: center;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .btn-primary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   padding: 13px 28px;
+  min-height: 48px;
   border-radius: 10px;
   background: linear-gradient(135deg, var(--accent-primary) 0%, #4f46e5 100%);
   color: #ffffff;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
   text-decoration: none;
   box-shadow: 0 4px 20px var(--accent-glow);
   transition: all 0.2s ease;
   border: 1px solid rgba(255, 255, 255, 0.15);
+  box-sizing: border-box;
 }
 
 .btn-primary:hover {
@@ -233,16 +236,19 @@ pre {
 .btn-secondary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 13px 24px;
+  min-height: 48px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   color: var(--text-primary);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
   text-decoration: none;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .btn-secondary:hover {
@@ -251,32 +257,137 @@ pre {
   transform: translateY(-2px);
 }
 
-.command-snippet {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(18, 24, 38, 0.85);
+/* Dedicated Terminal / Quick Install Widget */
+.terminal-widget {
+  background: #0d121f;
   border: 1px solid var(--border);
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-size: 0.9rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto 36px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  text-align: left;
 }
 
-.command-snippet code {
-  color: #38bdf8;
-  font-size: 0.88rem;
-}
-
-.copy-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
+.terminal-header {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 10px 14px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.terminal-dots {
+  display: flex;
   gap: 6px;
-  font-size: 0.85rem;
-  transition: color 0.2s ease;
+  align-items: center;
+}
+
+.terminal-dots .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.terminal-dots .dot.red {
+  background: #ff5f56;
+}
+.terminal-dots .dot.yellow {
+  background: #ffbd2e;
+}
+.terminal-dots .dot.green {
+  background: #27c93f;
+}
+
+.terminal-title {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.terminal-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.term-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.term-tab:hover {
+  color: var(--text-primary);
+}
+
+.term-tab.active {
+  background: rgba(99, 102, 241, 0.18);
+  color: #a5b4fc;
+}
+
+.terminal-body {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #090c15;
+}
+
+.terminal-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.prompt-symbol {
+  color: #818cf8;
+  font-weight: 700;
+  font-size: 0.95rem;
+  user-select: none;
+}
+
+.terminal-line code {
+  color: #38bdf8;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.btn-copy-term {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-copy-term:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.cta-terminal {
+  margin: 28px auto 0;
+  max-width: 520px;
 }
 
 .copy-btn:hover {
@@ -952,10 +1063,106 @@ pre {
 }
 
 @media (max-width: 768px) {
+  .hero {
+    padding: 60px 18px 40px;
+  }
+
   .hero-title {
     font-size: 2.5rem;
   }
+
+  .hero-subtitle {
+    font-size: 1.05rem;
+    margin-bottom: 28px;
+  }
+
   .nav-links {
     display: none;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .terminal-widget {
+    width: 100%;
+    max-width: 440px;
+    margin-bottom: 28px;
+  }
+
+  .demo-tabs {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .tab-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .demo-context-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .cta-section {
+    margin: 40px 16px 60px;
+    padding: 40px 20px;
+  }
+
+  .cta-section h2 {
+    font-size: 1.8rem;
+  }
+
+  .footer-container {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 2.1rem;
+  }
+
+  .terminal-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .terminal-tabs {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .term-tab {
+    font-size: 0.72rem;
+    padding: 3px 6px;
+  }
+
+  .terminal-body {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .terminal-line code {
+    font-size: 0.76rem;
+  }
+
+  .btn-copy-term {
+    padding: 5px 8px;
+    font-size: 0.75rem;
   }
 }
