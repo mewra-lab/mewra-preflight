@@ -41,8 +41,8 @@
         "command": "mewra-preflight.openDashboard",
         "title": "Open Dashboard",
         "icon": {
-          "dark": "assets/brand/preflight-icon-dark.svg",
-          "light": "assets/brand/preflight-icon-light.svg"
+          "dark": "assets/brand/preflight-icon-dark.png",
+          "light": "assets/brand/preflight-icon-light.png"
         },
         "category": "Mewra PreFlight"
       },

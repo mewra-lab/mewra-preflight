@@ -29,4 +29,12 @@ await cp(
   join(root, "assets", "brand", "preflight-icon-light.svg"),
   join(dest, "preflight-icon-light.svg"),
 );
+await cp(
+  join(root, "assets", "brand", "preflight-icon-dark.png"),
+  join(dest, "preflight-icon-dark.png"),
+);
+await cp(
+  join(root, "assets", "brand", "preflight-icon-light.png"),
+  join(dest, "preflight-icon-light.png"),
+);
 await cp(join(root, "src", "webview", "styles.css"), join(dest, "styles.css"));
