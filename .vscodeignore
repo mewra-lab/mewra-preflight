@@ -23,4 +23,6 @@ SPEC.md
 node_modules/**
 *.vsix
 landing/**
-
+assets/failed.png
+assets/pass.png
+assets/warning.png

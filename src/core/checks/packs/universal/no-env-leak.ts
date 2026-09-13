@@ -12,14 +12,14 @@ const PATTERNS = [
   /AKIA[0-9A-Z]{16}/g,
   /sk-[a-zA-Z0-9]{20,}/g,
   /ghp_[a-zA-Z0-9]{36}/g,
-  /(password|secret|token)\s*=\s*["'][^"'\s]{8,}["']/gi,
+  /(?:password|secret|token|api_key)\s*[:=]\s*["'][^"'\s]{8,}["']/gi,
 ];
 
 // MARK: - Check Definition
 
 export const noEnvLeak: CheckRunner = {
   id: "universal:no-env-leak",
-  label: "No credential leak",
+  label: "No secrets / env leak",
   severity: "error",
   pack: "universal",
 
@@ -41,7 +41,7 @@ export const noEnvLeak: CheckRunner = {
           findings.push({
             file: item.file,
             line: item.line,
-            message: "Potential secret or credential pattern detected.",
+            message: "Potential secret or environment variable leak detected.",
             rule: "no-env-leak",
           });
           break;
