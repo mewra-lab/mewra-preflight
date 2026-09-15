@@ -15,6 +15,7 @@ export type CommandResult = {
 export type PreFlightContext = {
   workspaceRoot: string;
   resolveTool(binName: string): Promise<string | null>;
+  resolveTrustedTool?(binName: string): Promise<string | null>;
   runCommand(
     cmd: string,
     args: string[],

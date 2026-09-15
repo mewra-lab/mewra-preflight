@@ -34,7 +34,6 @@ VS Code Workbench
 │   │   │       ├── python/        — Python ecosystem checks (ruff, black, flake8, mypy)
 │   │   │       ├── php/           — PHP ecosystem checks (php-cs-fixer, phpstan/psalm, test-pairing)
 │   │   │       ├── pounce/        — changed-route detection and Mermaid summaries
-│   │   │       ├── dependency-guard/ — dependency source safety checks
 │   │   │       ├── orm-cost-sentry/ — query-in-loop and destructive-migration heuristics
 │   │   │       ├── style-guardian/ — Tailwind utility conflict detection
 │   │   │       └── custom/        — Community JSON-based custom pack runner
@@ -81,7 +80,7 @@ mewra-preflight/
 │   │   │   ├── context.ts
 │   │   │   ├── runner.ts
 │   │   │   ├── manual-evaluator.ts
-│   │   │   └── packs/{universal,js-ts,go,python,php,pounce,dependency-guard,orm-cost-sentry,style-guardian,custom}/
+│   │   │   └── packs/{universal,js-ts,go,python,php,pounce,orm-cost-sentry,style-guardian,custom}/
 │   │   ├── ecosystem/detect-ecosystem.ts
 │   │   ├── config/preflight-ignore.ts — global and per-check/pack diff filtering
 │   │   ├── mcp/handler.ts
@@ -132,6 +131,10 @@ Each check pack exposes a `build<Pack>Pack(): CheckRunner[]` factory (or `buildC
 
 Before a check runs, `.preflightignore` rules filter its `GitDiff` input. Global rules remove paths for every consumer, while targeted rules remove paths only for the named check or pack.
 
+Installed companion extensions receive the versioned `MewraPreFlightAPI` through `vscode.extensions.getExtension(...).activate()`. The host applies `.mewra-preflight.json` `contributedChecks` enablement and severity controls before dashboard or MCP execution.
+
+Security-sensitive companion checks can use `PreFlightContext.resolveTrustedTool()`. It resolves only user-owned or system tool locations and never a binary from the opened workspace. The method is additive to API v1, so a companion can return `not-configured` rather than fall back to an untrusted executable on an older host.
+
 ## 6. Ecosystem detection
 
 `detectActiveEcosystems` checks for marker files (`package.json`, `go.mod`, `go.sum`, `uv.lock`, `pyproject.toml`, `requirements.txt`, `Pipfile`, `setup.py`, `composer.json`) across the workspace. It supports multi-ecosystem workspaces simultaneously.
@@ -139,3 +142,5 @@ Before a check runs, `.preflightignore` rules filter its `GitDiff` input. Global
 ## 7. Tool resolution
 
 Tools (e.g., `prettier`, `eslint`, `tsc`, `ruff`, `black`, `flake8`, `mypy`, `gofmt`, `govet`, `golangci-lint`, `php-cs-fixer`, `phpstan`, `psalm`, custom CLI tools) are resolved using project-local paths first (`node_modules/.bin/`, `.venv/bin/`, `venv/bin/`, `vendor/bin/`), user local environments (`~/.cargo/bin`, `~/.local/bin`, `~/go/bin`, `~/.composer/vendor/bin`), and finally system `PATH`. A check degrades gracefully to `not-configured` if the binary cannot be resolved.
+
+`resolveTrustedTool()` is intentionally stricter: it excludes project-local paths and does not consult `PATH`.

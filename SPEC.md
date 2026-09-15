@@ -149,6 +149,7 @@ Any installed extension can contribute a `CheckDefinition` via a small activatio
 ```typescript
 // Exposed by mewra.mewra-preflight as an extension API (vscode.extensions.getExtension)
 interface MewraPreFlightAPI {
+  readonly apiVersion: 1;
   registerCheck(check: CheckDefinition): vscode.Disposable;
 }
 ```
@@ -338,6 +339,10 @@ The generated PR body is assembled from:
       "enabled": true,
       "severity": "error",
     },
+    "dependency-guard:unsafe-source": {
+      "enabled": true,
+      "severity": "error",
+    },
     "mewra-orm-sentry:index-risk": { "enabled": true, "severity": "warning" },
     "mewra-style-guardian:tailwind-conflicts": {
       "enabled": true,
@@ -371,7 +376,8 @@ The generated PR body is assembled from:
 | :-------- | :---------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **0.1.0** | Released    | Core diff-scoped runner (branch, staged, working tree), Universal pack (secrets, console.log, debuggers, localhost, conflicts, file size), Polyglot packs (JS/TS, Python, Go, PHP), Community JSON custom packs, Interactive manual checklist with file triggers, Monorepo resolution, Built-in Model Context Protocol (MCP) server |
 | **0.2.0** | Released    | **Mewra Pounce route summary** (detect changed route declarations, surface route chips in the dashboard, and attach Mermaid route/file summaries to PR drafts), per-folder check-pack overrides (`.preflightignore`)                                                                                                                |
-| **0.3.0** | **Current** | **First-party local packs**: Dependency Guard (insecure dependency source detection), ORM Cost Sentry (query-in-loop and destructive migration heuristics), and Style Guardian (static Tailwind utility conflicts). External CVE scanners and local trend/history remain future work.                                               |
+| **0.3.0** | Released    | **First-party local packs**: Dependency Guard (insecure dependency source detection), ORM Cost Sentry (query-in-loop and destructive migration heuristics), and Style Guardian (static Tailwind utility conflicts).                                                                                                                 |
+| **0.4.0** | **Current** | **Contributed-check contract v1**: Mewra Dependency Guard runs OSV and Trivy plus the insecure dependency-source guard as a separate extension; workspace contributed-check enablement/severity configuration is enforced by the host.                                                                                              |
 | **1.0.0** | Future      | **Mewra Drift integration** (API contract drift detection), automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX                                                                                                                                                                  |
 
 ---

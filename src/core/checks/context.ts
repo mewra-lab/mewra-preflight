@@ -1,5 +1,5 @@
-import { access, constants, readdir } from "node:fs/promises";
-import { resolve } from "node:path";
+import { access, constants, realpath, readdir } from "node:fs/promises";
+import { isAbsolute, relative, resolve, sep } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import type { PreFlightContext, CommandResult } from "./check-contract.js";
@@ -15,6 +15,95 @@ async function isExecutable(filePath: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+function isInsideWorkspace(workspaceRoot: string, candidate: string): boolean {
+  const workspaceRelative = relative(workspaceRoot, candidate);
+  return (
+    (workspaceRelative === "" ||
+      workspaceRelative === ".." ||
+      workspaceRelative.startsWith(`..${sep}`) ||
+      isAbsolute(workspaceRelative)) === false
+  );
+}
+
+async function trustedExecutablePath(
+  workspaceRoot: string,
+  candidate: string,
+): Promise<string | null> {
+  try {
+    const [realWorkspaceRoot, realCandidate] = await Promise.all([
+      realpath(workspaceRoot),
+      realpath(candidate),
+    ]);
+    if (isInsideWorkspace(realWorkspaceRoot, realCandidate)) return null;
+    return (await isExecutable(realCandidate)) ? realCandidate : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function resolveTrustedTool(
+  workspaceRoot: string,
+  binName: string,
+  additionalCandidates: string[] = [],
+): Promise<string | null> {
+  const home = process.env.HOME ?? "";
+  const userProfile = process.env.USERPROFILE ?? "";
+  const programFiles = process.env.ProgramFiles ?? "";
+  const executableName =
+    process.platform === "win32" ? `${binName}.exe` : binName;
+  const userTrustedCandidates = home
+    ? [
+        resolve(home, ".local", "bin", executableName),
+        resolve(home, ".cargo", "bin", executableName),
+        resolve(home, "go", "bin", executableName),
+        resolve(home, ".composer", "vendor", "bin", executableName),
+        resolve(home, ".config", "composer", "vendor", "bin", executableName),
+        `${home}/.nvm/current/bin/${executableName}`,
+        `${home}/.pnpm/${executableName}`,
+      ]
+    : [];
+  const windowsTrustedCandidates =
+    process.platform === "win32" && userProfile
+      ? [
+          resolve(userProfile, ".cargo", "bin", executableName),
+          resolve(userProfile, "scoop", "shims", executableName),
+          resolve(userProfile, "go", "bin", executableName),
+        ]
+      : [];
+  const windowsSystemCandidates =
+    process.platform === "win32" && programFiles
+      ? [
+          resolve(
+            programFiles,
+            "Docker",
+            "Docker",
+            "resources",
+            "bin",
+            executableName,
+          ),
+          resolve(programFiles, "Trivy", executableName),
+          resolve(programFiles, "osv-scanner", executableName),
+        ]
+      : [];
+  const trustedCandidates = [
+    ...additionalCandidates,
+    ...userTrustedCandidates,
+    ...windowsTrustedCandidates,
+    ...windowsSystemCandidates,
+    `/opt/homebrew/bin/${executableName}`,
+    `/usr/local/bin/${executableName}`,
+    `/usr/local/go/bin/${executableName}`,
+    `/usr/bin/${executableName}`,
+  ];
+
+  for (const candidate of trustedCandidates) {
+    const trustedPath = await trustedExecutablePath(workspaceRoot, candidate);
+    if (trustedPath) return trustedPath;
+  }
+
+  return null;
 }
 
 // MARK: - Implementation
@@ -149,6 +238,8 @@ export function createPreFlightContext(
 
       return null;
     },
+
+    resolveTrustedTool: (binName) => resolveTrustedTool(workspaceRoot, binName),
 
     async runCommand(
       cmd: string,

@@ -8,10 +8,12 @@ import { buildGoPack } from "../core/checks/packs/go/index.js";
 import { buildPythonPack } from "../core/checks/packs/python/index.js";
 import { buildPhpPack } from "../core/checks/packs/php/index.js";
 import type { CheckRunner } from "../core/checks/check-contract.js";
+import { loadWorkspaceConfig } from "../core/config/workspace-config.js";
 
 // MARK: - Types
 
 export interface MewraPreFlightAPI {
+  readonly apiVersion: 1;
   registerCheck(check: CheckRunner): vscode.Disposable;
   readonly mcpHandler: PreFlightMcpHandler;
 }
@@ -19,14 +21,21 @@ export interface MewraPreFlightAPI {
 // MARK: - State
 
 const registry = new CheckRegistry();
-const mcpHandler = new PreFlightMcpHandler(() => [
-  ...buildUniversalPack(),
-  ...buildJsTsPack(),
-  ...buildGoPack(),
-  ...buildPythonPack(),
-  ...buildPhpPack(),
-  ...registry.getContributedChecks(),
-]);
+const mcpHandler = new PreFlightMcpHandler(async () => {
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  const fileConfig = workspaceRoot
+    ? await loadWorkspaceConfig(workspaceRoot)
+    : null;
+
+  return [
+    ...buildUniversalPack(),
+    ...buildJsTsPack(),
+    ...buildGoPack(),
+    ...buildPythonPack(),
+    ...buildPhpPack(),
+    ...registry.getConfiguredChecks(fileConfig?.contributedChecks),
+  ];
+});
 
 let statusBarItem: vscode.StatusBarItem | undefined;
 
@@ -132,6 +141,7 @@ export function activate(context: vscode.ExtensionContext): MewraPreFlightAPI {
   );
 
   return {
+    apiVersion: 1,
     registerCheck(check: CheckRunner): vscode.Disposable {
       const disposable = registry.register(check);
       context.subscriptions.push(disposable);

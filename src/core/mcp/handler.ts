@@ -22,9 +22,9 @@ export class PreFlightMcpHandler {
   private _latestSnapshot: PreFlightSnapshot | null = null;
   private _draftPR: DraftPR | null = null;
   private readonly _manualChecks = new Map<string, boolean>();
-  private readonly _getChecks: () => CheckRunner[];
+  private readonly _getChecks: () => CheckRunner[] | Promise<CheckRunner[]>;
 
-  constructor(getChecks: () => CheckRunner[]) {
+  constructor(getChecks: () => CheckRunner[] | Promise<CheckRunner[]>) {
     this._getChecks = getChecks;
   }
 
@@ -53,7 +53,7 @@ export class PreFlightMcpHandler {
     diff: GitDiff,
     context: PreFlightContext,
   ): Promise<CheckResult> {
-    const checks = this._getChecks();
+    const checks = await this._getChecks();
     const target = checks.find((c) => c.id === checkId);
 
     if (!target) {
