@@ -34,6 +34,9 @@ VS Code Workbench
 │   │   │       ├── python/        — Python ecosystem checks (ruff, black, flake8, mypy)
 │   │   │       ├── php/           — PHP ecosystem checks (php-cs-fixer, phpstan/psalm, test-pairing)
 │   │   │       ├── pounce/        — changed-route detection and Mermaid summaries
+│   │   │       ├── dependency-guard/ — dependency source safety checks
+│   │   │       ├── orm-cost-sentry/ — query-in-loop and destructive-migration heuristics
+│   │   │       ├── style-guardian/ — Tailwind utility conflict detection
 │   │   │       └── custom/        — Community JSON-based custom pack runner
 │   │   ├── ecosystem/
 │   │   │   └── detect-ecosystem.ts
@@ -78,7 +81,7 @@ mewra-preflight/
 │   │   │   ├── context.ts
 │   │   │   ├── runner.ts
 │   │   │   ├── manual-evaluator.ts
-│   │   │   └── packs/{universal,js-ts,go,python,php,custom}/
+│   │   │   └── packs/{universal,js-ts,go,python,php,pounce,dependency-guard,orm-cost-sentry,style-guardian,custom}/
 │   │   ├── ecosystem/detect-ecosystem.ts
 │   │   ├── config/preflight-ignore.ts — global and per-check/pack diff filtering
 │   │   ├── mcp/handler.ts

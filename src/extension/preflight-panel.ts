@@ -21,6 +21,9 @@ import { buildGoPack } from "../core/checks/packs/go/index.js";
 import { buildPythonPack } from "../core/checks/packs/python/index.js";
 import { buildPhpPack } from "../core/checks/packs/php/index.js";
 import { buildPouncePack } from "../core/checks/packs/pounce/index.js";
+import { buildDependencyGuardPack } from "../core/checks/packs/dependency-guard/index.js";
+import { buildOrmCostSentryPack } from "../core/checks/packs/orm-cost-sentry/index.js";
+import { buildStyleGuardianPack } from "../core/checks/packs/style-guardian/index.js";
 import { buildCustomChecks } from "../core/checks/packs/custom/custom-runner.js";
 import { buildPRUrl } from "../core/pr/pr-launcher.js";
 import {
@@ -177,6 +180,9 @@ export class PreFlightPanel {
         "python",
         "php",
         "pounce",
+        "dependency-guard",
+        "orm-cost-sentry",
+        "style-guardian",
       ],
       blockingOnWarnings: cfg.get<boolean>("blockingOnWarnings") ?? false,
       gitHost: cfg.get<"github" | "gitlab">("gitHost") ?? "github",
@@ -357,6 +363,14 @@ export class PreFlightPanel {
         fileConfig?.ecosystems?.["pounce"]?.enabled === true ||
         config.enabledPacks.includes("pounce"));
 
+    const shouldEnableFirstPartyPack = (packId: string): boolean => {
+      const fileSetting = fileConfig?.ecosystems?.[packId]?.enabled;
+      return (
+        fileSetting !== false &&
+        (fileSetting === true || config.enabledPacks.includes(packId))
+      );
+    };
+
     const checks = [
       ...buildUniversalPack(
         config.universalChecks ?? config.largeFileThresholdMb,
@@ -366,6 +380,15 @@ export class PreFlightPanel {
       ...(shouldEnablePython ? buildPythonPack() : []),
       ...(shouldEnablePhp ? buildPhpPack() : []),
       ...(shouldEnablePounce ? buildPouncePack() : []),
+      ...(shouldEnableFirstPartyPack("dependency-guard")
+        ? buildDependencyGuardPack()
+        : []),
+      ...(shouldEnableFirstPartyPack("orm-cost-sentry")
+        ? buildOrmCostSentryPack()
+        : []),
+      ...(shouldEnableFirstPartyPack("style-guardian")
+        ? buildStyleGuardianPack()
+        : []),
       ...customChecks,
       ...this._registry.getContributedChecks(),
     ];

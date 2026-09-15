@@ -13,7 +13,7 @@ Semantic Versioning:
 ```text
 0.1.0  — initial release: diff-scoped runner, polyglot packs (JS/TS, Python, Go, PHP), universal checks, custom packs, interactive manual checklist, MCP server
 0.2.0  — Mewra Pounce route summary (changed route declarations in dashboard/PR), .preflightignore per-folder check-pack overrides
-0.3.0  — first-party contributed packs: Dependency Guard (OSV/Trivy CVE scan), ORM Cost Sentry, Style Guardian; local trend & history tracking
+0.3.0  — first-party local packs: Dependency Guard (insecure dependency sources), ORM Cost Sentry (query-in-loop and destructive migrations), Style Guardian (static Tailwind conflicts)
 1.0.0  — Mewra Drift integration, automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX
 ```
 
@@ -81,6 +81,16 @@ notes, and validation status. Do not claim route tracing when the Pounce pack
 only detects route declarations in changed files.
 
 ## 8. Changelog
+
+### v0.3.0
+
+**First-party local safety packs**
+
+- **Dependency Guard** (`dependency-guard:unsafe-source`) fails newly added insecure `http://` and `git+http://` package sources in supported manifests and lock files.
+- **ORM Cost Sentry** flags potential database queries introduced inside loops and destructive `DROP TABLE`, `DROP COLUMN`, `DROP DATABASE`, or `DROP SCHEMA` migration statements.
+- **Style Guardian** flags conflicting static Tailwind utilities in changed JSX, Vue, HTML, Astro, and Svelte templates.
+- **Configuration**: all three packs are enabled by default and may be disabled per workspace under `ecosystems` in `.mewra-preflight.json`.
+- **Scope**: rules are local diff heuristics. This release does not claim CVE scanning, AST analysis, or local historical trend storage.
 
 ### v0.2.0
 
