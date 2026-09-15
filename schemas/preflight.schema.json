@@ -287,6 +287,27 @@
               "description": "Enable or disable automatic blast-radius and impacted route analysis"
             }
           }
+        },
+        "dependency-guard": {
+          "type": "object",
+          "description": "Dependency source safety checks for changed manifest and lock files",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true }
+          }
+        },
+        "orm-cost-sentry": {
+          "type": "object",
+          "description": "Diff-scoped ORM query cost and destructive migration heuristics",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true }
+          }
+        },
+        "style-guardian": {
+          "type": "object",
+          "description": "Diff-scoped template style consistency checks",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true }
+          }
         }
       }
     },

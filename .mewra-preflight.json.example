@@ -31,6 +31,15 @@
     },
     "pounce": {
       "enabled": true
+    },
+    "dependency-guard": {
+      "enabled": true
+    },
+    "orm-cost-sentry": {
+      "enabled": true
+    },
+    "style-guardian": {
+      "enabled": true
     }
   },
   "universalChecks": {
