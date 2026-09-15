@@ -276,6 +276,17 @@
               }
             }
           }
+        },
+        "pounce": {
+          "type": "object",
+          "description": "Mewra Pounce blast radius and impacted API routes settings",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable or disable automatic blast-radius and impacted route analysis"
+            }
+          }
         }
       }
     },

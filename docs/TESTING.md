@@ -23,6 +23,8 @@ Pure modules testable without VS Code:
 - `pr-launcher.ts` — remote URL → HTTPS conversion, PR URL construction;
 - `packs/universal/` — pattern matching in diff patches;
 - `packs/js-ts/` — pack factory shape and check properties;
+- `packs/pounce/` — changed-route detection and Mermaid summary generation;
+- `preflight-ignore.ts` — global and check/pack-specific diff filtering;
 - `messages.ts` — Zod schema validation for both directions.
 
 ### Extension tests (@vscode/test-electron)

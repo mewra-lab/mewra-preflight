@@ -1,5 +1,9 @@
 import { useState } from "preact/hooks";
-import type { CheckSnapshot, CheckStatus } from "../../shared/types.js";
+import type {
+  CheckSnapshot,
+  CheckStatus,
+  PounceRouteChip,
+} from "../../shared/types.js";
 
 // MARK: - Types
 
@@ -106,6 +110,39 @@ function StatusIcon({ status }: { status: CheckStatus }) {
   );
 }
 
+// MARK: - Route Chip Component
+
+function RouteChip({
+  chip,
+  onOpenFinding,
+}: {
+  chip: PounceRouteChip;
+  onOpenFinding?: ((path: string, line: number) => void) | undefined;
+}) {
+  const methodClass = chip.method.toLowerCase();
+  return (
+    <span
+      class={`route-chip route-chip--${methodClass}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onOpenFinding?.(chip.file, chip.line ?? 0);
+      }}
+      role="button"
+      tabIndex={0}
+      title={`Jump to ${chip.file}:${chip.line ?? 0}`}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.stopPropagation();
+          onOpenFinding?.(chip.file, chip.line ?? 0);
+        }
+      }}
+    >
+      <span class="route-chip__method">{chip.method}</span>
+      <span class="route-chip__path">{chip.route}</span>
+    </span>
+  );
+}
+
 // MARK: - CheckRow Component
 
 export function CheckRow({
@@ -117,7 +154,8 @@ export function CheckRow({
 }: CheckRowProps) {
   const { definition, result } = snapshot;
   const hasFindings = result.findings.length > 0;
-  const [expanded, setExpanded] = useState(hasFindings);
+  const hasRoutes = (result.routes?.length ?? 0) > 0;
+  const [expanded, setExpanded] = useState(hasFindings || hasRoutes);
   const isFixable =
     definition.id === "js-ts:prettier" ||
     definition.id === "js-ts:eslint" ||
@@ -126,24 +164,28 @@ export function CheckRow({
     definition.id === "php:cs-fixer" ||
     definition.fixable === true;
   const isFixingAll = fixingTarget === definition.id;
+  const isPounce = definition.pack === "pounce";
 
   const toggleExpanded = () => {
-    if (hasFindings) {
+    if (hasFindings || hasRoutes) {
       setExpanded(!expanded);
     }
   };
 
   return (
     <div
-      class={`check-row check-row--${result.status} ${hasFindings ? "check-row--has-findings" : ""}`}
+      class={`check-row check-row--${result.status} ${hasFindings || hasRoutes ? "check-row--has-findings" : ""}`}
     >
       <div
         class="check-row__header"
         onClick={toggleExpanded}
-        role={hasFindings ? "button" : undefined}
-        tabIndex={hasFindings ? 0 : undefined}
+        role={hasFindings || hasRoutes ? "button" : undefined}
+        tabIndex={hasFindings || hasRoutes ? 0 : undefined}
         onKeyDown={(e) => {
-          if (hasFindings && (e.key === "Enter" || e.key === " ")) {
+          if (
+            (hasFindings || hasRoutes) &&
+            (e.key === "Enter" || e.key === " ")
+          ) {
             e.preventDefault();
             toggleExpanded();
           }
@@ -154,7 +196,17 @@ export function CheckRow({
           {definition.label}
         </span>
 
-        {result.message && !hasFindings && (
+        {isPounce && hasRoutes && (
+          <span
+            class="blast-radius-badge"
+            title={`${result.routes!.length} impacted route${result.routes!.length === 1 ? "" : "s"}`}
+          >
+            {result.routes!.length} route
+            {result.routes!.length === 1 ? "" : "s"}
+          </span>
+        )}
+
+        {result.message && !hasFindings && !hasRoutes && (
           <span class="check-row__short-message" title={result.message}>
             {result.message}
           </span>
@@ -216,7 +268,7 @@ export function CheckRow({
                 : `${(result.durationMs / 1000).toFixed(1)}s`}
             </span>
           )}
-          {hasFindings && (
+          {(hasFindings || hasRoutes) && (
             <span class="check-row__toggle-icon">
               <svg
                 width="12"
@@ -239,7 +291,7 @@ export function CheckRow({
         </div>
       </div>
 
-      {result.message && hasFindings && (
+      {result.message && (hasFindings || hasRoutes) && (
         <p class="check-row__message">{result.message}</p>
       )}
 
@@ -319,6 +371,14 @@ export function CheckRow({
             </li>
           ))}
         </ul>
+      )}
+
+      {isPounce && hasRoutes && expanded && (
+        <div class="route-chips">
+          {result.routes!.map((chip, i) => (
+            <RouteChip key={i} chip={chip} onOpenFinding={onOpenFinding} />
+          ))}
+        </div>
       )}
     </div>
   );
