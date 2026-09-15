@@ -58,7 +58,29 @@ pnpm install --frozen-lockfile
 pnpm validate
 ```
 
-## 6. Changelog
+## 6. GitHub Release workflow
+
+`.github/workflows/release.yml` creates or updates a GitHub Release when a
+`vMAJOR.MINOR.PATCH` tag is pushed. It checks out the tag, verifies that it
+matches `package.json`, runs the full quality gate, builds the VSIX, and uploads
+both the VSIX and `SHA256SUMS.txt`.
+
+For an existing tag created before this workflow was merged, run **Release**
+from the Actions tab with the tag as the `tag` input. For a new release, merge
+the release PR, update `package.json`, and push its matching tag.
+
+The workflow publishes GitHub Releases only. Visual Studio Marketplace and
+Open VSX publishing remain explicit release actions until their credentials and
+publication policy are configured.
+
+## 7. Release notes
+
+GitHub generates notes from merged pull requests. Add a concise product summary
+when a release needs context: headline, user-visible changes, configuration
+notes, and validation status. Do not claim route tracing when the Pounce pack
+only detects route declarations in changed files.
+
+## 8. Changelog
 
 ### v0.2.0
 
