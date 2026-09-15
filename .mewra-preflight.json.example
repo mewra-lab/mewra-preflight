@@ -1,0 +1,63 @@
+{
+  "$schema": "./schemas/preflight.schema.json",
+  "targetBranch": "main",
+  "ecosystems": {
+    "js-ts": {
+      "enabled": true,
+      "format": { "tool": "prettier", "enabled": true },
+      "lint": { "tool": "eslint", "enabled": true },
+      "typecheck": { "tool": "tsc", "enabled": true },
+      "testPairing": { "enabled": true }
+    },
+    "python": {
+      "enabled": true,
+      "format": { "tool": "ruff", "enabled": true },
+      "lint": { "tool": "ruff", "enabled": true },
+      "typecheck": { "tool": "mypy", "enabled": true },
+      "testPairing": { "enabled": true }
+    },
+    "go": {
+      "enabled": true,
+      "format": { "tool": "gofmt", "enabled": true },
+      "vet": { "enabled": true },
+      "lint": { "tool": "golangci-lint", "enabled": true },
+      "testPairing": { "enabled": true }
+    },
+    "php": {
+      "enabled": false,
+      "format": { "tool": "php-cs-fixer", "enabled": true },
+      "analyze": { "tool": "phpstan", "enabled": true },
+      "testPairing": { "enabled": true }
+    },
+    "pounce": {
+      "enabled": true
+    }
+  },
+  "universalChecks": {
+    "noDebugStatements": "error",
+    "noSecrets": "error",
+    "noLocalhostUrls": "error",
+    "noMergeConflicts": "error",
+    "largeFileThresholdMb": 1
+  },
+  "customChecks": [
+    {
+      "id": "custom:shellcheck",
+      "label": "ShellCheck",
+      "tool": "shellcheck",
+      "args": ["-x"],
+      "severity": "warning",
+      "fileExtensions": [".sh"]
+    }
+  ],
+  "manualChecklist": [
+    {
+      "id": "manual-migration",
+      "label": "Applied DB migration to dev cluster",
+      "severity": "error",
+      "condition": {
+        "modifiedFilesMatch": "prisma/migrations/**"
+      }
+    }
+  ]
+}

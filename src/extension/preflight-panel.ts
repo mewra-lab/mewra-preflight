@@ -20,6 +20,7 @@ import { buildJsTsPack } from "../core/checks/packs/js-ts/index.js";
 import { buildGoPack } from "../core/checks/packs/go/index.js";
 import { buildPythonPack } from "../core/checks/packs/python/index.js";
 import { buildPhpPack } from "../core/checks/packs/php/index.js";
+import { buildPouncePack } from "../core/checks/packs/pounce/index.js";
 import { buildCustomChecks } from "../core/checks/packs/custom/custom-runner.js";
 import { buildPRUrl } from "../core/pr/pr-launcher.js";
 import {
@@ -27,6 +28,10 @@ import {
   mergeWorkspaceConfig,
 } from "../core/config/workspace-config.js";
 import { evaluateManualChecks } from "../core/checks/manual-evaluator.js";
+import {
+  parsePreflightIgnore,
+  filterDiffByPreflightIgnore,
+} from "../core/config/preflight-ignore.js";
 
 // MARK: - Types
 
@@ -165,7 +170,14 @@ export class PreFlightPanel {
     const cfg = vscode.workspace.getConfiguration("mewraPreflight");
     const base: PreFlightConfig = {
       targetBranch: cfg.get<string>("targetBranch") ?? "main",
-      enabledPacks: cfg.get<string[]>("enabledPacks") ?? ["universal", "js-ts"],
+      enabledPacks: cfg.get<string[]>("enabledPacks") ?? [
+        "universal",
+        "js-ts",
+        "go",
+        "python",
+        "php",
+        "pounce",
+      ],
       blockingOnWarnings: cfg.get<boolean>("blockingOnWarnings") ?? false,
       gitHost: cfg.get<"github" | "gitlab">("gitHost") ?? "github",
       diffScope: cfg.get<DiffScope>("diffScope") ?? "branch",
@@ -313,12 +325,6 @@ export class PreFlightPanel {
       return;
     }
 
-    const manualChecks = evaluateManualChecks(
-      config.manualChecklist ?? [],
-      diff.changedFiles,
-      this._manualCheckStates,
-    );
-
     const activeEcosystems = await detectActiveEcosystems(root, diff);
 
     const isPackActive = (
@@ -341,6 +347,16 @@ export class PreFlightPanel {
 
     const customChecks = await buildCustomChecks(config, root);
 
+    const hasPounceCompanion =
+      vscode.extensions.getExtension("mewra.mewra-pounce") !== undefined;
+    const isPounceExplicitlyDisabled =
+      fileConfig?.ecosystems?.["pounce"]?.enabled === false;
+    const shouldEnablePounce =
+      !isPounceExplicitlyDisabled &&
+      (hasPounceCompanion ||
+        fileConfig?.ecosystems?.["pounce"]?.enabled === true ||
+        config.enabledPacks.includes("pounce"));
+
     const checks = [
       ...buildUniversalPack(
         config.universalChecks ?? config.largeFileThresholdMb,
@@ -349,20 +365,42 @@ export class PreFlightPanel {
       ...(shouldEnableGo ? buildGoPack() : []),
       ...(shouldEnablePython ? buildPythonPack() : []),
       ...(shouldEnablePhp ? buildPhpPack() : []),
+      ...(shouldEnablePounce ? buildPouncePack() : []),
       ...customChecks,
       ...this._registry.getContributedChecks(),
     ];
+
+    let ignoreRules;
+    try {
+      const ignoreContent = await readFile(
+        resolve(root, ".preflightignore"),
+        "utf-8",
+      );
+      ignoreRules = parsePreflightIgnore(ignoreContent);
+    } catch {
+      ignoreRules = undefined;
+    }
+
+    const filteredDiff = ignoreRules
+      ? filterDiffByPreflightIgnore(diff, ignoreRules)
+      : diff;
+    const manualChecks = evaluateManualChecks(
+      config.manualChecklist ?? [],
+      filteredDiff.changedFiles,
+      this._manualCheckStates,
+    );
 
     const context = createPreFlightContext(root);
 
     const finalSnapshot = await runChecks(
       checks,
-      diff,
+      filteredDiff,
       context,
       (snapshot) => {
         this._post({ type: "snapshot", payload: snapshot });
       },
       manualChecks,
+      ignoreRules,
     );
 
     this._lastSnapshot = finalSnapshot;
@@ -686,6 +724,10 @@ export class PreFlightPanel {
       "testPairing": { "enabled": true }
     }`);
       }
+
+      ecoEntries.push(`    "pounce": {
+      "enabled": true
+    }`);
 
       const ecosystemsBlock =
         ecoEntries.length > 0

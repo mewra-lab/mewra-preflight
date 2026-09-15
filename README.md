@@ -50,10 +50,12 @@ PR button → blocked until errors & required checklists are resolved.
   - **Go**: `gofmt`, `go vet`, `golangci-lint`, test-file pairing.
   - **PHP**: `php-cs-fixer`, `phpstan`, Psalm, test-file pairing.
 - **Universal sanity checks** — Built-in guards detecting stray `console.log` / debuggers, exposed environment configurations, hardcoded localhost URLs, git merge conflict markers, and oversized binary files.
+- **Mewra Pounce — Route Summary** _(v0.2.0)_ — The built-in `pounce` pack detects route declarations in changed Next.js, Hono, Express, Fastify, NestJS, Go, Python, and PHP files. It shows colour-coded route chips and adds a Mermaid summary of the changed routes and files to the PR draft.
+- **`.preflightignore` support** _(v0.2.0)_ — Place a `.preflightignore` file in the workspace root to exclude files/folders from diff analysis globally (`dist/**`) or per-check/pack (`scripts/**: universal:no-console-log`, `legacy/**: js-ts`).
 - **Interactive manual checklist** — Human verification checklist items that trigger conditionally when specific files are touched (e.g. verifying database migrations when schema files are modified).
 - **Custom community JSON packs** — Easily define project-specific linters or script validations in `.mewra-preflight.json` without writing extension code.
 - **AI coding agent MCP server** — Built-in Model Context Protocol (MCP) server exposing pipeline status, findings, and check execution to AI coding assistants and agent workflows.
-- **One-click PR launcher** — Auto-assembles a rich pull request draft with commit summaries, test-pairing coverage, and check results for GitHub or GitLab.
+- **One-click PR launcher** — Auto-assembles a rich pull request draft with commit summaries, test-pairing coverage, check results, and (when Pounce is enabled) an embedded Mermaid blast-radius diagram for GitHub or GitLab.
 - **Graceful degradation (BYOT)** — Never bundles bulky toolchains. Uses your project's local versions (`node_modules`, `.venv`, `vendor`, global `PATH`). Missing tools show `not-configured` rather than failing.
 - **100% local & private** — No telemetry, no external network calls, no cloud dependencies.
 
@@ -190,7 +192,12 @@ Configure via VS Code Settings (`settings.json`):
 
 ## Configuration (`.mewra-preflight.json`)
 
-Customize your checks, define manual checklist items, or add custom tools:
+Mewra PreFlight is **Zero-Config by default** — it automatically detects your project's ecosystem and applies diff checks without requiring any configuration.
+
+If you wish to customize checks, define manual checklist items, or add custom tools:
+
+- Click the **⚙️ Settings icon** in the PreFlight Dashboard header (or run `Mewra PreFlight: Open Configuration` via the Command Palette) — this automatically generates a tailored `.mewra-preflight.json` starter file based on your project's detected ecosystems.
+- Or copy and edit [`.mewra-preflight.json.example`](./.mewra-preflight.json.example):
 
 ```jsonc
 {
@@ -270,8 +277,8 @@ Mewra PreFlight is designed as the orchestration host for the Mewra suite:
 
 | Version   | Status      | Scope                                                                                                                                                                                                                                                                                                                               |
 | :-------- | :---------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **0.1.0** | **Current** | Core diff-scoped runner (branch, staged, working tree), Universal pack (secrets, console.log, debuggers, localhost, conflicts, file size), Polyglot packs (JS/TS, Python, Go, PHP), Community JSON custom packs, Interactive manual checklist with file triggers, Monorepo resolution, Built-in Model Context Protocol (MCP) server |
-| **0.2.0** | Planned     | **Mewra Pounce integration** (surface blast radius & impacted API routes directly in PreFlight dashboard; auto-attach Mermaid call trace to PR draft), per-folder pack overrides (`.preflightignore`)                                                                                                                               |
+| **0.1.0** | Released    | Core diff-scoped runner (branch, staged, working tree), Universal pack (secrets, console.log, debuggers, localhost, conflicts, file size), Polyglot packs (JS/TS, Python, Go, PHP), Community JSON custom packs, interactive manual checklist with file triggers, monorepo resolution, Built-in Model Context Protocol (MCP) server |
+| **0.2.0** | **Current** | Pounce route detection with dashboard/PR Mermaid summaries, per-folder check-pack overrides (`.preflightignore`)                                                                                                                                                                                                                    |
 | **0.3.0** | Planned     | **First-party contributed extension packs**: Dependency Guard (OSV/Trivy CVE scan on lockfiles), ORM Cost Sentry (N+1 query & risky migration detection), Style Guardian (team AST conventions & Tailwind conflicts), Local trend & history tracking                                                                                |
 | **1.0.0** | Future      | **Mewra Drift integration** (API contract drift detection), automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX                                                                                                                                                                  |
 
@@ -311,6 +318,56 @@ Runs: formatting check → TypeScript compilation check → unit test suite → 
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — Contributing guide and PR rules
 - [`SECURITY.md`](./SECURITY.md) — Security policy and threat model
 - [`PRIVACY.md`](./PRIVACY.md) — Local-first privacy statement
+
+---
+
+## What's New in v0.2.0
+
+**Mewra Pounce Route Summary & `.preflightignore`**
+
+### Route Summary (`pounce` pack)
+
+The built-in `pounce` pack scans changed supported route files for route declarations. It is enabled by default and can be disabled per workspace. Installing the companion [Mewra Pounce](https://github.com/mewra-lab/mewra-pounce) extension also enables the pack when it has not been explicitly disabled.
+
+You can also explicitly enable it anytime in `.mewra-preflight.json` (`"pounce": { "enabled": true }`) or in your VS Code settings (`"mewraPreflight.enabledPacks"`).
+
+The dashboard surfaces colour-coded HTTP method/path chips (`GET /api/users`, `POST /api/checkout`, …) and the PR draft launcher auto-attaches dedicated per-route Mermaid summaries.
+
+````markdown
+## 🗺️ Blast Radius — Impacted Entry Points
+
+<details open>
+<summary><code>GET /api/users</code> — routes/user.ts:3</summary>
+
+```mermaid
+graph TD
+  SRC["📄 routes/user.ts"]
+  EP["GET /api/users"]
+  EP --> SRC
+  SIB_0["POST /api/users"]
+  SIB_0 --> SRC
+```
+
+</details>
+````
+
+Supported frameworks: **Next.js** App Router route handlers, **Express/Fastify** `router.get/post/…`, **Go** `net/http`, **mux**, **gin**, **Python** Flask/FastAPI/Django decorators, **PHP** Laravel/Symfony routing.
+
+### `.preflightignore`
+
+Create a `.preflightignore` file in your workspace root to exclude files from diff analysis:
+
+```gitignore
+# Completely ignore these paths
+dist/**
+fixtures/**
+*.generated.ts
+
+# Ignore specific checks or packs for a path
+scripts/**: universal:no-console-log
+legacy/**: js-ts
+vendor/**: *
+```
 
 ---
 

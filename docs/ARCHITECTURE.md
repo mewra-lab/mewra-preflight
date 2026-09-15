@@ -33,6 +33,7 @@ VS Code Workbench
 │   │   │       ├── go/            — Go ecosystem checks (gofmt, go vet, golangci-lint)
 │   │   │       ├── python/        — Python ecosystem checks (ruff, black, flake8, mypy)
 │   │   │       ├── php/           — PHP ecosystem checks (php-cs-fixer, phpstan/psalm, test-pairing)
+│   │   │       ├── pounce/        — changed-route detection and Mermaid summaries
 │   │   │       └── custom/        — Community JSON-based custom pack runner
 │   │   ├── ecosystem/
 │   │   │   └── detect-ecosystem.ts
@@ -79,6 +80,7 @@ mewra-preflight/
 │   │   │   ├── manual-evaluator.ts
 │   │   │   └── packs/{universal,js-ts,go,python,php,custom}/
 │   │   ├── ecosystem/detect-ecosystem.ts
+│   │   ├── config/preflight-ignore.ts — global and per-check/pack diff filtering
 │   │   ├── mcp/handler.ts
 │   │   └── pr/pr-launcher.ts
 │   ├── shared/
@@ -124,6 +126,8 @@ Each check pack exposes a `build<Pack>Pack(): CheckRunner[]` factory (or `buildC
 - implement `run(diff, context): Promise<CheckResult>`;
 - return `not-configured` (not `fail`) when the underlying tool is absent;
 - use fixed argument arrays in all `child_process` calls.
+
+Before a check runs, `.preflightignore` rules filter its `GitDiff` input. Global rules remove paths for every consumer, while targeted rules remove paths only for the named check or pack.
 
 ## 6. Ecosystem detection
 

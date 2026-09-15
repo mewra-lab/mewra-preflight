@@ -1,6 +1,11 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import type { PreFlightConfig, PreFlightSnapshot } from "../../shared/types.js";
+import type {
+  PreFlightConfig,
+  PreFlightSnapshot,
+  PounceRouteChip,
+} from "../../shared/types.js";
+import { buildRouteSectionMermaid } from "../checks/packs/pounce/entry-point-scanner.js";
 
 // MARK: - Helpers
 
@@ -69,7 +74,8 @@ export function formatPRBody(
   snapshot?: PreFlightSnapshot,
 ): string {
   const sections: string[] = [
-    "## Summary",
+    "Summary",
+    "-------",
     "Automated PR draft created by Mewra PreFlight.",
     "",
     `- Source branch: \`${branch}\``,
@@ -77,13 +83,29 @@ export function formatPRBody(
   ];
 
   if (commits.length > 0) {
-    sections.push("", "## Commits", ...commits.map((c) => `- ${c}`));
+    if (commits.length > 5) {
+      sections.push(
+        "",
+        "Commits",
+        "-------",
+        "",
+        "<details>",
+        `<summary>View all ${commits.length} commits</summary>`,
+        "",
+        ...commits.map((c) => `- ${c}`),
+        "",
+        "</details>",
+      );
+    } else {
+      sections.push("", "Commits", "-------", ...commits.map((c) => `- ${c}`));
+    }
   }
 
   if (snapshot) {
     sections.push(
       "",
-      "## PreFlight Sanity Checks",
+      "PreFlight Sanity Checks",
+      "-----------------------",
       `- Overall Status: **${snapshot.overallStatus.toUpperCase()}**`,
     );
 
@@ -99,13 +121,62 @@ export function formatPRBody(
         "",
       );
       for (const check of checksWithFindings) {
-        sections.push(`### ${check.definition.label} (${check.result.status})`);
+        sections.push(`**${check.definition.label} (${check.result.status})**`);
         for (const f of check.result.findings) {
           const loc = f.line ? `:${f.line}` : "";
           sections.push(`- \`${f.file}${loc}\`: ${f.message}`);
         }
       }
       sections.push("</details>");
+    }
+
+    const pounceChecks = snapshot.checks.filter(
+      (c) => (c.result.routes?.length ?? 0) > 0,
+    );
+
+    if (pounceChecks.length > 0) {
+      sections.push(
+        "",
+        "Blast Radius — Impacted Entry Points",
+        "-------------------------------------",
+      );
+
+      const modifiedFiles =
+        snapshot.diff?.changedFiles
+          .filter((f) => f.status !== "deleted")
+          .map((f) => f.path) ?? [];
+
+      for (const check of pounceChecks) {
+        const allChips: PounceRouteChip[] = check.result.routes ?? [];
+        const seen = new Set<string>();
+        const uniqueChips = allChips.filter((chip) => {
+          const key = `${chip.method} ${chip.route} ${chip.file}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+
+        for (const chip of uniqueChips.slice(0, 10)) {
+          const locLabel = chip.line ? `:${chip.line}` : "";
+          const fileLabel = chip.file.split("/").slice(-2).join("/");
+          const diagram = buildRouteSectionMermaid(
+            chip,
+            allChips,
+            modifiedFiles,
+          );
+          sections.push(
+            "",
+            "<details open>",
+            `<summary><code>${chip.method} ${chip.route}</code> — ${fileLabel}${locLabel}</summary>`,
+            "",
+            "```mermaid",
+            diagram,
+            "```",
+            "",
+            "</details>",
+          );
+        }
+      }
     }
   }
 

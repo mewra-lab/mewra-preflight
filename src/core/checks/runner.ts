@@ -6,6 +6,11 @@ import type {
   PreFlightSnapshot,
   ManualCheckItem,
 } from "../../shared/types.js";
+import {
+  type PreflightIgnoreRules,
+  filterDiffForCheck,
+  isCheckIgnoredForFile,
+} from "../config/preflight-ignore.js";
 
 // MARK: - Helpers
 
@@ -54,6 +59,7 @@ export async function runChecks(
   context: PreFlightContext,
   onProgress?: RunnerProgressCallback,
   manualChecks: ManualCheckItem[] = [],
+  ignoreRules?: PreflightIgnoreRules,
 ): Promise<PreFlightSnapshot> {
   const runId = crypto.randomUUID();
   const startedAt = Date.now();
@@ -91,7 +97,21 @@ export async function runChecks(
       const snapshot = snapshots[i];
       if (!snapshot) return;
 
-      if (!check.appliesTo(diff)) {
+      const checkDiff = ignoreRules
+        ? filterDiffForCheck(diff, check.id, check.pack, ignoreRules)
+        : diff;
+
+      if (checkDiff.changedFiles.length === 0 && diff.changedFiles.length > 0) {
+        snapshot.result = {
+          status: "skipped",
+          findings: [],
+          message: "Skipped (all files ignored by .preflightignore)",
+        };
+        emit();
+        return;
+      }
+
+      if (!check.appliesTo(checkDiff)) {
         snapshot.result = {
           status: "skipped",
           findings: [],
@@ -106,12 +126,43 @@ export async function runChecks(
 
       const t0 = Date.now();
       try {
-        const result = await check.run(diff, context);
-        const status =
+        const result = await check.run(checkDiff, context);
+        let findings = result.findings;
+        if (ignoreRules) {
+          findings = findings.filter(
+            (f) =>
+              !isCheckIgnoredForFile(check.id, check.pack, f.file, ignoreRules),
+          );
+        }
+        let routes = result.routes;
+        if (routes && ignoreRules) {
+          routes = routes.filter(
+            (r) =>
+              !isCheckIgnoredForFile(check.id, check.pack, r.file, ignoreRules),
+          );
+        }
+        let status =
           result.status === "fail" && check.severity === "warning"
             ? "warning"
             : result.status;
-        snapshot.result = { ...result, status, durationMs: Date.now() - t0 };
+        const hadContent =
+          result.findings.length > 0 || (result.routes?.length ?? 0) > 0;
+        const filteredToEmpty =
+          findings.length === 0 && (routes?.length ?? 0) === 0;
+        if (
+          (result.status === "fail" || result.status === "warning") &&
+          hadContent &&
+          filteredToEmpty
+        ) {
+          status = "pass";
+        }
+        snapshot.result = {
+          ...result,
+          findings,
+          routes,
+          status,
+          durationMs: Date.now() - t0,
+        };
       } catch {
         snapshot.result = {
           status: "fail",
