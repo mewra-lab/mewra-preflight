@@ -9,6 +9,7 @@ Testing must protect:
 - graceful degradation when tools are missing (`not-configured`);
 - universal pack pattern detection (no-console-log, no-debugger, no-env-leak);
 - Webview protocol safety (Zod message validation);
+- contributed security-finding metadata and advisory-link handling;
 - PR URL construction from remote URLs and branches, plus GitHub and GitLab CLI PR/MR creation/fallback behavior.
 
 ## 2. Test layers
@@ -46,6 +47,8 @@ Manual checklist:
 - [ ] Dashboard shows `running` spinner while checks execute
 - [ ] All checks reflect correct pass/fail/not-configured after run
 - [ ] Click a finding → opens file at correct line
+- [ ] Security findings group by package and show advisory metadata without
+      treating a lockfile finding as a navigable line number
 - [ ] "Create PR / MR" leaves push to Source Control, then creates via `gh`/`glab` or opens the documented browser fallback with the description copied
 - [ ] Button is blocked (greyed out) when any error check fails
 - [ ] Tool missing (e.g., no Prettier) shows `not-configured`, not `fail`

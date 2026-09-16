@@ -69,8 +69,7 @@ export const WebviewMessageSchema = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("installTool"),
-    tool: z.string(),
-    pack: z.string().optional(),
+    checkId: z.string(),
   }),
   z.object({
     type: z.literal("configureCheck"),

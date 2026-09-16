@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { resolve, isAbsolute } from "node:path";
+import { resolve, isAbsolute, relative } from "node:path";
 import { access, readFile, writeFile } from "node:fs/promises";
 import { generateNonce } from "./security/nonce.js";
 import { WebviewMessageSchema } from "../shared/messages.js";
@@ -62,6 +62,32 @@ async function detectJsPackageManager(root: string): Promise<string> {
   if ((await check("bun.lockb")) || (await check("bun.lock")))
     return "bun add -d";
   return "npm install -D";
+}
+
+type ToolInstall =
+  | { kind: "js"; packageName: string }
+  | { kind: "python"; packageName: string }
+  | { kind: "php"; packageName: string };
+
+const INSTALLABLE_CHECKS: Record<string, ToolInstall> = {
+  "js-ts:prettier": { kind: "js", packageName: "prettier" },
+  "js-ts:eslint": { kind: "js", packageName: "eslint" },
+  "js-ts:tsc": { kind: "js", packageName: "typescript" },
+  "python:format": { kind: "python", packageName: "ruff" },
+  "python:lint": { kind: "python", packageName: "ruff" },
+  "python:mypy": { kind: "python", packageName: "mypy" },
+  "php:cs-fixer": {
+    kind: "php",
+    packageName: "friendsofphp/php-cs-fixer",
+  },
+  "php:analyze": { kind: "php", packageName: "phpstan/phpstan" },
+};
+
+function isWorkspacePath(workspaceRoot: string, candidate: string): boolean {
+  const path = relative(workspaceRoot, candidate);
+  return (
+    path !== "" && path !== ".." && !path.startsWith("..") && !isAbsolute(path)
+  );
 }
 
 // MARK: - Panel Class
@@ -244,7 +270,7 @@ export class PreFlightPanel {
         }
       }
     } else if (msg.type === "installTool") {
-      await this._handleInstallTool(msg.tool, msg.pack);
+      await this._handleInstallTool(msg.checkId);
     } else if (msg.type === "configureCheck") {
       await this._handleConfigureCheck(msg.checkId);
     } else if (msg.type === "openFile") {
@@ -254,6 +280,7 @@ export class PreFlightPanel {
       const fullPath = isAbsolute(msg.path)
         ? msg.path
         : resolve(root, msg.path);
+      if (!isWorkspacePath(root, fullPath)) return;
 
       try {
         const uri = vscode.Uri.file(fullPath);
@@ -270,7 +297,12 @@ export class PreFlightPanel {
       }
     } else if (msg.type === "openExternal") {
       const uri = vscode.Uri.parse(msg.url);
-      if (uri.scheme === "https") {
+      const advisoryUrls = this._lastSnapshot?.checks.flatMap((check) =>
+        check.result.findings
+          .map((finding) => finding.metadata?.advisoryUrl)
+          .filter((url): url is string => url !== undefined),
+      );
+      if (uri.scheme === "https" && advisoryUrls?.includes(msg.url)) {
         await vscode.env.openExternal(uri);
       }
     } else if (msg.type === "openConfig") {
@@ -278,28 +310,26 @@ export class PreFlightPanel {
     }
   }
 
-  private async _handleInstallTool(
-    toolName: string,
-    pack?: string,
-  ): Promise<void> {
+  private async _handleInstallTool(checkId: string): Promise<void> {
     const root = this._workspaceRoot();
     if (!root) return;
+    const definition = this._lastSnapshot?.checks.find(
+      (check) => check.definition.id === checkId,
+    )?.definition;
+    const install =
+      definition?.installable === false
+        ? undefined
+        : INSTALLABLE_CHECKS[checkId];
+    if (!install) return;
 
     let cmd: string;
-    if (pack === "python") {
-      cmd = `pip install ${toolName}`;
-    } else if (pack === "php") {
-      const pkgMap: Record<string, string> = {
-        "php-cs-fixer": "friendsofphp/php-cs-fixer",
-        phpstan: "phpstan/phpstan",
-        psalm: "vimeo/psalm",
-      };
-      const pkg = pkgMap[toolName] ?? toolName;
-      cmd = `composer require --dev ${pkg}`;
+    if (install.kind === "python") {
+      cmd = `pip install ${install.packageName}`;
+    } else if (install.kind === "php") {
+      cmd = `composer require --dev ${install.packageName}`;
     } else {
-      const pkg = toolName === "tsc" ? "typescript" : toolName;
       const pm = await detectJsPackageManager(root);
-      cmd = `${pm} ${pkg}`;
+      cmd = `${pm} ${install.packageName}`;
     }
 
     const terminal = vscode.window.createTerminal({

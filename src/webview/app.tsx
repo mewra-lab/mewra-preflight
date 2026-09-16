@@ -175,8 +175,8 @@ export function App() {
     [],
   );
 
-  const handleInstallTool = useCallback((tool: string, pack?: string) => {
-    post({ type: "installTool", tool, pack });
+  const handleInstallTool = useCallback((checkId: string) => {
+    post({ type: "installTool", checkId });
   }, []);
 
   const handleConfigureCheck = useCallback((checkId: string) => {

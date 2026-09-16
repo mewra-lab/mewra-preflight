@@ -133,6 +133,12 @@ Before a check runs, `.preflightignore` rules filter its `GitDiff` input. Global
 
 Installed companion extensions receive the versioned `MewraPreFlightAPI` through `vscode.extensions.getExtension(...).activate()`. The host applies `.mewra-preflight.json` `contributedChecks` enablement and severity controls before dashboard or MCP execution.
 
+The Webview may request an install only by check ID. The extension host resolves
+that ID through its fixed built-in allowlist before composing a terminal command;
+it never accepts a package name or shell fragment from the Webview. Advisory
+links are opened only when they match an HTTPS URL in the current validated
+check snapshot.
+
 Security-sensitive companion checks can use `PreFlightContext.resolveTrustedTool()`. It resolves only user-owned or system tool locations and never a binary from the opened workspace. The method is additive to API v1, so a companion can return `not-configured` rather than fall back to an untrusted executable on an older host.
 
 ## 6. Ecosystem detection

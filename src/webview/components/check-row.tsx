@@ -12,7 +12,7 @@ type CheckRowProps = {
   snapshot: CheckSnapshot;
   onOpenFinding?: (path: string, line: number) => void;
   onQuickFix?: (checkId: string, file?: string) => void;
-  onInstallTool?: (tool: string, pack?: string) => void;
+  onInstallTool?: (checkId: string) => void;
   onConfigureCheck?: (checkId: string) => void;
   onOpenExternal?: (url: string) => void;
   fixingTarget?: string | null;
@@ -297,10 +297,7 @@ export function CheckRow({
                 class="quick-fix-btn quick-fix-btn--install"
                 onClick={(e) => {
                   e.stopPropagation();
-                  const tool = definition.id.includes(":")
-                    ? (definition.id.split(":")[1] ?? definition.id)
-                    : definition.id;
-                  onInstallTool(tool, definition.pack);
+                  onInstallTool(definition.id);
                 }}
                 title={`Install ${definition.label}`}
               >

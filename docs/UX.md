@@ -28,6 +28,9 @@
 - When status is `not-configured`, an `[ Install ]` button is shown to install the tool into project devDependencies via integrated terminal.
 - QuickFix buttons (`[Fix All]` and `[Fix]`) trigger linter/formatter auto-fix with spinner feedback.
 - Route-summary checks may show colour-coded HTTP method/path chips. Each chip opens its source file and line when available.
+- Dependency-security findings group by package/version. They show severity,
+  CVSS, fixed version, and an advisory link when the scanner provides those
+  fields; lockfile findings do not expose a misleading `:0` source location.
 
 ## 4. Manual checklist & PR launch button
 
@@ -69,3 +72,5 @@ MANUAL CHECKS
 - Keyboard-navigable (buttons reachable by Tab, findings by Enter).
 - No external fonts or remote resources loaded by the Webview.
 - Live updates via `postMessage` — no polling.
+- A Webview action identifies a check or finding only; the extension host owns
+  all terminal commands and validates advisory links against the active snapshot.
