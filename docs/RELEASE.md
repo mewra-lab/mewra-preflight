@@ -15,6 +15,7 @@ Semantic Versioning:
 0.2.0  — Mewra Pounce route summary (changed route declarations in dashboard/PR), .preflightignore per-folder check-pack overrides
 0.3.0  — first-party local packs: Dependency Guard (insecure dependency sources), ORM Cost Sentry (query-in-loop and destructive migrations), Style Guardian (static Tailwind conflicts)
 0.4.0  — contributed-check contract v1 and Mewra Dependency Guard companion extension
+0.5.0  — push branch and create GitHub pull requests directly through authenticated GitHub CLI, with pre-filled browser fallback
 1.0.0  — Mewra Drift integration, automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX
 ```
 
@@ -82,6 +83,15 @@ notes, and validation status. Do not claim route tracing when the Pounce pack
 only detects route declarations in changed files.
 
 ## 8. Changelog
+
+### v0.5.0
+
+**Direct GitHub PR creation**
+
+- **Truthful PR action**: the dashboard now pushes the current branch to `origin` with its upstream configured before launching the PR flow.
+- **GitHub CLI integration**: when a trusted, authenticated `gh` installation is available, PreFlight creates the pull request directly and opens the resulting PR. Existing open PRs are opened instead of duplicated.
+- **Transparent fallback**: GitHub falls back to a pre-filled compare page if direct creation is unavailable; GitLab continues to open a pre-filled merge-request page after push.
+- **Privacy and safety**: GitHub communication occurs only after the explicit button click, through the user's existing `gh` authentication. Git and GitHub CLI commands use fixed argument arrays and trusted executable resolution.
 
 ### v0.4.0
 

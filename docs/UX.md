@@ -8,12 +8,12 @@
 
 ## 2. Panel states
 
-| State       | What is shown                                              |
-| ----------- | ---------------------------------------------------------- |
-| **Idle**    | Tagline + "▶ Run Pipeline" button                          |
-| **Running** | Check rows with live status updates + spinner in header    |
-| **Done**    | All rows resolved + "↗ Open Pull Request" button in footer |
-| **Error**   | Warning icon + error message + "▶ Re-run" button           |
+| State       | What is shown                                             |
+| ----------- | --------------------------------------------------------- |
+| **Idle**    | Tagline + "▶ Run Pipeline" button                         |
+| **Running** | Check rows with live status updates + spinner in header   |
+| **Done**    | All rows resolved + "↗ Push & Create PR" button in footer |
+| **Error**   | Warning icon + error message + "▶ Re-run" button          |
 
 ## 3. Check row anatomy
 
@@ -43,6 +43,7 @@ MANUAL CHECKS
 - **Ready** (green): all error-severity checks pass and error manual checks are checked.
 - **Blocked** (muted): one or more error checks or manual checklist items remain unresolved, with live blocker count badge.
 - If `blockingOnWarnings` is `true`, warning-severity failures also block.
+- Clicking a ready button pushes the current branch. For GitHub, PreFlight uses an authenticated `gh` CLI to create a PR directly (or opens an existing PR); if the CLI is missing or unavailable, it opens a pre-filled browser page. GitLab opens a pre-filled MR page after the push.
 
 ## 5. Commands and keybindings
 

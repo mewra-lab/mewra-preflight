@@ -4,7 +4,7 @@
 
 Mewra PreFlight must remain:
 
-- deterministic and local-first (no AI, no network calls in v1);
+- deterministic and local-first (no AI or background network calls);
 - tool-agnostic at the core (check packs registered per ecosystem, not spread through logic);
 - safe when handling untrusted Webview messages;
 - gracefully degraded when tools are missing (`not-configured`, never `failed`);
@@ -40,7 +40,7 @@ VS Code Workbench
 │   │   ├── ecosystem/
 │   │   │   └── detect-ecosystem.ts
 │   │   └── pr/
-│   │       └── pr-launcher.ts     — PR URL builder
+│   │       └── pr-launcher.ts     — trusted git push + GitHub PR creator / browser fallback
 │   │
 │   └── security/
 │       └── nonce.ts

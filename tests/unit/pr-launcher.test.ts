@@ -3,6 +3,8 @@ import {
   remoteToHttps,
   formatBranchTitle,
   formatPRBody,
+  createGitHubPullRequest,
+  pushCurrentBranch,
 } from "../../src/core/pr/pr-launcher.js";
 import type { PreFlightSnapshot } from "../../src/shared/types.js";
 
@@ -158,5 +160,126 @@ describe("formatPRBody", () => {
     const body = formatPRBody("feat/simple", "main", [], undefined);
     expect(body).not.toContain("<details open>");
     expect(body).not.toContain("```mermaid");
+  });
+});
+
+describe("pushCurrentBranch", () => {
+  it("pushes the current branch and configures its origin upstream", async () => {
+    const calls: Array<{ command: string; args: string[]; cwd: string }> = [];
+
+    const result = await pushCurrentBranch("/workspace", "feat/pr-launch", {
+      resolveTool: async () => "/usr/bin/git",
+      runCommand: async (command, args, cwd) => {
+        calls.push({ command, args, cwd });
+        return { stdout: "", stderr: "" };
+      },
+    });
+
+    expect(result).toEqual({ ok: true });
+    expect(calls).toEqual([
+      {
+        command: "/usr/bin/git",
+        args: ["push", "--set-upstream", "origin", "feat/pr-launch"],
+        cwd: "/workspace",
+      },
+    ]);
+  });
+});
+
+describe("createGitHubPullRequest", () => {
+  const draft = {
+    url: "https://github.com/mewra-lab/preflight/compare/main...feat%2Fpr-launch",
+    branch: "feat/pr-launch",
+    targetBranch: "main",
+    title: "feat: pr launch",
+    body: "A generated PR body.\n",
+  };
+
+  it("returns an existing PR instead of creating a duplicate", async () => {
+    const calls: string[][] = [];
+    const result = await createGitHubPullRequest("/workspace", draft, {
+      resolveTool: async () => "/usr/local/bin/gh",
+      runCommand: async (_command, args) => {
+        calls.push(args);
+        return {
+          stdout: "https://github.com/mewra-lab/preflight/pull/12\n",
+          stderr: "",
+        };
+      },
+    });
+
+    expect(result).toEqual({
+      kind: "existing",
+      url: "https://github.com/mewra-lab/preflight/pull/12",
+    });
+    expect(calls).toEqual([
+      [
+        "pr",
+        "list",
+        "--head",
+        "feat/pr-launch",
+        "--state",
+        "open",
+        "--json",
+        "url",
+        "--jq",
+        ".[0].url",
+      ],
+    ]);
+  });
+
+  it("creates a PR with explicit base, head, title, and body arguments", async () => {
+    const calls: string[][] = [];
+    const result = await createGitHubPullRequest("/workspace", draft, {
+      resolveTool: async () => "/usr/local/bin/gh",
+      runCommand: async (_command, args) => {
+        calls.push(args);
+        if (args[1] === "list") return { stdout: "", stderr: "" };
+        return {
+          stdout: "https://github.com/mewra-lab/preflight/pull/13\n",
+          stderr: "",
+        };
+      },
+    });
+
+    expect(result).toEqual({
+      kind: "created",
+      url: "https://github.com/mewra-lab/preflight/pull/13",
+    });
+    expect(calls).toEqual([
+      [
+        "pr",
+        "list",
+        "--head",
+        "feat/pr-launch",
+        "--state",
+        "open",
+        "--json",
+        "url",
+        "--jq",
+        ".[0].url",
+      ],
+      [
+        "pr",
+        "create",
+        "--base",
+        "main",
+        "--head",
+        "feat/pr-launch",
+        "--title",
+        "feat: pr launch",
+        "--body",
+        "A generated PR body.\n",
+      ],
+    ]);
+  });
+
+  it("returns null when GitHub CLI is unavailable", async () => {
+    const result = await createGitHubPullRequest("/workspace", draft, {
+      resolveTool: async () => null,
+      runCommand: async () => ({ stdout: "", stderr: "" }),
+    });
+
+    expect(result).toBeNull();
   });
 });

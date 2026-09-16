@@ -24,7 +24,11 @@ import { buildPouncePack } from "../core/checks/packs/pounce/index.js";
 import { buildOrmCostSentryPack } from "../core/checks/packs/orm-cost-sentry/index.js";
 import { buildStyleGuardianPack } from "../core/checks/packs/style-guardian/index.js";
 import { buildCustomChecks } from "../core/checks/packs/custom/custom-runner.js";
-import { buildPRUrl } from "../core/pr/pr-launcher.js";
+import {
+  buildPRUrl,
+  createGitHubPullRequest,
+  pushCurrentBranch,
+} from "../core/pr/pr-launcher.js";
 import {
   loadWorkspaceConfig,
   mergeWorkspaceConfig,
@@ -666,10 +670,35 @@ export class PreFlightPanel {
       return;
     }
 
+    const push = await pushCurrentBranch(root, prUrl.branch);
+    if (!push.ok) {
+      void vscode.window.showErrorMessage(
+        `Could not push '${prUrl.branch}' to origin. Resolve the Git error and try again.`,
+      );
+      return;
+    }
+
     this._mcpHandler.setDraftPR({
       title: prUrl.title,
       body: prUrl.body,
     });
+
+    if (config.gitHost === "github") {
+      const pullRequest = await createGitHubPullRequest(root, prUrl);
+      if (pullRequest) {
+        const action =
+          pullRequest.kind === "created" ? "created" : "already exists";
+        void vscode.window.showInformationMessage(
+          `GitHub pull request ${action}.`,
+        );
+        await vscode.env.openExternal(vscode.Uri.parse(pullRequest.url));
+        return;
+      }
+
+      void vscode.window.showWarningMessage(
+        "GitHub CLI could not create the pull request. Opened a pre-filled GitHub page instead. Install and authenticate gh for direct creation.",
+      );
+    }
 
     await vscode.env.openExternal(vscode.Uri.parse(prUrl.url));
   }

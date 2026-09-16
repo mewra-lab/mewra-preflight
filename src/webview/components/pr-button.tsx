@@ -27,7 +27,7 @@ export function PrButton({
       title={
         blocked
           ? "Fix all failing checks before creating a pull request."
-          : "Create Pull Request in browser"
+          : "Push this branch and create a pull request"
       }
     >
       <span class="pr-button__icon">
