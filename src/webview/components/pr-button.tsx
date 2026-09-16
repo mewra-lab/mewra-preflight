@@ -15,9 +15,9 @@ export function PrButton({
 }: PrButtonProps) {
   const label = blocked
     ? blockerCount > 0
-      ? `Push & Create PR (${blockerCount} ${blockerCount === 1 ? "blocker" : "blockers"} remaining)`
-      : "Resolve Errors to Open PR"
-    : "Push & Create PR";
+      ? `Create PR / MR (${blockerCount} ${blockerCount === 1 ? "blocker" : "blockers"} remaining)`
+      : "Resolve Errors to Create PR / MR"
+    : "Create PR / MR";
 
   return (
     <button
@@ -27,7 +27,7 @@ export function PrButton({
       title={
         blocked
           ? "Fix all failing checks before creating a pull request."
-          : "Push this branch and create a pull request"
+          : "Create a pull request or merge request from the pushed branch"
       }
     >
       <span class="pr-button__icon">

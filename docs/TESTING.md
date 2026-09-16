@@ -9,7 +9,7 @@ Testing must protect:
 - graceful degradation when tools are missing (`not-configured`);
 - universal pack pattern detection (no-console-log, no-debugger, no-env-leak);
 - Webview protocol safety (Zod message validation);
-- PR URL construction from remote URLs and branches, trusted branch pushing, and GitHub CLI PR creation/fallback behavior.
+- PR URL construction from remote URLs and branches, plus GitHub and GitLab CLI PR/MR creation/fallback behavior.
 
 ## 2. Test layers
 
@@ -20,7 +20,7 @@ Pure modules testable without VS Code:
 - `git-diff.ts` — name-status parsing logic;
 - `runner.ts` — execution lifecycle, parallel scheduling, error recovery;
 - `detect-ecosystem.ts` — file presence detection;
-- `pr-launcher.ts` — remote URL → HTTPS conversion, PR URL construction, fixed-argument Git push, and GitHub CLI PR creation;
+- `pr-launcher.ts` — remote URL → HTTPS conversion, PR URL construction, and fixed-argument GitHub/GitLab CLI PR/MR creation;
 - `packs/universal/` — pattern matching in diff patches;
 - `packs/js-ts/` — pack factory shape and check properties;
 - `packs/pounce/` — changed-route detection and Mermaid summary generation;
@@ -46,7 +46,7 @@ Manual checklist:
 - [ ] Dashboard shows `running` spinner while checks execute
 - [ ] All checks reflect correct pass/fail/not-configured after run
 - [ ] Click a finding → opens file at correct line
-- [ ] "Push & Create PR" pushes the branch, then creates GitHub PRs through `gh` or opens the documented browser fallback
+- [ ] "Create PR / MR" leaves push to Source Control, then creates via `gh`/`glab` or opens the documented browser fallback with the description copied
 - [ ] Button is blocked (greyed out) when any error check fails
 - [ ] Tool missing (e.g., no Prettier) shows `not-configured`, not `fail`
 

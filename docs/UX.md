@@ -8,12 +8,12 @@
 
 ## 2. Panel states
 
-| State       | What is shown                                             |
-| ----------- | --------------------------------------------------------- |
-| **Idle**    | Tagline + "▶ Run Pipeline" button                         |
-| **Running** | Check rows with live status updates + spinner in header   |
-| **Done**    | All rows resolved + "↗ Push & Create PR" button in footer |
-| **Error**   | Warning icon + error message + "▶ Re-run" button          |
+| State       | What is shown                                           |
+| ----------- | ------------------------------------------------------- |
+| **Idle**    | Tagline + "▶ Run Pipeline" button                       |
+| **Running** | Check rows with live status updates + spinner in header |
+| **Done**    | All rows resolved + "↗ Create PR / MR" button in footer |
+| **Error**   | Warning icon + error message + "▶ Re-run" button        |
 
 ## 3. Check row anatomy
 
@@ -36,14 +36,14 @@ MANUAL CHECKS
 [ ] Applied DB migration to dev cluster
     (Triggered: prisma/migrations/** was modified)
 
-[ 🚀 Push & Create PR (2 blockers remaining) ]
+[ 🚀 Create PR / MR (2 blockers remaining) ]
 ```
 
 - Triggered manual checks display condition trigger note and toggleable checkbox.
 - **Ready** (green): all error-severity checks pass and error manual checks are checked.
 - **Blocked** (muted): one or more error checks or manual checklist items remain unresolved, with live blocker count badge.
 - If `blockingOnWarnings` is `true`, warning-severity failures also block.
-- Clicking a ready button pushes the current branch. For GitHub, PreFlight uses an authenticated `gh` CLI to create a PR directly (or opens an existing PR); if the CLI is missing or unavailable, it opens a pre-filled browser page. For GitLab, PreFlight sends the title and generated description as native merge-request Git push options, avoiding browser URL-size limits; if the server rejects those options, it opens the MR page and copies the description for paste.
+- Clicking a ready button never pushes the current branch; users keep their normal Source Control workflow for that action. For GitHub, PreFlight uses an authenticated `gh` CLI to create a PR directly (or opens an existing PR). For GitLab, it uses an authenticated `glab` CLI to create an MR with the generated description. If either CLI is unavailable, PreFlight opens the provider page and copies the description for paste.
 
 ## 5. Commands and keybindings
 

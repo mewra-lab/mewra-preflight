@@ -208,10 +208,6 @@ type PRLauncherDependencies = {
   ) => Promise<CommandOutput>;
 };
 
-export type PushResult = { ok: true } | { ok: false };
-
-export type GitLabPushResult = { ok: true; url: string | null } | { ok: false };
-
 export type GitHubPullRequestResult = {
   kind: "created" | "existing";
   url: string;
@@ -247,76 +243,44 @@ function launcherDependencies(
   };
 }
 
-/** Pushes the current branch using a trusted Git executable. */
-export async function pushCurrentBranch(
-  workspaceRoot: string,
-  branch: string,
-  dependencies: PRLauncherDependencies = {},
-): Promise<PushResult> {
-  const { resolveTool, runCommand: execute } = launcherDependencies(
-    workspaceRoot,
-    dependencies,
-  );
-  const git = await resolveTool("git");
-  if (!git) return { ok: false };
-
-  try {
-    await execute(
-      git,
-      ["push", "--set-upstream", "origin", branch],
-      workspaceRoot,
-    );
-    return { ok: true };
-  } catch {
-    return { ok: false };
-  }
-}
-
-function mergeRequestUrl(output: string): string | null {
-  return output.match(/https:\/\/\S+\/-\/merge_requests\/\d+/)?.[0] ?? null;
-}
-
 /**
- * Pushes a branch and asks GitLab to create its merge request server-side.
- * Git push options avoid browser URL-size limits for generated descriptions.
+ * Creates a GitLab merge request through the user's authenticated GitLab CLI.
+ * The source branch must already be pushed by the user's normal Git workflow.
  */
-export async function pushGitLabMergeRequest(
+export async function createGitLabMergeRequest(
   workspaceRoot: string,
   draft: PRUrl,
   dependencies: PRLauncherDependencies = {},
-): Promise<GitLabPushResult> {
+): Promise<GitHubPullRequestResult | null> {
   const { resolveTool, runCommand: execute } = launcherDependencies(
     workspaceRoot,
     dependencies,
   );
-  const git = await resolveTool("git");
-  if (!git) return { ok: false };
+  const glab = await resolveTool("glab");
+  if (!glab) return null;
 
   try {
     const result = await execute(
-      git,
+      glab,
       [
-        "push",
-        "--set-upstream",
-        "-o",
-        "merge_request.create",
-        "-o",
-        `merge_request.target=${draft.targetBranch}`,
-        "-o",
-        `merge_request.title=${draft.title}`,
-        "-o",
-        `merge_request.description=${draft.body}`,
-        "origin",
+        "mr",
+        "create",
+        "--source-branch",
         draft.branch,
+        "--target-branch",
+        draft.targetBranch,
+        "--title",
+        draft.title,
+        "--description",
+        draft.body,
+        "--yes",
       ],
       workspaceRoot,
     );
-    return {
-      ok: true,
-      url: mergeRequestUrl(`${result.stdout}\n${result.stderr}`),
-    };
+    const url = outputUrl(result.stdout);
+    return url ? { kind: "created", url } : null;
   } catch {
-    return { ok: false };
+    return null;
   }
 }
 

@@ -15,7 +15,7 @@ Semantic Versioning:
 0.2.0  — Mewra Pounce route summary (changed route declarations in dashboard/PR), .preflightignore per-folder check-pack overrides
 0.3.0  — first-party local packs: Dependency Guard (insecure dependency sources), ORM Cost Sentry (query-in-loop and destructive migrations), Style Guardian (static Tailwind conflicts)
 0.4.0  — contributed-check contract v1 and Mewra Dependency Guard companion extension
-0.5.0  — push branch and create GitHub pull requests directly through authenticated GitHub CLI, with pre-filled browser fallback
+0.5.0  — create GitHub pull requests and GitLab merge requests through authenticated CLIs, with browser fallback
 1.0.0  — Mewra Drift integration, automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX
 ```
 
@@ -88,11 +88,10 @@ only detects route declarations in changed files.
 
 **Direct GitHub PR creation**
 
-- **Truthful PR action**: the dashboard now pushes the current branch to `origin` with its upstream configured before launching the PR flow.
-- **GitHub CLI integration**: when a trusted, authenticated `gh` installation is available, PreFlight creates the pull request directly and opens the resulting PR. Existing open PRs are opened instead of duplicated.
-- **Transparent fallback**: GitHub falls back to a pre-filled compare page if direct creation is unavailable; GitLab continues to open a pre-filled merge-request page after push.
-- **Reliable GitLab descriptions**: GitLab MRs now use native `merge_request.title` and `merge_request.description` push options, avoiding browser URL limits that could leave a generated description blank. If a GitLab server rejects push options, PreFlight copies the description before opening the fallback page.
-- **Privacy and safety**: GitHub communication occurs only after the explicit button click, through the user's existing `gh` authentication. Git and GitHub CLI commands use fixed argument arrays and trusted executable resolution.
+- **Separated push and creation**: the dashboard never pushes; users keep their normal Source Control workflow and run Create PR / MR after their branch is available remotely.
+- **GitHub and GitLab CLI integration**: trusted, authenticated `gh` and `glab` installations create the generated PR/MR descriptions directly. Existing GitHub PRs are opened instead of duplicated.
+- **Transparent fallback**: if a provider CLI is unavailable or cannot create the PR/MR, PreFlight opens the provider page and copies the generated description for paste.
+- **Privacy and safety**: provider communication occurs only after the explicit button click, through the user's existing CLI authentication. CLI commands use fixed argument arrays and trusted executable resolution.
 - **Safe dependency-scanner setup**: contributed checks can opt out of the generic package-manager installer. Dependency Guard's OSV/Trivy scanner no longer attempts to install a nonexistent `security-scan` npm package.
 
 ### v0.4.0

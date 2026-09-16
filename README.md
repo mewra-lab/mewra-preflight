@@ -57,7 +57,7 @@ PR button → blocked until errors & required checklists are resolved.
 - **Interactive manual checklist** — Human verification checklist items that trigger conditionally when specific files are touched (e.g. verifying database migrations when schema files are modified).
 - **Custom community JSON packs** — Easily define project-specific linters or script validations in `.mewra-preflight.json` without writing extension code.
 - **AI coding agent MCP server** — Built-in Model Context Protocol (MCP) server exposing pipeline status, findings, and check execution to AI coding assistants and agent workflows.
-- **One-click PR launcher** — Pushes the branch and auto-assembles a rich pull request draft with commit summaries, test-pairing coverage, check results, and (when Pounce is enabled) an embedded Mermaid blast-radius diagram. GitHub uses an authenticated GitHub CLI; GitLab uses native merge-request push options so the generated description is not constrained by browser URL length.
+- **One-click PR launcher** — Auto-assembles a rich pull request draft with commit summaries, test-pairing coverage, check results, and (when Pounce is enabled) an embedded Mermaid blast-radius diagram. After you push through your normal Git workflow, GitHub uses `gh` and GitLab uses `glab` to create the PR/MR with that description directly.
 - **Graceful degradation (BYOT)** — Never bundles bulky toolchains. Uses your project's local versions (`node_modules`, `.venv`, `vendor`, global `PATH`). Missing tools show `not-configured` rather than failing.
 - **Local-first & private** — No telemetry or background network activity. A Git push and direct GitHub PR creation occur only after you press the PR button.
 
@@ -77,7 +77,7 @@ Catch issues before git push. Findings link directly to the exact file and line,
 - **In-Editor Findings**: Clickable file:line diagnostics (`src/webview/app.tsx:1 ↗`).
 - **One-Click QuickFix**: Directly re-formats via Prettier (`Fix` / `Fix All`) without terminal commands.
 - **Graceful Degradation**: Missing tools (e.g. ESLint not in `node_modules` or `PATH`) surface as neutral `not-configured` with a one-click `Install` button, never crashing or failing your build.
-- **Gatekeeper Lock**: The **Push & Create PR** button is safely locked until blocking errors are resolved.
+- **Gatekeeper Lock**: The **Create PR / MR** button is safely locked until blocking errors are resolved.
 
 ---
 
@@ -104,13 +104,20 @@ All checks green. One click to push your branch and create your PR.
 </p>
 
 - **All Clear Indicator**: Status bar and header show `✓ PreFlight: Ready` / `Passed`.
-- **One-Click PR Launcher**: The emerald **↗ Push & Create PR** button pushes your branch, then creates a GitHub PR through an authenticated `gh` CLI session. If `gh` is unavailable or cannot authenticate, it opens a pre-filled GitHub page instead. GitLab creates the MR through native Git push options, including the generated description; if the server rejects those options, PreFlight opens its MR page and copies the description for paste.
+- **One-Click PR Launcher**: The emerald **↗ Create PR / MR** button never pushes. It creates a GitHub PR through an authenticated `gh` session or a GitLab MR through an authenticated `glab` session, including the generated description. If the CLI is unavailable or cannot authenticate, PreFlight opens the provider page and copies the description for paste.
 
 For direct GitHub PR creation, install and authenticate the GitHub CLI once:
 
 ```bash
 brew install gh # macOS
 gh auth login
+```
+
+For a self-managed GitLab instance, install and authenticate GitLab CLI once:
+
+```bash
+brew install glab # macOS
+glab auth login --hostname git.inet.co.th
 ```
 
 ---
@@ -290,7 +297,7 @@ Mewra PreFlight is designed as the orchestration host for the Mewra suite:
 | **0.2.0** | Released    | Pounce route detection with dashboard/PR Mermaid summaries, per-folder check-pack overrides (`.preflightignore`)                                                                                                                                                                                                                    |
 | **0.3.0** | Released    | First-party local, diff-scoped packs: Dependency Guard (insecure dependency sources), ORM Cost Sentry (query-in-loop and destructive migration heuristics), and Style Guardian (static Tailwind utility conflicts).                                                                                                                 |
 | **0.4.0** | Released    | Versioned contributed-check API, workspace enablement/severity controls, and Mewra Dependency Guard as a separate OSV/Trivy companion extension that retains secure dependency-source checking.                                                                                                                                     |
-| **0.5.0** | **Current** | Pushes the current branch and creates GitHub PRs directly through an authenticated GitHub CLI; uses a transparent pre-filled browser fallback when the CLI is unavailable and for GitLab MRs.                                                                                                                                       |
+| **0.5.0** | **Current** | Creates GitHub PRs through authenticated `gh` and GitLab MRs through authenticated `glab`, without pushing the branch; provider-page fallback copies the generated description for paste.                                                                                                                                           |
 | **1.0.0** | Future      | **Mewra Drift integration** (API contract drift detection), automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX                                                                                                                                                                  |
 
 ---

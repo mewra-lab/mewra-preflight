@@ -40,7 +40,7 @@ VS Code Workbench
 │   │   ├── ecosystem/
 │   │   │   └── detect-ecosystem.ts
 │   │   └── pr/
-│   │       └── pr-launcher.ts     — trusted git push + GitHub PR / GitLab MR creator
+│   │       └── pr-launcher.ts     — GitHub PR / GitLab MR creator with browser fallback
 │   │
 │   └── security/
 │       └── nonce.ts

@@ -4,8 +4,7 @@ import {
   formatBranchTitle,
   formatPRBody,
   createGitHubPullRequest,
-  pushGitLabMergeRequest,
-  pushCurrentBranch,
+  createGitLabMergeRequest,
 } from "../../src/core/pr/pr-launcher.js";
 import type { PreFlightSnapshot } from "../../src/shared/types.js";
 
@@ -164,30 +163,7 @@ describe("formatPRBody", () => {
   });
 });
 
-describe("pushCurrentBranch", () => {
-  it("pushes the current branch and configures its origin upstream", async () => {
-    const calls: Array<{ command: string; args: string[]; cwd: string }> = [];
-
-    const result = await pushCurrentBranch("/workspace", "feat/pr-launch", {
-      resolveTool: async () => "/usr/bin/git",
-      runCommand: async (command, args, cwd) => {
-        calls.push({ command, args, cwd });
-        return { stdout: "", stderr: "" };
-      },
-    });
-
-    expect(result).toEqual({ ok: true });
-    expect(calls).toEqual([
-      {
-        command: "/usr/bin/git",
-        args: ["push", "--set-upstream", "origin", "feat/pr-launch"],
-        cwd: "/workspace",
-      },
-    ]);
-  });
-});
-
-describe("pushGitLabMergeRequest", () => {
+describe("createGitLabMergeRequest", () => {
   const draft = {
     url: "https://gitlab.example.com/team/preflight/-/merge_requests/new",
     branch: "feat/pr-launch",
@@ -196,41 +172,40 @@ describe("pushGitLabMergeRequest", () => {
     body: "A generated MR body.\n",
   };
 
-  it("creates an MR with title and description Git push options", async () => {
+  it("creates an MR with title and description without pushing", async () => {
     const calls: Array<{ command: string; args: string[]; cwd: string }> = [];
 
-    const result = await pushGitLabMergeRequest("/workspace", draft, {
-      resolveTool: async () => "/usr/bin/git",
+    const result = await createGitLabMergeRequest("/workspace", draft, {
+      resolveTool: async () => "/usr/bin/glab",
       runCommand: async (command, args, cwd) => {
         calls.push({ command, args, cwd });
         return {
           stdout:
-            "remote: https://gitlab.example.com/team/preflight/-/merge_requests/42\n",
+            "https://gitlab.example.com/team/preflight/-/merge_requests/42\n",
           stderr: "",
         };
       },
     });
 
     expect(result).toEqual({
-      ok: true,
+      kind: "created",
       url: "https://gitlab.example.com/team/preflight/-/merge_requests/42",
     });
     expect(calls).toEqual([
       {
-        command: "/usr/bin/git",
+        command: "/usr/bin/glab",
         args: [
-          "push",
-          "--set-upstream",
-          "-o",
-          "merge_request.create",
-          "-o",
-          "merge_request.target=develop",
-          "-o",
-          "merge_request.title=feat: pr launch",
-          "-o",
-          "merge_request.description=A generated MR body.\n",
-          "origin",
+          "mr",
+          "create",
+          "--source-branch",
           "feat/pr-launch",
+          "--target-branch",
+          "develop",
+          "--title",
+          "feat: pr launch",
+          "--description",
+          "A generated MR body.\n",
+          "--yes",
         ],
         cwd: "/workspace",
       },
