@@ -16,6 +16,7 @@ Semantic Versioning:
 0.3.0  — first-party local packs: Dependency Guard (insecure dependency sources), ORM Cost Sentry (query-in-loop and destructive migrations), Style Guardian (static Tailwind conflicts)
 0.4.0  — contributed-check contract v1 and Mewra Dependency Guard companion extension
 0.5.0  — create GitHub pull requests and GitLab merge requests through authenticated CLIs, with browser fallback
+0.6.0  — Mewra Pounce becomes a companion extension; PreFlight hosts generic contributed route summaries
 1.0.0  — Mewra Drift integration, automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX
 ```
 
@@ -83,6 +84,15 @@ notes, and validation status. Do not claim route tracing when the Pounce pack
 only detects route declarations in changed files.
 
 ## 8. Changelog
+
+### v0.6.0
+
+**Pounce companion boundary**
+
+- **Single ownership**: moved `pounce:blast-radius` route declaration detection from PreFlight into Mewra Pounce, which registers the check through the versioned extension API.
+- **Tool-agnostic host**: PreFlight no longer imports, enables, or configures a Pounce pack. It renders generic contributed route payloads and Mermaid PR/MR sections.
+- **Workspace configuration**: control Pounce through `contributedChecks.pounce:blast-radius`; the legacy `ecosystems.pounce` and `enabledPacks` entries are removed.
+- **Development host**: the combined F5 profile now loads PreFlight, Dependency Guard, and Pounce together.
 
 ### v0.5.0
 
