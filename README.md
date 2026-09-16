@@ -51,7 +51,7 @@ PR button → blocked until errors & required checklists are resolved.
   - **PHP**: `php-cs-fixer`, `phpstan`, Psalm, test-file pairing.
 - **Universal sanity checks** — Built-in guards detecting stray `console.log` / debuggers, exposed environment configurations, hardcoded localhost URLs, git merge conflict markers, and oversized binary files.
 - **Mewra Pounce — Route Summary** _(v0.2.0)_ — The built-in `pounce` pack detects route declarations in changed Next.js, Hono, Express, Fastify, NestJS, Go, Python, and PHP files. It shows colour-coded route chips and adds a Mermaid summary of the changed routes and files to the PR draft.
-- **First-party safety packs** _(v0.3.0)_ — Dependency Guard fails newly added insecure HTTP package sources; ORM Cost Sentry flags potential ORM queries inside loops and destructive migration statements; Style Guardian flags conflicting static Tailwind utilities. These are local, diff-scoped heuristics and every finding links to the changed line.
+- **Contributed security checks** _(v0.4.0)_ — Installed companion extensions register checks through the PreFlight API. Mewra Dependency Guard scans only changed lockfiles with OSV Scanner and Trivy, while preserving the insecure dependency-source guard.
 - **`.preflightignore` support** _(v0.2.0)_ — Place a `.preflightignore` file in the workspace root to exclude files/folders from diff analysis globally (`dist/**`) or per-check/pack (`scripts/**: universal:no-console-log`, `legacy/**: js-ts`).
 - **Interactive manual checklist** — Human verification checklist items that trigger conditionally when specific files are touched (e.g. verifying database migrations when schema files are modified).
 - **Custom community JSON packs** — Easily define project-specific linters or script validations in `.mewra-preflight.json` without writing extension code.
@@ -147,13 +147,13 @@ All checks green. One click to push your branch and open your PR in the browser.
 
 Configure via VS Code Settings (`settings.json`):
 
-| Setting                             | Type       | Default                                                                                                            | Description                                                                 |
-| :---------------------------------- | :--------- | :----------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------- |
-| `mewraPreflight.targetBranch`       | `string`   | `"main"`                                                                                                           | Base branch to diff against                                                 |
-| `mewraPreflight.diffScope`          | `string`   | `"branch"`                                                                                                         | Scope to analyze: `"branch"` (vs target branch), `"staged"`, or `"working"` |
-| `mewraPreflight.enabledPacks`       | `string[]` | `["universal", "js-ts", "go", "python", "php", "pounce", "dependency-guard", "orm-cost-sentry", "style-guardian"]` | Active check packs                                                          |
-| `mewraPreflight.blockingOnWarnings` | `boolean`  | `false`                                                                                                            | When true, warning-severity findings also block PR launch                   |
-| `mewraPreflight.gitHost`            | `string`   | `"github"`                                                                                                         | Hosting platform for PR generation (`"github"` or `"gitlab"`)               |
+| Setting                             | Type       | Default                                                                                        | Description                                                                 |
+| :---------------------------------- | :--------- | :--------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------- |
+| `mewraPreflight.targetBranch`       | `string`   | `"main"`                                                                                       | Base branch to diff against                                                 |
+| `mewraPreflight.diffScope`          | `string`   | `"branch"`                                                                                     | Scope to analyze: `"branch"` (vs target branch), `"staged"`, or `"working"` |
+| `mewraPreflight.enabledPacks`       | `string[]` | `["universal", "js-ts", "go", "python", "php", "pounce", "orm-cost-sentry", "style-guardian"]` | Active check packs                                                          |
+| `mewraPreflight.blockingOnWarnings` | `boolean`  | `false`                                                                                        | When true, warning-severity findings also block PR launch                   |
+| `mewraPreflight.gitHost`            | `string`   | `"github"`                                                                                     | Hosting platform for PR generation (`"github"` or `"gitlab"`)               |
 
 ---
 
@@ -267,7 +267,7 @@ Mewra PreFlight is designed as the orchestration host for the Mewra suite:
 ```
 
 - **[Mewra Pounce](https://github.com/mewra-lab/mewra-pounce)** (`mewra.mewra-pounce`): Traces reverse call hierarchy and surfaces blast radius directly in the PreFlight dashboard (affected public API routes, background workers, and jobs).
-- **Mewra Dependency Guard**: Lockfile vulnerability scanning powered by OSV and Trivy.
+- **Mewra Dependency Guard** (`mewra.mewra-dependency-guard`): Registers a lockfile-only OSV and Trivy security scan plus the insecure dependency-source guard with PreFlight.
 - **ORM Cost Sentry**: Detects N+1 query patterns and unindexed migration risks across Prisma, Drizzle, and SQLAlchemy.
 - **Mewra Style Guardian**: Enforces AST design tokens and catches Tailwind CSS conflicts.
 - **Mewra Drift**: Detects contract drift between API implementations and schemas.
@@ -280,7 +280,8 @@ Mewra PreFlight is designed as the orchestration host for the Mewra suite:
 | :-------- | :---------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **0.1.0** | Released    | Core diff-scoped runner (branch, staged, working tree), Universal pack (secrets, console.log, debuggers, localhost, conflicts, file size), Polyglot packs (JS/TS, Python, Go, PHP), Community JSON custom packs, interactive manual checklist with file triggers, monorepo resolution, Built-in Model Context Protocol (MCP) server |
 | **0.2.0** | Released    | Pounce route detection with dashboard/PR Mermaid summaries, per-folder check-pack overrides (`.preflightignore`)                                                                                                                                                                                                                    |
-| **0.3.0** | **Current** | First-party local, diff-scoped packs: Dependency Guard (insecure dependency sources), ORM Cost Sentry (query-in-loop and destructive migration heuristics), and Style Guardian (static Tailwind utility conflicts). Local trend/history and external CVE scanner integrations remain future work.                                   |
+| **0.3.0** | Released    | First-party local, diff-scoped packs: Dependency Guard (insecure dependency sources), ORM Cost Sentry (query-in-loop and destructive migration heuristics), and Style Guardian (static Tailwind utility conflicts).                                                                                                                 |
+| **0.4.0** | **Current** | Versioned contributed-check API, workspace enablement/severity controls, and Mewra Dependency Guard as a separate OSV/Trivy companion extension that retains secure dependency-source checking.                                                                                                                                     |
 | **1.0.0** | Future      | **Mewra Drift integration** (API contract drift detection), automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX                                                                                                                                                                  |
 
 ---
@@ -321,6 +322,14 @@ Runs: formatting check → TypeScript compilation check → unit test suite → 
 - [`PRIVACY.md`](./PRIVACY.md) — Local-first privacy statement
 
 ---
+
+## What's New in v0.4.0
+
+**Contributed Dependency Guard**
+
+- **Versioned extension API**: contributed checks now register against API version 1.
+- **Workspace controls**: `.mewra-preflight.json` now applies `contributedChecks.<id>.enabled` and `.severity` to registered checks, including MCP-triggered runs.
+- **Dependency Guard companion**: OSV and Trivy vulnerability scanning, plus the existing insecure dependency-source guard, now live in Mewra Dependency Guard, preserving PreFlight as the generic host.
 
 ## What's New in v0.3.0
 

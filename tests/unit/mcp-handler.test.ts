@@ -123,6 +123,30 @@ describe("PreFlightMcpHandler — tools", () => {
       handler.run_check("malicious:command", mockDiff, mockContext),
     ).rejects.toThrowError('Unknown checkId "malicious:command"');
   });
+
+  it("resolves configured checks afresh for every MCP invocation", async () => {
+    let enabled = true;
+    const handler = new PreFlightMcpHandler(() =>
+      enabled ? [sampleCheck] : [],
+    );
+
+    await expect(
+      handler.run_check("universal:test", mockDiff, mockContext),
+    ).resolves.toMatchObject({ status: "fail" });
+
+    enabled = false;
+    await expect(
+      handler.run_check("universal:test", mockDiff, mockContext),
+    ).rejects.toThrowError('Unknown checkId "universal:test"');
+  });
+
+  it("awaits an asynchronous configured check provider", async () => {
+    const handler = new PreFlightMcpHandler(async () => [sampleCheck]);
+
+    await expect(
+      handler.run_check("universal:test", mockDiff, mockContext),
+    ).resolves.toMatchObject({ status: "fail" });
+  });
 });
 
 describe("PreFlightMcpHandler — resources", () => {

@@ -21,7 +21,6 @@ import { buildGoPack } from "../core/checks/packs/go/index.js";
 import { buildPythonPack } from "../core/checks/packs/python/index.js";
 import { buildPhpPack } from "../core/checks/packs/php/index.js";
 import { buildPouncePack } from "../core/checks/packs/pounce/index.js";
-import { buildDependencyGuardPack } from "../core/checks/packs/dependency-guard/index.js";
 import { buildOrmCostSentryPack } from "../core/checks/packs/orm-cost-sentry/index.js";
 import { buildStyleGuardianPack } from "../core/checks/packs/style-guardian/index.js";
 import { buildCustomChecks } from "../core/checks/packs/custom/custom-runner.js";
@@ -180,7 +179,6 @@ export class PreFlightPanel {
         "python",
         "php",
         "pounce",
-        "dependency-guard",
         "orm-cost-sentry",
         "style-guardian",
       ],
@@ -380,9 +378,6 @@ export class PreFlightPanel {
       ...(shouldEnablePython ? buildPythonPack() : []),
       ...(shouldEnablePhp ? buildPhpPack() : []),
       ...(shouldEnablePounce ? buildPouncePack() : []),
-      ...(shouldEnableFirstPartyPack("dependency-guard")
-        ? buildDependencyGuardPack()
-        : []),
       ...(shouldEnableFirstPartyPack("orm-cost-sentry")
         ? buildOrmCostSentryPack()
         : []),
@@ -390,7 +385,7 @@ export class PreFlightPanel {
         ? buildStyleGuardianPack()
         : []),
       ...customChecks,
-      ...this._registry.getContributedChecks(),
+      ...this._registry.getConfiguredChecks(fileConfig?.contributedChecks),
     ];
 
     let ignoreRules;

@@ -2,7 +2,7 @@
   "name": "mewra-preflight",
   "displayName": "Mewra PreFlight — Pre-Push Sanity Pipeline",
   "description": "Run diff-scoped checks before every push. One dashboard. One button to open your PR.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "mewra",
   "license": "MIT",
   "pricing": "Free",
@@ -133,7 +133,6 @@
               "python",
               "php",
               "pounce",
-              "dependency-guard",
               "orm-cost-sentry",
               "style-guardian"
             ]
@@ -145,7 +144,6 @@
             "python",
             "php",
             "pounce",
-            "dependency-guard",
             "orm-cost-sentry",
             "style-guardian"
           ],

@@ -288,13 +288,6 @@
             }
           }
         },
-        "dependency-guard": {
-          "type": "object",
-          "description": "Dependency source safety checks for changed manifest and lock files",
-          "properties": {
-            "enabled": { "type": "boolean", "default": true }
-          }
-        },
         "orm-cost-sentry": {
           "type": "object",
           "description": "Diff-scoped ORM query cost and destructive migration heuristics",
@@ -307,6 +300,20 @@
           "description": "Diff-scoped template style consistency checks",
           "properties": {
             "enabled": { "type": "boolean", "default": true }
+          }
+        }
+      }
+    },
+    "contributedChecks": {
+      "type": "object",
+      "description": "Enable or override severity for checks registered by installed extensions",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "enabled": { "type": "boolean", "default": true },
+          "severity": {
+            "type": "string",
+            "enum": ["error", "warning"]
           }
         }
       }

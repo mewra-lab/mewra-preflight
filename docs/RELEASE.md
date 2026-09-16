@@ -14,6 +14,7 @@ Semantic Versioning:
 0.1.0  — initial release: diff-scoped runner, polyglot packs (JS/TS, Python, Go, PHP), universal checks, custom packs, interactive manual checklist, MCP server
 0.2.0  — Mewra Pounce route summary (changed route declarations in dashboard/PR), .preflightignore per-folder check-pack overrides
 0.3.0  — first-party local packs: Dependency Guard (insecure dependency sources), ORM Cost Sentry (query-in-loop and destructive migrations), Style Guardian (static Tailwind conflicts)
+0.4.0  — contributed-check contract v1 and Mewra Dependency Guard companion extension
 1.0.0  — Mewra Drift integration, automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX
 ```
 
@@ -81,6 +82,14 @@ notes, and validation status. Do not claim route tracing when the Pounce pack
 only detects route declarations in changed files.
 
 ## 8. Changelog
+
+### v0.4.0
+
+**Contributed Dependency Guard**
+
+- **Versioned host contract**: `MewraPreFlightAPI` now exposes `apiVersion: 1` for companion-extension compatibility checks.
+- **Configuration enforcement**: registered checks honor `.mewra-preflight.json` `contributedChecks.<id>.enabled` and `.severity` settings in the dashboard and MCP handler.
+- **Dependency Guard separation**: OSV and Trivy scanning, plus `dependency-guard:unsafe-source`, moved out of the host into `mewra.mewra-dependency-guard`, keeping PreFlight tool-agnostic.
 
 ### v0.3.0
 

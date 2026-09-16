@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { buildDependencyGuardPack } from "../../../src/core/checks/packs/dependency-guard/index.js";
 import { buildOrmCostSentryPack } from "../../../src/core/checks/packs/orm-cost-sentry/index.js";
 import { buildStyleGuardianPack } from "../../../src/core/checks/packs/style-guardian/index.js";
 import type { GitDiff } from "../../../src/shared/types.js";
@@ -12,35 +11,6 @@ function makeDiff(paths: string[], rawPatch: string): GitDiff {
     rawPatch,
   };
 }
-
-describe("Dependency Guard", () => {
-  it("fails an insecure dependency URL introduced in a lockfile", async () => {
-    const check = buildDependencyGuardPack()[0]!;
-    const result = await check.run(
-      makeDiff(
-        ["pnpm-lock.yaml"],
-        "+++ b/pnpm-lock.yaml\n@@ -1,0 +1 @@\n+  resolution: {integrity: sha512-x, tarball: http://registry.example/pkg.tgz}",
-      ),
-      {} as never,
-    );
-
-    expect(result.status).toBe("fail");
-    expect(result.findings[0]?.line).toBe(1);
-  });
-
-  it("passes an HTTPS package source", async () => {
-    const check = buildDependencyGuardPack()[0]!;
-    const result = await check.run(
-      makeDiff(
-        ["package-lock.json"],
-        '+++ b/package-lock.json\n@@ -1,0 +1 @@\n+"resolved": "https://registry.npmjs.org/pkg/-/pkg.tgz"',
-      ),
-      {} as never,
-    );
-
-    expect(result.status).toBe("pass");
-  });
-});
 
 describe("ORM Cost Sentry", () => {
   it("warns about a likely ORM query in a loop", async () => {

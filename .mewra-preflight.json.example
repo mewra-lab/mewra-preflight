@@ -32,9 +32,6 @@
     "pounce": {
       "enabled": true
     },
-    "dependency-guard": {
-      "enabled": true
-    },
     "orm-cost-sentry": {
       "enabled": true
     },
@@ -48,6 +45,16 @@
     "noLocalhostUrls": "error",
     "noMergeConflicts": "error",
     "largeFileThresholdMb": 1
+  },
+  "contributedChecks": {
+    "mewra-dependency-guard:security-scan": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "dependency-guard:unsafe-source": {
+      "enabled": true,
+      "severity": "error"
+    }
   },
   "customChecks": [
     {

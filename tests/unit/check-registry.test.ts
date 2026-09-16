@@ -29,4 +29,33 @@ describe("CheckRegistry", () => {
     registry.register(dummyCheck);
     expect(() => registry.register(dummyCheck)).toThrowError();
   });
+
+  it("applies workspace enablement and severity overrides to contributed checks", () => {
+    const registry = new CheckRegistry();
+    registry.register(dummyCheck);
+
+    expect(
+      registry.getConfiguredChecks({
+        [dummyCheck.id]: { severity: "error" },
+      }),
+    ).toEqual([
+      expect.objectContaining({ id: dummyCheck.id, severity: "error" }),
+    ]);
+    expect(
+      registry.getConfiguredChecks({
+        [dummyCheck.id]: { enabled: false },
+      }),
+    ).toEqual([]);
+  });
+
+  it("ignores an invalid severity instead of weakening a contributed check", () => {
+    const registry = new CheckRegistry();
+    registry.register(dummyCheck);
+
+    const [configured] = registry.getConfiguredChecks({
+      [dummyCheck.id]: { severity: "off" as never },
+    });
+
+    expect(configured?.severity).toBe("warning");
+  });
 });

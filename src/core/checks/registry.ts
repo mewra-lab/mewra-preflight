@@ -6,6 +6,11 @@ export type Disposable = {
   dispose(): void;
 };
 
+export type ContributedCheckSettings = Record<
+  string,
+  { enabled?: boolean; severity?: "error" | "warning" }
+>;
+
 // MARK: - Registry
 
 export class CheckRegistry {
@@ -27,6 +32,17 @@ export class CheckRegistry {
 
   getContributedChecks(): CheckRunner[] {
     return Array.from(this.contributedChecks.values());
+  }
+
+  getConfiguredChecks(settings: ContributedCheckSettings = {}): CheckRunner[] {
+    return this.getContributedChecks()
+      .filter((check) => settings[check.id]?.enabled !== false)
+      .map((check) => {
+        const severity = settings[check.id]?.severity;
+        return severity === "error" || severity === "warning"
+          ? { ...check, severity }
+          : check;
+      });
   }
 
   clear(): void {
