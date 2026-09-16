@@ -47,11 +47,11 @@ MANUAL CHECKS
 
 ## 5. Commands and keybindings
 
-| Command ID                      | Title               | Keybinding          |
-| ------------------------------- | ------------------- | ------------------- |
-| `mewra-preflight.runPipeline`   | Run Pipeline        | `Alt+Shift+P`       |
-| `mewra-preflight.openDashboard` | Open Dashboard      | —                   |
-| `mewra-preflight.launchPR`      | Launch Pull Request | Webview button only |
+| Command ID                      | Title          | Keybinding          |
+| ------------------------------- | -------------- | ------------------- |
+| `mewra-preflight.runPipeline`   | Run Pipeline   | `Alt+Shift+P`       |
+| `mewra-preflight.openDashboard` | Open Dashboard | —                   |
+| `mewra-preflight.launchPR`      | Create PR / MR | Webview button only |
 
 ## 6. Settings
 

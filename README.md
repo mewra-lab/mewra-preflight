@@ -149,12 +149,12 @@ glab auth login --hostname git.inet.co.th
 
 ## Commands
 
-| Command                         | Title                  | Default keybinding | Description                                        |
-| :------------------------------ | :--------------------- | :----------------- | :------------------------------------------------- |
-| `mewra-preflight.runPipeline`   | Run PreFlight Pipeline | `Alt+Shift+P`      | Re-scans git diff and runs all enabled checks      |
-| `mewra-preflight.openDashboard` | Open Dashboard         | —                  | Focuses or reveals the PreFlight Webview panel     |
-| `mewra-preflight.launchPR`      | Launch Pull Request    | Dashboard button   | Pushes branch, then creates/opens its PR or MR     |
-| `mewra-preflight.openConfig`    | Open Configuration     | —                  | Opens `.mewra-preflight.json` in the active editor |
+| Command                         | Title                  | Default keybinding | Description                                              |
+| :------------------------------ | :--------------------- | :----------------- | :------------------------------------------------------- |
+| `mewra-preflight.runPipeline`   | Run PreFlight Pipeline | `Alt+Shift+P`      | Re-scans git diff and runs all enabled checks            |
+| `mewra-preflight.openDashboard` | Open Dashboard         | —                  | Focuses or reveals the PreFlight Webview panel           |
+| `mewra-preflight.launchPR`      | Create PR / MR         | Dashboard button   | Creates and opens its PR or MR after you push the branch |
+| `mewra-preflight.openConfig`    | Open Configuration     | —                  | Opens `.mewra-preflight.json` in the active editor       |
 
 ---
 
@@ -313,7 +313,12 @@ pnpm install
 pnpm build
 ```
 
-Press `F5` in VS Code to launch the Extension Development Host.
+Press `F5` in VS Code to launch the Extension Development Host. To test the
+sibling Mewra Dependency Guard source at the same time, select **Run PreFlight
+
+- Dependency Guard (Extension Development Host)** from Run and Debug. This
+  builds and loads both development extensions rather than mixing PreFlight
+  source with an installed Dependency Guard VSIX.
 
 **Quality gate:**
 

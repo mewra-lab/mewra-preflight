@@ -59,7 +59,7 @@
       },
       {
         "command": "mewra-preflight.launchPR",
-        "title": "Launch Pull Request",
+        "title": "Create PR / MR",
         "category": "Mewra PreFlight"
       },
       {

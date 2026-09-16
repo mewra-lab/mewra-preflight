@@ -28,6 +28,11 @@ pnpm build
 
 Press `F5` in VS Code to launch the Extension Development Host for manual testing.
 
+To test a contributed check from the sibling `mewra-dependency-guard` repository,
+select **Run PreFlight + Dependency Guard (Extension Development Host)** in the
+Run and Debug view. It builds and loads both source extensions, avoiding a mix
+of the development PreFlight extension and an installed Dependency Guard VSIX.
+
 Full quality gate:
 
 ```bash
