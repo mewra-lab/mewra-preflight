@@ -45,6 +45,16 @@ describe("runChecks", () => {
     expect(snapshot.checks[1]?.result.status).toBe("pass");
   });
 
+  it("runs a duplicate check ID only once", async () => {
+    const run = vi.fn(async () => ({ status: "pass" as const, findings: [] }));
+    const check = makeCheck({ id: "pounce:blast-radius", run });
+
+    const snapshot = await runChecks([check, check], MOCK_DIFF, CONTEXT);
+
+    expect(snapshot.checks).toHaveLength(1);
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
   it("marks non-applicable checks as skipped", async () => {
     const check = makeCheck({
       id: "c1",

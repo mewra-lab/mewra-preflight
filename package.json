@@ -2,7 +2,7 @@
   "name": "mewra-preflight",
   "displayName": "Mewra PreFlight — Pre-Push Sanity Pipeline",
   "description": "Run diff-scoped checks before every push. One dashboard. One button to create your PR or MR.",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "publisher": "mewra",
   "license": "MIT",
   "pricing": "Free",

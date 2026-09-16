@@ -68,4 +68,17 @@ describe("Style Guardian", () => {
 
     expect(result.status).toBe("pass");
   });
+
+  it("does not confuse variant-scoped utilities with base utilities", async () => {
+    const check = buildStyleGuardianPack()[0]!;
+    const result = await check.run(
+      makeDiff(
+        ["src/card.tsx"],
+        '+++ b/src/card.tsx\n@@ -1,0 +1 @@\n+<button className="bg-muted/30 focus-visible:bg-background hover:bg-muted/50 grid-cols-1 sm:grid-cols-2" />',
+      ),
+      {} as never,
+    );
+
+    expect(result.status).toBe("pass");
+  });
 });
