@@ -496,6 +496,18 @@ export function App() {
                       {snap.definition.label}
                     </span>
                     <span class="skipped-row__tag">{snap.definition.pack}</span>
+                    {snap.definition.resultCommand && (
+                      <button
+                        type="button"
+                        class="btn btn--ghost btn--sm"
+                        title={`Open results for ${snap.definition.label}`}
+                        onClick={() =>
+                          handleOpenCheckResults(snap.definition.id)
+                        }
+                      >
+                        Open results
+                      </button>
+                    )}
                   </div>
                 ))}
             </div>
