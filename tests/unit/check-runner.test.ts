@@ -109,6 +109,20 @@ describe("runChecks", () => {
     expect(snapshot.checks[0]?.definition.installable).toBe(false);
   });
 
+  it("preserves a contributed check's setup command in the snapshot", async () => {
+    const check = makeCheck({
+      id: "mewra-dependency-guard:security-scan",
+      installable: false,
+      setupCommand: "mewra-dependency-guard.configureScanner",
+    });
+
+    const snapshot = await runChecks([check], MOCK_DIFF, CONTEXT);
+
+    expect(snapshot.checks[0]?.definition.setupCommand).toBe(
+      "mewra-dependency-guard.configureScanner",
+    );
+  });
+
   it("calls onProgress for each check transition", async () => {
     const progress = vi.fn();
     const check = makeCheck({ id: "c1" });

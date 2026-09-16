@@ -12,6 +12,7 @@ type CheckRowProps = {
   onOpenFinding?: (path: string, line: number) => void;
   onQuickFix?: (checkId: string, file?: string) => void;
   onInstallTool?: (tool: string, pack?: string) => void;
+  onConfigureCheck?: (checkId: string) => void;
   fixingTarget?: string | null;
 };
 
@@ -150,6 +151,7 @@ export function CheckRow({
   onOpenFinding,
   onQuickFix,
   onInstallTool,
+  onConfigureCheck,
   fixingTarget,
 }: CheckRowProps) {
   const { definition, result } = snapshot;
@@ -213,6 +215,21 @@ export function CheckRow({
         )}
 
         <div class="check-row__meta">
+          {result.status === "not-configured" &&
+            definition.setupCommand &&
+            onConfigureCheck && (
+              <button
+                class="quick-fix-btn quick-fix-btn--install"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onConfigureCheck(definition.id);
+                }}
+                title={`Set up ${definition.label}`}
+              >
+                Set up
+              </button>
+            )}
+
           {result.status === "not-configured" &&
             definition.installable !== false &&
             onInstallTool && (

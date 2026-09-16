@@ -72,6 +72,7 @@ export async function runChecks(
       pack: c.pack,
       fixable: c.fixable,
       installable: c.installable,
+      setupCommand: c.setupCommand,
     },
     result: { status: "pending", findings: [] },
   }));

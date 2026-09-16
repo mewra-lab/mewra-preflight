@@ -175,6 +175,10 @@ export function App() {
     post({ type: "installTool", tool, pack });
   }, []);
 
+  const handleConfigureCheck = useCallback((checkId: string) => {
+    post({ type: "configureCheck", checkId });
+  }, []);
+
   if (state.phase === "idle") {
     return (
       <div class="glass-shell">
@@ -439,6 +443,7 @@ export function App() {
               onOpenFinding={handleOpenFinding}
               onQuickFix={handleQuickFix}
               onInstallTool={handleInstallTool}
+              onConfigureCheck={handleConfigureCheck}
               fixingTarget={fixingTarget}
             />
           ))}

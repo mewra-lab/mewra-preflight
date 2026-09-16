@@ -245,6 +245,8 @@ export class PreFlightPanel {
       }
     } else if (msg.type === "installTool") {
       await this._handleInstallTool(msg.tool, msg.pack);
+    } else if (msg.type === "configureCheck") {
+      await this._handleConfigureCheck(msg.checkId);
     } else if (msg.type === "openFile") {
       const root = this._workspaceRoot();
       if (!root || !msg.path || msg.path === "(diff)") return;
@@ -301,6 +303,15 @@ export class PreFlightPanel {
     });
     terminal.show(true);
     terminal.sendText(cmd);
+  }
+
+  private async _handleConfigureCheck(checkId: string): Promise<void> {
+    const setupCommand = this._lastSnapshot?.checks.find(
+      (check) => check.definition.id === checkId,
+    )?.definition.setupCommand;
+    if (!setupCommand) return;
+
+    await vscode.commands.executeCommand(setupCommand);
   }
 
   private async _runPipeline(): Promise<void> {

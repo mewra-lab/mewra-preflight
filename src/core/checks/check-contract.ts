@@ -32,6 +32,8 @@ export type CheckRunner = {
   readonly fixable?: boolean;
   /** False when the check requires environment setup rather than a package install. */
   readonly installable?: boolean;
+  /** Registered command that opens the check's own setup experience. */
+  readonly setupCommand?: string;
   appliesTo(diff: GitDiff): boolean;
   run(diff: GitDiff, context: PreFlightContext): Promise<CheckResult>;
 };

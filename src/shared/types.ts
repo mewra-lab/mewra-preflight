@@ -53,6 +53,7 @@ export const CheckDefinitionSchema = z.object({
   pack: z.string(),
   fixable: z.boolean().optional(),
   installable: z.boolean().optional(),
+  setupCommand: z.string().optional(),
 });
 
 export type CheckDefinition = z.infer<typeof CheckDefinitionSchema>;
