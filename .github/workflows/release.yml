@@ -76,3 +76,4 @@ jobs:
           else
             gh release create "$RELEASE_TAG" "$vsix" SHA256SUMS.txt --verify-tag --generate-notes --title "$RELEASE_TAG"
           fi
+          fi
