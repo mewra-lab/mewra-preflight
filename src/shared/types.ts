@@ -52,6 +52,7 @@ export const CheckDefinitionSchema = z.object({
   severity: CheckSeveritySchema,
   pack: z.string(),
   fixable: z.boolean().optional(),
+  installable: z.boolean().optional(),
 });
 
 export type CheckDefinition = z.infer<typeof CheckDefinitionSchema>;

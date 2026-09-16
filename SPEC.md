@@ -300,6 +300,11 @@ GitLab uses the pre-filled MR page after the branch is pushed. The PR launcher
 uses trusted `git`/`gh` executables and fixed argument arrays; neither command
 is derived from Webview input.
 
+Checks that require machine-level tools can set `installable: false` in the
+check contract. The dashboard then shows their setup message without offering
+the generic package-manager Install action; this prevents logical check IDs
+from being mistaken for package names.
+
 The generated PR body is assembled from:
 
 1. Commit summary (from `git log` on the branch)

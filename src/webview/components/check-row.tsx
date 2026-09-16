@@ -213,21 +213,23 @@ export function CheckRow({
         )}
 
         <div class="check-row__meta">
-          {result.status === "not-configured" && onInstallTool && (
-            <button
-              class="quick-fix-btn quick-fix-btn--install"
-              onClick={(e) => {
-                e.stopPropagation();
-                const tool = definition.id.includes(":")
-                  ? (definition.id.split(":")[1] ?? definition.id)
-                  : definition.id;
-                onInstallTool(tool, definition.pack);
-              }}
-              title={`Install ${definition.label}`}
-            >
-              Install
-            </button>
-          )}
+          {result.status === "not-configured" &&
+            definition.installable !== false &&
+            onInstallTool && (
+              <button
+                class="quick-fix-btn quick-fix-btn--install"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const tool = definition.id.includes(":")
+                    ? (definition.id.split(":")[1] ?? definition.id)
+                    : definition.id;
+                  onInstallTool(tool, definition.pack);
+                }}
+                title={`Install ${definition.label}`}
+              >
+                Install
+              </button>
+            )}
 
           {hasFindings && isFixable && (
             <button

@@ -97,6 +97,18 @@ describe("runChecks", () => {
     expect(snapshot.overallStatus).toBe("pass");
   });
 
+  it("preserves a contributed check's installability in the snapshot", async () => {
+    const check = makeCheck({
+      id: "mewra-dependency-guard:security-scan",
+      installable: false,
+      run: async () => ({ status: "not-configured", findings: [] }),
+    });
+
+    const snapshot = await runChecks([check], MOCK_DIFF, CONTEXT);
+
+    expect(snapshot.checks[0]?.definition.installable).toBe(false);
+  });
+
   it("calls onProgress for each check transition", async () => {
     const progress = vi.fn();
     const check = makeCheck({ id: "c1" });
