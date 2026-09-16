@@ -131,7 +131,7 @@ Each check pack exposes a `build<Pack>Pack(): CheckRunner[]` factory (or `buildC
 
 Before a check runs, `.preflightignore` rules filter its `GitDiff` input. Global rules remove paths for every consumer, while targeted rules remove paths only for the named check or pack.
 
-Installed companion extensions receive the versioned `MewraPreFlightAPI` through `vscode.extensions.getExtension(...).activate()`. The host applies `.mewra-preflight.json` `contributedChecks` enablement and severity controls before dashboard or MCP execution.
+Installed companion extensions receive the versioned `MewraPreFlightAPI` through `vscode.extensions.getExtension(...).activate()`. The host applies `.mewra-preflight.json` `contributedChecks` enablement and severity controls before dashboard or MCP execution. Check IDs are deduplicated at execution time as a final defensive boundary, so an accidental duplicate contribution cannot run twice or render duplicate dashboard rows.
 
 ## 6. MCP bridge
 

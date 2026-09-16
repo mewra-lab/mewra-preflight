@@ -87,6 +87,20 @@ only detects route declarations in changed files.
 
 ## 8. Changelog
 
+### v0.7.2
+
+**Reliable companion and style checks**
+
+- Deduplicates check IDs immediately before execution, preventing an accidental
+  duplicate companion contribution from running twice or rendering two rows.
+- Treats Tailwind modifier scopes independently, so base, `hover:`, `focus:`,
+  and responsive utilities are no longer reported as conflicts with each other.
+- Documents the new Dependency Guard Marketplace ID
+  `mewra.mewra-dependency-guard-vscode`; its existing PreFlight check IDs and
+  `.mewra-preflight.json` configuration remain unchanged.
+- Excludes a repository-local `.mewra-preflight.json` from the distributable
+  VSIX; the schema and tracked example remain available to users.
+
 ### v0.7.1
 
 **Release workflow fix**

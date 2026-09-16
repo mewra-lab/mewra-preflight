@@ -11,21 +11,45 @@ import { parseAddedLines } from "../../../diff/parse-patch.js";
 const TEMPLATE_FILE = /\.(?:tsx|jsx|vue|html|astro|svelte)$/;
 const CLASS_ATTRIBUTE = /\b(?:class|className)\s*=\s*["']([^"']+)["']/g;
 
+function splitVariant(token: string): { variant: string; utility: string } {
+  let depth = 0;
+  let lastSeparator = -1;
+  for (let index = 0; index < token.length; index += 1) {
+    const character = token[index];
+    if (character === "[") depth += 1;
+    else if (character === "]") depth = Math.max(0, depth - 1);
+    else if (character === ":" && depth === 0) lastSeparator = index;
+  }
+  return lastSeparator === -1
+    ? { variant: "", utility: token }
+    : {
+        variant: token.slice(0, lastSeparator),
+        utility: token.slice(lastSeparator + 1),
+      };
+}
+
 function utilityGroup(token: string): string | null {
-  const normalized = token.replace(/^(?:[\w-]+:)*!?/, "");
-  if (/^(?:p|px|py|pt|pr|pb|pl)-/.test(normalized))
-    return normalized.split("-")[0] ?? null;
-  if (/^(?:m|mx|my|mt|mr|mb|ml)-/.test(normalized))
-    return normalized.split("-")[0] ?? null;
-  if (/^bg-/.test(normalized)) return "bg";
-  if (/^font-/.test(normalized)) return "font";
-  if (/^grid-cols-/.test(normalized)) return "grid-cols";
-  if (/^text-(?:xs|sm|base|lg|xl|\d+xl)$/.test(normalized)) return "text-size";
-  if (
-    /^text-(?:black|white|transparent|current|[a-z]+-\d{2,3})$/.test(normalized)
-  )
-    return "text-color";
-  return null;
+  const { variant, utility } = splitVariant(token);
+  const normalized = utility.replace(/^!/, "");
+  const group = (() => {
+    if (/^(?:p|px|py|pt|pr|pb|pl)-/.test(normalized))
+      return normalized.split("-")[0] ?? null;
+    if (/^(?:m|mx|my|mt|mr|mb|ml)-/.test(normalized))
+      return normalized.split("-")[0] ?? null;
+    if (/^bg-/.test(normalized)) return "bg";
+    if (/^font-/.test(normalized)) return "font";
+    if (/^grid-cols-/.test(normalized)) return "grid-cols";
+    if (/^text-(?:xs|sm|base|lg|xl|\d+xl)$/.test(normalized))
+      return "text-size";
+    if (
+      /^text-(?:black|white|transparent|current|[a-z]+-\d{2,3})$/.test(
+        normalized,
+      )
+    )
+      return "text-color";
+    return null;
+  })();
+  return group ? `${variant}|${group}` : null;
 }
 
 function conflictingUtilities(classList: string): string[] {

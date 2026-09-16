@@ -51,6 +51,15 @@ function cloneSnapshot(snapshot: PreFlightSnapshot): PreFlightSnapshot {
 
 export type RunnerProgressCallback = (snapshot: PreFlightSnapshot) => void;
 
+export function deduplicateChecks(checks: CheckRunner[]): CheckRunner[] {
+  const seen = new Set<string>();
+  return checks.filter((check) => {
+    if (seen.has(check.id)) return false;
+    seen.add(check.id);
+    return true;
+  });
+}
+
 // MARK: - Runner
 
 export async function runChecks(
@@ -61,10 +70,11 @@ export async function runChecks(
   manualChecks: ManualCheckItem[] = [],
   ignoreRules?: PreflightIgnoreRules,
 ): Promise<PreFlightSnapshot> {
+  const uniqueChecks = deduplicateChecks(checks);
   const runId = crypto.randomUUID();
   const startedAt = Date.now();
 
-  const snapshots: CheckSnapshot[] = checks.map((c) => ({
+  const snapshots: CheckSnapshot[] = uniqueChecks.map((c) => ({
     definition: {
       id: c.id,
       label: c.label,
@@ -95,7 +105,7 @@ export async function runChecks(
   emit();
 
   await Promise.all(
-    checks.map(async (check, i) => {
+    uniqueChecks.map(async (check, i) => {
       const snapshot = snapshots[i];
       if (!snapshot) return;
 

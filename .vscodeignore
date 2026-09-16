@@ -9,6 +9,7 @@ tests/**
 coverage/**
 .prettierrc.json
 .prettierignore
+.mewra-preflight.json
 .gitignore
 tsconfig.json
 pnpm-lock.yaml
