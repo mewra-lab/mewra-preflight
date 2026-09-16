@@ -105,6 +105,13 @@ All checks green. One click to push your branch and create your PR.
 - **All Clear Indicator**: Status bar and header show `✓ PreFlight: Ready` / `Passed`.
 - **One-Click PR Launcher**: The emerald **↗ Push & Create PR** button pushes your branch, then creates a GitHub PR through an authenticated `gh` CLI session. If `gh` is unavailable or cannot authenticate, it opens a pre-filled GitHub page instead; GitLab always uses its pre-filled MR page.
 
+For direct GitHub PR creation, install and authenticate the GitHub CLI once:
+
+```bash
+brew install gh # macOS
+gh auth login
+```
+
 ---
 
 ## Install
