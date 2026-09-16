@@ -183,6 +183,10 @@ export function App() {
     post({ type: "configureCheck", checkId });
   }, []);
 
+  const handleOpenCheckResults = useCallback((checkId: string) => {
+    post({ type: "openCheckResults", checkId });
+  }, []);
+
   if (state.phase === "idle") {
     return (
       <div class="glass-shell">
@@ -449,6 +453,7 @@ export function App() {
               onQuickFix={handleQuickFix}
               onInstallTool={handleInstallTool}
               onConfigureCheck={handleConfigureCheck}
+              onOpenResults={handleOpenCheckResults}
               fixingTarget={fixingTarget}
             />
           ))}
@@ -491,6 +496,18 @@ export function App() {
                       {snap.definition.label}
                     </span>
                     <span class="skipped-row__tag">{snap.definition.pack}</span>
+                    {snap.definition.resultCommand && (
+                      <button
+                        type="button"
+                        class="btn btn--ghost btn--sm"
+                        title={`Open results for ${snap.definition.label}`}
+                        onClick={() =>
+                          handleOpenCheckResults(snap.definition.id)
+                        }
+                      >
+                        Open results
+                      </button>
+                    )}
                   </div>
                 ))}
             </div>

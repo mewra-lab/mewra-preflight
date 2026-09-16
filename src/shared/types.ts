@@ -57,6 +57,10 @@ export const CheckDefinitionSchema = z.object({
   fixable: z.boolean().optional(),
   installable: z.boolean().optional(),
   setupCommand: z.string().optional(),
+  resultCommand: z
+    .string()
+    .regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,255}$/)
+    .optional(),
 });
 
 export type CheckDefinition = z.infer<typeof CheckDefinitionSchema>;
