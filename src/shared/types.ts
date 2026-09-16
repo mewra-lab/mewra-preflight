@@ -143,9 +143,21 @@ export type ManualCheckConfig = {
   id: string;
   label: string;
   severity?: "error" | "warning";
+  agentCheckable?: boolean;
   condition?: {
     modifiedFilesMatch?: string;
   };
+};
+
+export type McpConfig = {
+  enabled?: boolean;
+  exposedTools?: Array<
+    | "get_preflight_status"
+    | "get_check_findings"
+    | "run_check"
+    | "mark_manual_check"
+  >;
+  agentCheckableManualChecks?: string[];
 };
 
 export type PreFlightConfigFile = {
@@ -162,6 +174,7 @@ export type PreFlightConfigFile = {
     string,
     { enabled?: boolean; severity?: "error" | "warning" }
   >;
+  mcp?: McpConfig;
   manualChecklist?: ManualCheckConfig[];
   customPacks?: CustomPackConfig[];
   customChecks?: CustomCheckConfig[];

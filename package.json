@@ -2,7 +2,7 @@
   "name": "mewra-preflight",
   "displayName": "Mewra PreFlight — Pre-Push Sanity Pipeline",
   "description": "Run diff-scoped checks before every push. One dashboard. One button to create your PR or MR.",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "publisher": "mewra",
   "license": "MIT",
   "pricing": "Free",
@@ -36,12 +36,19 @@
   "icon": "assets/brand/icon.png",
   "main": "./dist/extension.cjs",
   "activationEvents": [
+    "onMcpServerDefinitionProvider:mewra-preflight",
     "onCommand:mewra-preflight.openDashboard",
     "onCommand:mewra-preflight.runPipeline",
     "onCommand:mewra-preflight.launchPR",
     "onCommand:mewra-preflight.openConfig"
   ],
   "contributes": {
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "mewra-preflight",
+        "label": "Mewra PreFlight"
+      }
+    ],
     "commands": [
       {
         "command": "mewra-preflight.openDashboard",

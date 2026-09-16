@@ -147,6 +147,63 @@ describe("PreFlightMcpHandler — tools", () => {
       handler.run_check("universal:test", mockDiff, mockContext),
     ).resolves.toMatchObject({ status: "fail" });
   });
+
+  it("runs only the dashboard-provided registered check callback", async () => {
+    const handler = new PreFlightMcpHandler(() => []);
+    handler.setRegisteredCheckRunner(async (checkId) => {
+      expect(checkId).toBe("universal:test");
+      return { status: "pass", findings: [] };
+    });
+
+    await expect(handler.runRegisteredCheck("universal:test")).resolves.toEqual(
+      {
+        status: "pass",
+        findings: [],
+      },
+    );
+  });
+
+  it("requires a dashboard run before registered MCP checks can execute", async () => {
+    const handler = new PreFlightMcpHandler(() => []);
+
+    await expect(handler.runRegisteredCheck("universal:test")).rejects.toThrow(
+      "Run the PreFlight dashboard before re-running a check.",
+    );
+  });
+
+  it("delegates manual updates only through the panel callback", () => {
+    const handler = new PreFlightMcpHandler(() => []);
+    const updates: Array<{
+      checkId: string;
+      done: boolean;
+      allowed: string[];
+    }> = [];
+    handler.setManualCheckUpdater((checkId, done, allowed) => {
+      updates.push({ checkId, done, allowed });
+    });
+
+    handler.markAgentManualCheck("manual-migration", true, [
+      "manual-migration",
+    ]);
+
+    expect(updates).toEqual([
+      {
+        checkId: "manual-migration",
+        done: true,
+        allowed: ["manual-migration"],
+      },
+    ]);
+  });
+
+  it("requires a dashboard run before MCP can update a manual check", () => {
+    const handler = new PreFlightMcpHandler(() => []);
+
+    expect(() =>
+      handler.markAgentManualCheck("manual-migration", true, [
+        "manual-migration",
+      ]),
+    ).toThrow("Run the PreFlight dashboard before updating a manual check.");
+  });
 });
 
 describe("PreFlightMcpHandler — resources", () => {

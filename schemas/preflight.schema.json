@@ -119,6 +119,11 @@
             "default": "error",
             "description": "Severity level. 'error' blocks push until checked; 'warning' displays a notice"
           },
+          "agentCheckable": {
+            "type": "boolean",
+            "default": false,
+            "description": "Allow an enabled MCP agent to mark this item after it independently verifies the condition"
+          },
           "condition": {
             "type": "object",
             "description": "Optional condition determining when this check triggers",
@@ -129,6 +134,34 @@
               }
             }
           }
+        }
+      }
+    },
+    "mcp": {
+      "type": "object",
+      "description": "Controls the local Mewra PreFlight MCP server.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "exposedTools": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "get_preflight_status",
+              "get_check_findings",
+              "run_check",
+              "mark_manual_check"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "agentCheckableManualChecks": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
         }
       }
     },

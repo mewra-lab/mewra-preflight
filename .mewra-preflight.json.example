@@ -57,6 +57,11 @@
       "severity": "warning"
     }
   },
+  "mcp": {
+    "enabled": true,
+    "exposedTools": ["get_preflight_status", "get_check_findings", "run_check"],
+    "agentCheckableManualChecks": ["manual-migration"]
+  },
   "customChecks": [
     {
       "id": "custom:shellcheck",
@@ -72,6 +77,7 @@
       "id": "manual-migration",
       "label": "Applied DB migration to dev cluster",
       "severity": "error",
+      "agentCheckable": true,
       "condition": {
         "modifiedFilesMatch": "prisma/migrations/**"
       }
