@@ -18,6 +18,7 @@ Semantic Versioning:
 0.5.0  — create GitHub pull requests and GitLab merge requests through authenticated CLIs, with browser fallback
 0.6.0  — Mewra Pounce becomes a companion extension; PreFlight hosts generic contributed route summaries
 0.7.0  — native VS Code MCP bridge for safe pipeline status, findings, known-check re-runs, and explicitly allowlisted manual checks
+0.7.1  — release workflow shell-conditional fix
 1.0.0  — Mewra Drift integration, automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX
 ```
 
@@ -85,6 +86,13 @@ notes, and validation status. Do not claim route tracing when the Pounce pack
 only detects route declarations in changed files.
 
 ## 8. Changelog
+
+### v0.7.1
+
+**Release workflow fix**
+
+- Removed an extra shell terminator that incorrectly marked an otherwise
+  published release workflow as failed.
 
 ### v0.7.0
 
