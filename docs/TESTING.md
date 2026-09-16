@@ -30,6 +30,7 @@ Pure modules testable without VS Code:
 - `context.test.ts` — trusted security-tool resolution excludes workspace executables;
 - `preflight-ignore.ts` — global and check/pack-specific diff filtering;
 - `messages.ts` — Zod schema validation for both directions.
+- `result-action.test.ts` — result-command propagation through validated snapshots, all completed statuses, strict ID-only messages, and rejection of unknown, revoked, changed, disabled, and unfinished checks.
 - `mcp-handler.test.ts` — snapshot, known-check execution, resource access, and
   manual-check authorization boundaries used by the MCP bridge.
 

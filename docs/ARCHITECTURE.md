@@ -133,6 +133,8 @@ Before a check runs, `.preflightignore` rules filter its `GitDiff` input. Global
 
 Installed companion extensions receive the versioned `MewraPreFlightAPI` through `vscode.extensions.getExtension(...).activate()`. The host applies `.mewra-preflight.json` `contributedChecks` enablement and severity controls before dashboard or MCP execution. Check IDs are deduplicated at execution time as a final defensive boundary, so an accidental duplicate contribution cannot run twice or render duplicate dashboard rows.
 
+Companions may contribute an optional fixed `resultCommand`. API v1 advertises `capabilities.resultActions: true` when the host supports it. Completed check rows render an **Open results** action; the webview sends only a strictly validated check ID. The extension resolves the command from the current enabled registry and verifies it still matches the latest snapshot before calling it without arguments. Disabled, disposed, replaced, unknown, and unfinished checks cannot execute a result command. The host does not inspect or store companion-specific evidence.
+
 ## 6. MCP bridge
 
 PreFlight registers a native VS Code MCP server definition provider. Its local

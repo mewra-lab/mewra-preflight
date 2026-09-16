@@ -75,6 +75,12 @@ export const WebviewMessageSchema = z.discriminatedUnion("type", [
     type: z.literal("configureCheck"),
     checkId: z.string(),
   }),
+  z
+    .object({
+      type: z.literal("openCheckResults"),
+      checkId: z.string().min(1).max(256),
+    })
+    .strict(),
   z.object({
     type: z.literal("openConfig"),
   }),
