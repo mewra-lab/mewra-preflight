@@ -33,14 +33,14 @@ VS Code Workbench
 │   │   │       ├── go/            — Go ecosystem checks (gofmt, go vet, golangci-lint)
 │   │   │       ├── python/        — Python ecosystem checks (ruff, black, flake8, mypy)
 │   │   │       ├── php/           — PHP ecosystem checks (php-cs-fixer, phpstan/psalm, test-pairing)
-│   │   │       ├── pounce/        — changed-route detection and Mermaid summaries
 │   │   │       ├── orm-cost-sentry/ — query-in-loop and destructive-migration heuristics
 │   │   │       ├── style-guardian/ — Tailwind utility conflict detection
 │   │   │       └── custom/        — Community JSON-based custom pack runner
 │   │   ├── ecosystem/
 │   │   │   └── detect-ecosystem.ts
 │   │   └── pr/
-│   │       └── pr-launcher.ts     — GitHub PR / GitLab MR creator with browser fallback
+│   │       ├── pr-launcher.ts     — GitHub PR / GitLab MR creator with browser fallback
+│   │       └── route-mermaid.ts   — generic route-summary Mermaid renderer
 │   │
 │   └── security/
 │       └── nonce.ts
@@ -80,7 +80,7 @@ mewra-preflight/
 │   │   │   ├── context.ts
 │   │   │   ├── runner.ts
 │   │   │   ├── manual-evaluator.ts
-│   │   │   └── packs/{universal,js-ts,go,python,php,pounce,orm-cost-sentry,style-guardian,custom}/
+│   │   │   └── packs/{universal,js-ts,go,python,php,orm-cost-sentry,style-guardian,custom}/
 │   │   ├── ecosystem/detect-ecosystem.ts
 │   │   ├── config/preflight-ignore.ts — global and per-check/pack diff filtering
 │   │   ├── mcp/handler.ts
@@ -132,6 +132,8 @@ Each check pack exposes a `build<Pack>Pack(): CheckRunner[]` factory (or `buildC
 Before a check runs, `.preflightignore` rules filter its `GitDiff` input. Global rules remove paths for every consumer, while targeted rules remove paths only for the named check or pack.
 
 Installed companion extensions receive the versioned `MewraPreFlightAPI` through `vscode.extensions.getExtension(...).activate()`. The host applies `.mewra-preflight.json` `contributedChecks` enablement and severity controls before dashboard or MCP execution.
+
+Mewra Pounce owns its own `pounce:blast-radius` check and registers it as a companion. PreFlight has no Pounce scanner or activation logic; it renders the generic optional `routes` payload returned by any registered check.
 
 The Webview may request an install only by check ID. The extension host resolves
 that ID through its fixed built-in allowlist before composing a terminal command;

@@ -24,7 +24,7 @@ Pure modules testable without VS Code:
 - `pr-launcher.ts` — remote URL → HTTPS conversion, PR URL construction, and fixed-argument GitHub/GitLab CLI PR/MR creation;
 - `packs/universal/` — pattern matching in diff patches;
 - `packs/js-ts/` — pack factory shape and check properties;
-- `packs/pounce/` — changed-route detection and Mermaid summary generation;
+- Pounce companion integration — route payload rendering and generic Mermaid PR/MR sections;
 - `packs/first-party-packs.test.ts` — ORM cost and Tailwind conflict heuristics;
 - `check-registry.test.ts` — contributed-check registration and workspace enablement/severity overrides;
 - `context.test.ts` — trusted security-tool resolution excludes workspace executables;

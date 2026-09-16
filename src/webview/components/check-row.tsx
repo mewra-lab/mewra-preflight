@@ -3,7 +3,7 @@ import type {
   CheckFinding,
   CheckSnapshot,
   CheckStatus,
-  PounceRouteChip,
+  RouteChip,
 } from "../../shared/types.js";
 
 // MARK: - Types
@@ -119,7 +119,7 @@ function RouteChip({
   chip,
   onOpenFinding,
 }: {
-  chip: PounceRouteChip;
+  chip: RouteChip;
   onOpenFinding?: ((path: string, line: number) => void) | undefined;
 }) {
   const methodClass = chip.method.toLowerCase();
@@ -220,7 +220,6 @@ export function CheckRow({
     definition.id === "php:cs-fixer" ||
     definition.fixable === true;
   const isFixingAll = fixingTarget === definition.id;
-  const isPounce = definition.pack === "pounce";
   const isSecurityScan =
     definition.id === "mewra-dependency-guard:security-scan";
   const securityGroups = isSecurityScan
@@ -258,7 +257,7 @@ export function CheckRow({
           {definition.label}
         </span>
 
-        {isPounce && hasRoutes && (
+        {hasRoutes && (
           <span
             class="blast-radius-badge"
             title={`${result.routes!.length} impacted route${result.routes!.length === 1 ? "" : "s"}`}
@@ -525,7 +524,7 @@ export function CheckRow({
           </ul>
         ))}
 
-      {isPounce && hasRoutes && expanded && (
+      {hasRoutes && expanded && (
         <div class="route-chips">
           {result.routes!.map((chip, i) => (
             <RouteChip key={i} chip={chip} onOpenFinding={onOpenFinding} />

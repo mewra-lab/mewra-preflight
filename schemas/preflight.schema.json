@@ -277,17 +277,6 @@
             }
           }
         },
-        "pounce": {
-          "type": "object",
-          "description": "Mewra Pounce blast radius and impacted API routes settings",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "default": true,
-              "description": "Enable or disable automatic blast-radius and impacted route analysis"
-            }
-          }
-        },
         "orm-cost-sentry": {
           "type": "object",
           "description": "Diff-scoped ORM query cost and destructive migration heuristics",

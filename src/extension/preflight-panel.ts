@@ -20,7 +20,6 @@ import { buildJsTsPack } from "../core/checks/packs/js-ts/index.js";
 import { buildGoPack } from "../core/checks/packs/go/index.js";
 import { buildPythonPack } from "../core/checks/packs/python/index.js";
 import { buildPhpPack } from "../core/checks/packs/php/index.js";
-import { buildPouncePack } from "../core/checks/packs/pounce/index.js";
 import { buildOrmCostSentryPack } from "../core/checks/packs/orm-cost-sentry/index.js";
 import { buildStyleGuardianPack } from "../core/checks/packs/style-guardian/index.js";
 import { buildCustomChecks } from "../core/checks/packs/custom/custom-runner.js";
@@ -208,7 +207,6 @@ export class PreFlightPanel {
         "go",
         "python",
         "php",
-        "pounce",
         "orm-cost-sentry",
         "style-guardian",
       ],
@@ -401,16 +399,6 @@ export class PreFlightPanel {
 
     const customChecks = await buildCustomChecks(config, root);
 
-    const hasPounceCompanion =
-      vscode.extensions.getExtension("mewra.mewra-pounce") !== undefined;
-    const isPounceExplicitlyDisabled =
-      fileConfig?.ecosystems?.["pounce"]?.enabled === false;
-    const shouldEnablePounce =
-      !isPounceExplicitlyDisabled &&
-      (hasPounceCompanion ||
-        fileConfig?.ecosystems?.["pounce"]?.enabled === true ||
-        config.enabledPacks.includes("pounce"));
-
     const shouldEnableFirstPartyPack = (packId: string): boolean => {
       const fileSetting = fileConfig?.ecosystems?.[packId]?.enabled;
       return (
@@ -427,7 +415,6 @@ export class PreFlightPanel {
       ...(shouldEnableGo ? buildGoPack() : []),
       ...(shouldEnablePython ? buildPythonPack() : []),
       ...(shouldEnablePhp ? buildPhpPack() : []),
-      ...(shouldEnablePounce ? buildPouncePack() : []),
       ...(shouldEnableFirstPartyPack("orm-cost-sentry")
         ? buildOrmCostSentryPack()
         : []),
@@ -824,10 +811,6 @@ export class PreFlightPanel {
       "testPairing": { "enabled": true }
     }`);
       }
-
-      ecoEntries.push(`    "pounce": {
-      "enabled": true
-    }`);
 
       const ecosystemsBlock =
         ecoEntries.length > 0

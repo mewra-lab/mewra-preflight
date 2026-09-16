@@ -50,7 +50,7 @@ PR button → blocked until errors & required checklists are resolved.
   - **Go**: `gofmt`, `go vet`, `golangci-lint`, test-file pairing.
   - **PHP**: `php-cs-fixer`, `phpstan`, Psalm, test-file pairing.
 - **Universal sanity checks** — Built-in guards detecting stray `console.log` / debuggers, exposed environment configurations, hardcoded localhost URLs, git merge conflict markers, and oversized binary files.
-- **Mewra Pounce — Route Summary** _(v0.2.0)_ — The built-in `pounce` pack detects route declarations in changed Next.js, Hono, Express, Fastify, NestJS, Go, Python, and PHP files. It shows colour-coded route chips and adds a Mermaid summary of the changed routes and files to the PR draft.
+- **Mewra Pounce — Blast Radius** — The optional companion extension contributes diff-scoped route detection for changed Next.js, Hono, Express, Fastify, NestJS, Go, Python, and PHP files. It shows colour-coded route chips and adds Mermaid route summaries to the PR/MR draft.
 - **Contributed security checks** _(v0.4.0)_ — Installed companion extensions register checks through the PreFlight API. Mewra Dependency Guard scans only changed lockfiles with OSV Scanner and Trivy, while preserving the insecure dependency-source guard.
 - **Safe setup actions** _(v0.5.0)_ — A contributed check can mark itself as environment-managed, preventing PreFlight from incorrectly treating its check name as an npm package. Dependency Guard's scanner check instead reports its OSV/Trivy or Docker requirements.
 - **`.preflightignore` support** _(v0.2.0)_ — Place a `.preflightignore` file in the workspace root to exclude files/folders from diff analysis globally (`dist/**`) or per-check/pack (`scripts/**: universal:no-console-log`, `legacy/**: js-ts`).
@@ -162,13 +162,13 @@ glab auth login --hostname git.inet.co.th
 
 Configure via VS Code Settings (`settings.json`):
 
-| Setting                             | Type       | Default                                                                                        | Description                                                                 |
-| :---------------------------------- | :--------- | :--------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------- |
-| `mewraPreflight.targetBranch`       | `string`   | `"main"`                                                                                       | Base branch to diff against                                                 |
-| `mewraPreflight.diffScope`          | `string`   | `"branch"`                                                                                     | Scope to analyze: `"branch"` (vs target branch), `"staged"`, or `"working"` |
-| `mewraPreflight.enabledPacks`       | `string[]` | `["universal", "js-ts", "go", "python", "php", "pounce", "orm-cost-sentry", "style-guardian"]` | Active check packs                                                          |
-| `mewraPreflight.blockingOnWarnings` | `boolean`  | `false`                                                                                        | When true, warning-severity findings also block PR launch                   |
-| `mewraPreflight.gitHost`            | `string`   | `"github"`                                                                                     | Hosting platform for PR generation (`"github"` or `"gitlab"`)               |
+| Setting                             | Type       | Default                                                                              | Description                                                                 |
+| :---------------------------------- | :--------- | :----------------------------------------------------------------------------------- | :-------------------------------------------------------------------------- |
+| `mewraPreflight.targetBranch`       | `string`   | `"main"`                                                                             | Base branch to diff against                                                 |
+| `mewraPreflight.diffScope`          | `string`   | `"branch"`                                                                           | Scope to analyze: `"branch"` (vs target branch), `"staged"`, or `"working"` |
+| `mewraPreflight.enabledPacks`       | `string[]` | `["universal", "js-ts", "go", "python", "php", "orm-cost-sentry", "style-guardian"]` | Active built-in check packs                                                 |
+| `mewraPreflight.blockingOnWarnings` | `boolean`  | `false`                                                                              | When true, warning-severity findings also block PR launch                   |
+| `mewraPreflight.gitHost`            | `string`   | `"github"`                                                                           | Hosting platform for PR generation (`"github"` or `"gitlab"`)               |
 
 ---
 
@@ -366,11 +366,9 @@ Each rule is enabled by default and can be disabled per workspace through the co
 
 **Mewra Pounce Route Summary & `.preflightignore`**
 
-### Route Summary (`pounce` pack)
+### Route Summary (Mewra Pounce companion)
 
-The built-in `pounce` pack scans changed supported route files for route declarations. It is enabled by default and can be disabled per workspace. Installing the companion [Mewra Pounce](https://github.com/mewra-lab/mewra-pounce) extension also enables the pack when it has not been explicitly disabled.
-
-You can also explicitly enable it anytime in `.mewra-preflight.json` (`"pounce": { "enabled": true }`) or in your VS Code settings (`"mewraPreflight.enabledPacks"`).
+Install [Mewra Pounce](https://github.com/mewra-lab/mewra-pounce) to contribute `pounce:blast-radius`. The companion scans changed supported route files for route declarations; PreFlight renders its route chips and includes Mermaid route/file summaries in the PR/MR draft. Control it per workspace with `contributedChecks.pounce:blast-radius`.
 
 The dashboard surfaces colour-coded HTTP method/path chips (`GET /api/users`, `POST /api/checkout`, …) and the PR draft launcher auto-attaches dedicated per-route Mermaid summaries.
 

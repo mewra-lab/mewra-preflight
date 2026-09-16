@@ -3,9 +3,9 @@ import { promisify } from "node:util";
 import type {
   PreFlightConfig,
   PreFlightSnapshot,
-  PounceRouteChip,
+  RouteChip,
 } from "../../shared/types.js";
-import { buildRouteSectionMermaid } from "../checks/packs/pounce/entry-point-scanner.js";
+import { buildRouteSectionMermaid } from "./route-mermaid.js";
 import { resolveTrustedTool } from "../checks/context.js";
 
 // MARK: - Helpers
@@ -131,11 +131,11 @@ export function formatPRBody(
       sections.push("</details>");
     }
 
-    const pounceChecks = snapshot.checks.filter(
+    const routeChecks = snapshot.checks.filter(
       (c) => (c.result.routes?.length ?? 0) > 0,
     );
 
-    if (pounceChecks.length > 0) {
+    if (routeChecks.length > 0) {
       sections.push(
         "",
         "Blast Radius — Impacted Entry Points",
@@ -147,8 +147,8 @@ export function formatPRBody(
           .filter((f) => f.status !== "deleted")
           .map((f) => f.path) ?? [];
 
-      for (const check of pounceChecks) {
-        const allChips: PounceRouteChip[] = check.result.routes ?? [];
+      for (const check of routeChecks) {
+        const allChips: RouteChip[] = check.result.routes ?? [];
         const seen = new Set<string>();
         const uniqueChips = allChips.filter((chip) => {
           const key = `${chip.method} ${chip.route} ${chip.file}`;

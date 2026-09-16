@@ -29,9 +29,6 @@
       "analyze": { "tool": "phpstan", "enabled": true },
       "testPairing": { "enabled": true }
     },
-    "pounce": {
-      "enabled": true
-    },
     "orm-cost-sentry": {
       "enabled": true
     },
@@ -54,6 +51,10 @@
     "dependency-guard:unsafe-source": {
       "enabled": true,
       "severity": "error"
+    },
+    "pounce:blast-radius": {
+      "enabled": true,
+      "severity": "warning"
     }
   },
   "customChecks": [
