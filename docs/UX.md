@@ -58,12 +58,12 @@ MANUAL CHECKS
 
 ## 6. Settings
 
-| Key                                 | Default                                                                                 | Description              |
-| ----------------------------------- | --------------------------------------------------------------------------------------- | ------------------------ |
-| `mewraPreflight.targetBranch`       | `"main"`                                                                                | Branch to diff against   |
-| `mewraPreflight.enabledPacks`       | `["universal","js-ts","go","python","php","pounce","orm-cost-sentry","style-guardian"]` | Active check packs       |
-| `mewraPreflight.blockingOnWarnings` | `false`                                                                                 | Warnings block PR button |
-| `mewraPreflight.gitHost`            | `"github"`                                                                              | Platform for PR URL      |
+| Key                                 | Default                                                                        | Description                 |
+| ----------------------------------- | ------------------------------------------------------------------------------ | --------------------------- |
+| `mewraPreflight.targetBranch`       | `"main"`                                                                       | Branch to diff against      |
+| `mewraPreflight.enabledPacks`       | `["universal","js-ts","go","python","php","orm-cost-sentry","style-guardian"]` | Active built-in check packs |
+| `mewraPreflight.blockingOnWarnings` | `false`                                                                        | Warnings block PR button    |
+| `mewraPreflight.gitHost`            | `"github"`                                                                     | Platform for PR URL         |
 
 ## 7. Design principles
 

@@ -9,15 +9,25 @@
       "problemMatcher": []
     },
     {
-      "label": "Mewra PreFlight + Dependency Guard: Build",
+      "label": "Mewra PreFlight + Companions: Build",
       "dependsOrder": "sequence",
-      "dependsOn": ["Mewra PreFlight: Build", "Mewra Dependency Guard: Build"],
+      "dependsOn": [
+        "Mewra PreFlight: Build",
+        "Mewra Dependency Guard: Build",
+        "Mewra Pounce: Build"
+      ],
       "problemMatcher": []
     },
     {
       "label": "Mewra Dependency Guard: Build",
       "type": "shell",
       "command": "pnpm --dir ../mewra-dependency-guard build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Mewra Pounce: Build",
+      "type": "shell",
+      "command": "pnpm --dir ../mewra-pounce build",
       "problemMatcher": []
     }
   ]

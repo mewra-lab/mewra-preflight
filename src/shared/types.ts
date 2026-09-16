@@ -16,14 +16,16 @@ export const CheckSeveritySchema = z.enum(["error", "warning"]);
 
 export type CheckSeverity = z.infer<typeof CheckSeveritySchema>;
 
-export const PounceRouteChipSchema = z.object({
+export const RouteChipSchema = z.object({
   method: z.string(),
   route: z.string(),
   file: z.string(),
   line: z.number().int().nonnegative().optional(),
 });
 
-export type PounceRouteChip = z.infer<typeof PounceRouteChipSchema>;
+export type RouteChip = z.infer<typeof RouteChipSchema>;
+
+export type PounceRouteChip = RouteChip;
 
 export const CheckFindingSchema = z.object({
   file: z.string(),
@@ -42,7 +44,7 @@ export const CheckResultSchema = z.object({
   message: z.string().optional(),
   durationMs: z.number().nonnegative().optional(),
   mermaid: z.string().optional(),
-  routes: z.array(PounceRouteChipSchema).optional(),
+  routes: z.array(RouteChipSchema).optional(),
 });
 
 export type CheckResult = z.infer<typeof CheckResultSchema>;

@@ -14,21 +14,24 @@
       "preLaunchTask": "Mewra PreFlight: Build"
     },
     {
-      "name": "Run PreFlight + Dependency Guard (Extension Development Host)",
+      "name": "Run PreFlight + Companions (Extension Development Host)",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
-        "--extensionDevelopmentPath=${workspaceFolder}/../mewra-dependency-guard"
+        "--extensionDevelopmentPath=${workspaceFolder}/../mewra-dependency-guard",
+        "--extensionDevelopmentPath=${workspaceFolder}/../mewra-pounce"
       ],
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js",
         "${workspaceFolder}/dist/**/*.cjs",
         "${workspaceFolder}/../mewra-dependency-guard/dist/**/*.js",
-        "${workspaceFolder}/../mewra-dependency-guard/dist/**/*.cjs"
+        "${workspaceFolder}/../mewra-dependency-guard/dist/**/*.cjs",
+        "${workspaceFolder}/../mewra-pounce/dist/**/*.js",
+        "${workspaceFolder}/../mewra-pounce/dist/**/*.cjs"
       ],
-      "preLaunchTask": "Mewra PreFlight + Dependency Guard: Build"
+      "preLaunchTask": "Mewra PreFlight + Companions: Build"
     }
   ]
 }
