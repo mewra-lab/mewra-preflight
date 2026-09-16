@@ -7,7 +7,7 @@ Testing must protect:
 - diff computation correctness (git output parsing);
 - check runner execution lifecycle (pending → running → pass/fail/skipped);
 - graceful degradation when tools are missing (`not-configured`);
-- universal pack pattern detection (no-console-log, no-debugger, no-env-leak);
+- universal pack pattern detection (no-console-log, no-debugger, no-env-leak), including source-only matching for debugger statements;
 - Webview protocol safety (Zod message validation);
 - contributed security-finding metadata and advisory-link handling;
 - PR URL construction from remote URLs and branches, plus GitHub and GitLab CLI PR/MR creation/fallback behavior.

@@ -176,13 +176,13 @@ Configure via VS Code Settings (`settings.json`):
 
 ### 1. Universal Pack (Always active)
 
-| Check                      | Severity  | What it detects                                                        |
-| :------------------------- | :-------- | :--------------------------------------------------------------------- |
-| **No debug statements**    | `error`   | `console.log`, `debugger`, `print()`, `var_dump()` in added diff lines |
-| **No environment leaks**   | `error`   | Accidentally staged sensitive environment variables or keys            |
-| **No hardcoded localhost** | `error`   | Added URLs matching `localhost` or `127.0.0.1`                         |
-| **No merge conflicts**     | `error`   | Unresolved git conflict marker syntax in modified files                |
-| **Large file warning**     | `warning` | Newly added files exceeding threshold (default 1 MB)                   |
+| Check                      | Severity  | What it detects                                                                    |
+| :------------------------- | :-------- | :--------------------------------------------------------------------------------- |
+| **No debug statements**    | `error`   | `console.log`, `debugger`, `print()`, `var_dump()` in added source-code diff lines |
+| **No environment leaks**   | `error`   | Accidentally staged sensitive environment variables or keys                        |
+| **No hardcoded localhost** | `error`   | Added URLs matching `localhost` or `127.0.0.1`                                     |
+| **No merge conflicts**     | `error`   | Unresolved git conflict marker syntax in modified files                            |
+| **Large file warning**     | `warning` | Newly added files exceeding threshold (default 1 MB)                               |
 
 ### 2. Polyglot Language Packs
 

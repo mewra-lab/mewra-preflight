@@ -74,6 +74,17 @@ describe("universal pack — no-debugger", () => {
     const result = await noDbg.run(diff, CONTEXT);
     expect(result.status).toBe("pass");
   });
+
+  it("ignores debugger references in documentation", async () => {
+    const checks = buildUniversalPack();
+    const noDbg = checks.find((c) => c.id === "universal:no-debugger")!;
+    const diff = makeDiff(
+      "+The debugger statement is checked in source files.",
+      [{ path: "SPEC.md", status: "modified" }],
+    );
+    const result = await noDbg.run(diff, CONTEXT);
+    expect(result.status).toBe("pass");
+  });
 });
 
 describe("universal pack — no-env-leak", () => {

@@ -9,6 +9,7 @@ import type {
 // MARK: - Constants
 
 const PATTERN = /\bdebugger\s*;?/g;
+const SOURCE_FILE_PATTERN = /\.(ts|tsx|js|jsx|mjs|cjs|vue|svelte|astro)$/;
 
 // MARK: - Check Definition
 
@@ -20,9 +21,7 @@ export const noDebugger: CheckRunner = {
 
   appliesTo(diff: GitDiff): boolean {
     return diff.changedFiles.some(
-      (f) =>
-        f.status !== "deleted" &&
-        /\.(ts|tsx|js|jsx|mjs|cjs|vue|svelte|astro)$/.test(f.path),
+      (f) => f.status !== "deleted" && SOURCE_FILE_PATTERN.test(f.path),
     );
   },
 
@@ -34,6 +33,7 @@ export const noDebugger: CheckRunner = {
     );
 
     for (const item of additions) {
+      if (!SOURCE_FILE_PATTERN.test(item.file)) continue;
       PATTERN.lastIndex = 0;
       if (PATTERN.test(item.content)) {
         findings.push({
