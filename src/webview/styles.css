@@ -592,6 +592,131 @@ body {
   background: rgba(0, 0, 0, 0.12);
 }
 
+.security-findings {
+  border-top: 1px solid var(--pf-glass-border-subtle);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.security-findings__summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 12px;
+  color: var(--pf-muted);
+  font-size: 10.5px;
+}
+
+.security-findings__list {
+  list-style: none;
+}
+
+.security-finding {
+  padding: 8px 12px 9px 36px;
+  border-top: 1px solid var(--pf-glass-border-subtle);
+}
+
+.security-finding__package {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+}
+
+.security-finding__name {
+  color: var(--pf-fg);
+  font-family: var(--pf-mono);
+  font-size: 11px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 52%;
+}
+
+.security-finding__version,
+.security-advisory__meta {
+  color: var(--pf-muted);
+  font-family: var(--pf-mono);
+  font-size: 10px;
+}
+
+.security-finding__severity {
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 2px 5px;
+}
+
+.security-finding__severity--critical {
+  background: rgba(244, 63, 94, 0.2);
+  color: #fb7185;
+}
+
+.security-finding__severity--high {
+  background: rgba(249, 115, 22, 0.2);
+  color: #fb923c;
+}
+
+.security-finding__severity--medium {
+  background: rgba(251, 191, 36, 0.18);
+  color: #fbbf24;
+}
+
+.security-finding__severity--low {
+  background: rgba(96, 165, 250, 0.18);
+  color: #60a5fa;
+}
+
+.security-advisory {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding-top: 5px;
+}
+
+.security-advisory__id {
+  color: var(--pf-fg);
+  font-family: var(--pf-mono);
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.security-advisory__meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.security-advisory__link,
+.security-findings__more {
+  border: 0;
+  background: transparent;
+  color: var(--pf-accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.security-advisory__link {
+  margin-left: auto;
+}
+
+.security-findings__more {
+  display: block;
+  width: 100%;
+  padding: 8px 12px 9px 36px;
+  text-align: left;
+  border-top: 1px solid var(--pf-glass-border-subtle);
+}
+
 .finding {
   display: flex;
   align-items: center;

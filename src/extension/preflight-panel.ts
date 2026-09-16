@@ -268,6 +268,11 @@ export class PreFlightPanel {
       } catch {
         void vscode.window.showErrorMessage(`Could not open file: ${msg.path}`);
       }
+    } else if (msg.type === "openExternal") {
+      const uri = vscode.Uri.parse(msg.url);
+      if (uri.scheme === "https") {
+        await vscode.env.openExternal(uri);
+      }
     } else if (msg.type === "openConfig") {
       await this.openConfig();
     }

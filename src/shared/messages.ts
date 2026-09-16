@@ -59,6 +59,10 @@ export const WebviewMessageSchema = z.discriminatedUnion("type", [
     line: z.number().int().nonnegative(),
   }),
   z.object({
+    type: z.literal("openExternal"),
+    url: z.string().url(),
+  }),
+  z.object({
     type: z.literal("markManualCheck"),
     checkId: z.string(),
     done: z.boolean(),

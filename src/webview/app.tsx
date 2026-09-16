@@ -151,6 +151,10 @@ export function App() {
     post({ type: "openFile", path, line });
   }, []);
 
+  const handleOpenExternal = useCallback((url: string) => {
+    post({ type: "openExternal", url });
+  }, []);
+
   const handleScopeChange = useCallback((scope: DiffScope) => {
     post({ type: "changeDiffScope", scope });
   }, []);
@@ -441,6 +445,7 @@ export function App() {
               key={snap.definition.id}
               snapshot={snap}
               onOpenFinding={handleOpenFinding}
+              onOpenExternal={handleOpenExternal}
               onQuickFix={handleQuickFix}
               onInstallTool={handleInstallTool}
               onConfigureCheck={handleConfigureCheck}

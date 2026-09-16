@@ -1,5 +1,6 @@
 import { useState } from "preact/hooks";
 import type {
+  CheckFinding,
   CheckSnapshot,
   CheckStatus,
   PounceRouteChip,
@@ -13,6 +14,7 @@ type CheckRowProps = {
   onQuickFix?: (checkId: string, file?: string) => void;
   onInstallTool?: (tool: string, pack?: string) => void;
   onConfigureCheck?: (checkId: string) => void;
+  onOpenExternal?: (url: string) => void;
   fixingTarget?: string | null;
 };
 
@@ -144,6 +146,57 @@ function RouteChip({
   );
 }
 
+type SecurityFindingGroup = {
+  packageName: string;
+  installedVersion: string;
+  findings: CheckFinding[];
+  highestSeverity: string | undefined;
+};
+
+const securitySeverityRank: Record<string, number> = {
+  CRITICAL: 4,
+  HIGH: 3,
+  MEDIUM: 2,
+  LOW: 1,
+  UNKNOWN: 0,
+};
+
+function securityFindingGroups(
+  findings: CheckFinding[],
+): SecurityFindingGroup[] {
+  const groups = new Map<string, SecurityFindingGroup>();
+  for (const finding of findings) {
+    const packageName = finding.metadata?.packageName ?? "Unknown package";
+    const installedVersion = finding.metadata?.installedVersion ?? "unknown";
+    const key = `${packageName}@${installedVersion}`;
+    const current = groups.get(key) ?? {
+      packageName,
+      installedVersion,
+      findings: [],
+      highestSeverity: undefined,
+    };
+    current.findings.push(finding);
+    const severity = finding.metadata?.severity?.toUpperCase();
+    if (
+      severity &&
+      (securitySeverityRank[severity] ?? 0) >
+        (securitySeverityRank[current.highestSeverity ?? "UNKNOWN"] ?? 0)
+    ) {
+      current.highestSeverity = severity;
+    }
+    groups.set(key, current);
+  }
+  return [...groups.values()].sort(
+    (a, b) =>
+      (securitySeverityRank[b.highestSeverity ?? "UNKNOWN"] ?? 0) -
+      (securitySeverityRank[a.highestSeverity ?? "UNKNOWN"] ?? 0),
+  );
+}
+
+function advisoryId(finding: CheckFinding): string {
+  return finding.rule?.split(":").slice(1).join(":") ?? "Advisory";
+}
+
 // MARK: - CheckRow Component
 
 export function CheckRow({
@@ -152,6 +205,7 @@ export function CheckRow({
   onQuickFix,
   onInstallTool,
   onConfigureCheck,
+  onOpenExternal,
   fixingTarget,
 }: CheckRowProps) {
   const { definition, result } = snapshot;
@@ -167,6 +221,12 @@ export function CheckRow({
     definition.fixable === true;
   const isFixingAll = fixingTarget === definition.id;
   const isPounce = definition.pack === "pounce";
+  const isSecurityScan =
+    definition.id === "mewra-dependency-guard:security-scan";
+  const securityGroups = isSecurityScan
+    ? securityFindingGroups(result.findings)
+    : [];
+  const [showAllSecurityGroups, setShowAllSecurityGroups] = useState(false);
 
   const toggleExpanded = () => {
     if (hasFindings || hasRoutes) {
@@ -314,83 +374,159 @@ export function CheckRow({
         <p class="check-row__message">{result.message}</p>
       )}
 
-      {hasFindings && expanded && (
-        <ul class="check-row__findings">
-          {result.findings.map((f, i) => (
-            <li
-              key={i}
-              class="finding"
-              onClick={() => onOpenFinding?.(f.file, f.line)}
-              role="button"
-              tabIndex={0}
-              title={`Jump to ${f.file}:${f.line}`}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") onOpenFinding?.(f.file, f.line);
-              }}
-            >
-              <span class="finding__badge">
-                <span class="finding__badge-text">
-                  {f.file}:{f.line}
-                </span>
-                <span class="finding__badge-arrow">
-                  <svg
-                    width="10"
-                    height="10"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <line x1="7" y1="17" x2="17" y2="7" />
-                    <polyline points="7 7 17 7 17 17" />
-                  </svg>
-                </span>
-              </span>
-              <span class="finding__message">{f.message}</span>
-
-              {isFixable &&
-                (() => {
-                  const isFixingFile =
-                    fixingTarget === `${definition.id}:${f.file}`;
-                  const isDisabled = isFixingFile || isFixingAll;
-                  return (
-                    <button
-                      class={`quick-fix-btn ${isFixingFile ? "quick-fix-btn--loading" : ""}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isDisabled) onQuickFix?.(definition.id, f.file);
-                      }}
-                      disabled={isDisabled}
-                      title={`Fix ${f.file}`}
+      {hasFindings &&
+        expanded &&
+        (isSecurityScan ? (
+          <div class="security-findings">
+            <div class="security-findings__summary">
+              <span>Lockfile security findings</span>
+              <span>{securityGroups.length} packages</span>
+            </div>
+            <ul class="security-findings__list">
+              {(showAllSecurityGroups
+                ? securityGroups
+                : securityGroups.slice(0, 5)
+              ).map((group) => (
+                <li
+                  key={`${group.packageName}@${group.installedVersion}`}
+                  class="security-finding"
+                >
+                  <div class="security-finding__package">
+                    <span class="security-finding__name">
+                      {group.packageName}
+                    </span>
+                    <span class="security-finding__version">
+                      @{group.installedVersion}
+                    </span>
+                    {group.highestSeverity && (
+                      <span
+                        class={`security-finding__severity security-finding__severity--${group.highestSeverity.toLowerCase()}`}
+                      >
+                        {group.highestSeverity}
+                      </span>
+                    )}
+                  </div>
+                  {group.findings.map((finding) => (
+                    <div
+                      key={`${finding.rule}-${finding.message}`}
+                      class="security-advisory"
                     >
-                      {isFixingFile ? (
-                        <>
-                          <svg
-                            class="spinner-svg"
-                            width="10"
-                            height="10"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="3"
-                            stroke-linecap="round"
-                          >
-                            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                          </svg>
-                          <span>Fixing...</span>
-                        </>
-                      ) : (
-                        "Fix"
+                      <span class="security-advisory__id">
+                        {advisoryId(finding)}
+                      </span>
+                      <span class="security-advisory__meta">
+                        {finding.metadata?.scanner ?? "Scanner"}
+                        {finding.metadata?.cvss
+                          ? ` · CVSS ${finding.metadata.cvss}`
+                          : ""}
+                        {finding.metadata?.fixedVersion
+                          ? ` · Fix ${finding.metadata.fixedVersion}`
+                          : ""}
+                      </span>
+                      {finding.metadata?.advisoryUrl && onOpenExternal && (
+                        <button
+                          class="security-advisory__link"
+                          onClick={() =>
+                            onOpenExternal(finding.metadata!.advisoryUrl!)
+                          }
+                          title={`Open ${advisoryId(finding)} advisory`}
+                        >
+                          Details ↗
+                        </button>
                       )}
-                    </button>
-                  );
-                })()}
-            </li>
-          ))}
-        </ul>
-      )}
+                    </div>
+                  ))}
+                </li>
+              ))}
+            </ul>
+            {securityGroups.length > 5 && (
+              <button
+                class="security-findings__more"
+                onClick={() => setShowAllSecurityGroups(!showAllSecurityGroups)}
+              >
+                {showAllSecurityGroups
+                  ? "Show fewer"
+                  : `Show ${securityGroups.length - 5} more packages`}
+              </button>
+            )}
+          </div>
+        ) : (
+          <ul class="check-row__findings">
+            {result.findings.map((f, i) => (
+              <li
+                key={i}
+                class="finding"
+                onClick={() => onOpenFinding?.(f.file, f.line)}
+                role="button"
+                tabIndex={0}
+                title={`Jump to ${f.file}:${f.line}`}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") onOpenFinding?.(f.file, f.line);
+                }}
+              >
+                <span class="finding__badge">
+                  <span class="finding__badge-text">
+                    {f.file}:{f.line}
+                  </span>
+                  <span class="finding__badge-arrow">
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <line x1="7" y1="17" x2="17" y2="7" />
+                      <polyline points="7 7 17 7 17 17" />
+                    </svg>
+                  </span>
+                </span>
+                <span class="finding__message">{f.message}</span>
+
+                {isFixable &&
+                  (() => {
+                    const isFixingFile =
+                      fixingTarget === `${definition.id}:${f.file}`;
+                    const isDisabled = isFixingFile || isFixingAll;
+                    return (
+                      <button
+                        class={`quick-fix-btn ${isFixingFile ? "quick-fix-btn--loading" : ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!isDisabled) onQuickFix?.(definition.id, f.file);
+                        }}
+                        disabled={isDisabled}
+                        title={`Fix ${f.file}`}
+                      >
+                        {isFixingFile ? (
+                          <>
+                            <svg
+                              class="spinner-svg"
+                              width="10"
+                              height="10"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="3"
+                              stroke-linecap="round"
+                            >
+                              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                            </svg>
+                            <span>Fixing...</span>
+                          </>
+                        ) : (
+                          "Fix"
+                        )}
+                      </button>
+                    );
+                  })()}
+              </li>
+            ))}
+          </ul>
+        ))}
 
       {isPounce && hasRoutes && expanded && (
         <div class="route-chips">
