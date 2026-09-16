@@ -23,6 +23,12 @@ export class PreFlightMcpHandler {
   private _draftPR: DraftPR | null = null;
   private readonly _manualChecks = new Map<string, boolean>();
   private readonly _getChecks: () => CheckRunner[] | Promise<CheckRunner[]>;
+  private _runRegisteredCheck:
+    ((checkId: string) => Promise<CheckResult>) | undefined;
+  private _markManualCheck:
+    | ((checkId: string, done: boolean, allowedChecks: string[]) => void)
+    | undefined;
+  private _audit: ((message: string) => void) | undefined;
 
   constructor(getChecks: () => CheckRunner[] | Promise<CheckRunner[]>) {
     this._getChecks = getChecks;
@@ -36,11 +42,37 @@ export class PreFlightMcpHandler {
     this._draftPR = draft;
   }
 
+  setAuditLogger(audit: (message: string) => void): void {
+    this._audit = audit;
+  }
+
+  setRegisteredCheckRunner(
+    runRegisteredCheck: (checkId: string) => Promise<CheckResult>,
+  ): void {
+    this._runRegisteredCheck = runRegisteredCheck;
+  }
+
+  setManualCheckUpdater(
+    markManualCheck: (
+      checkId: string,
+      done: boolean,
+      allowedChecks: string[],
+    ) => void,
+  ): void {
+    this._markManualCheck = markManualCheck;
+  }
+
+  private _log(operation: string): void {
+    this._audit?.(`MCP ${operation}`);
+  }
+
   get_preflight_status(): PreFlightSnapshot | null {
+    this._log("get_preflight_status");
     return this._latestSnapshot;
   }
 
   get_check_findings(checkId: string): CheckFinding[] {
+    this._log(`get_check_findings ${checkId}`);
     if (!this._latestSnapshot) return [];
     const check = this._latestSnapshot.checks.find(
       (c) => c.definition.id === checkId,
@@ -53,6 +85,7 @@ export class PreFlightMcpHandler {
     diff: GitDiff,
     context: PreFlightContext,
   ): Promise<CheckResult> {
+    this._log(`run_check ${checkId}`);
     const checks = await this._getChecks();
     const target = checks.find((c) => c.id === checkId);
 
@@ -74,6 +107,7 @@ export class PreFlightMcpHandler {
     done: boolean,
     allowedChecks?: string[],
   ): void {
+    this._log(`mark_manual_check ${checkId}`);
     if (allowedChecks && !allowedChecks.includes(checkId)) {
       throw new Error(
         `Manual check "${checkId}" is not allowed to be modified by agents.`,
@@ -87,6 +121,7 @@ export class PreFlightMcpHandler {
   }
 
   getResource(uri: string): unknown {
+    this._log(`read_resource ${uri}`);
     if (uri === "preflight://dashboard") {
       return this._latestSnapshot;
     }
@@ -94,5 +129,27 @@ export class PreFlightMcpHandler {
       return this._draftPR;
     }
     return null;
+  }
+
+  async runRegisteredCheck(checkId: string): Promise<CheckResult> {
+    this._log(`run_check ${checkId}`);
+    if (!this._runRegisteredCheck) {
+      throw new Error("Run the PreFlight dashboard before re-running a check.");
+    }
+    return this._runRegisteredCheck(checkId);
+  }
+
+  markAgentManualCheck(
+    checkId: string,
+    done: boolean,
+    allowedChecks: string[],
+  ): void {
+    this._log(`mark_manual_check ${checkId}`);
+    if (!this._markManualCheck) {
+      throw new Error(
+        "Run the PreFlight dashboard before updating a manual check.",
+      );
+    }
+    this._markManualCheck(checkId, done, allowedChecks);
   }
 }

@@ -133,6 +133,19 @@ Before a check runs, `.preflightignore` rules filter its `GitDiff` input. Global
 
 Installed companion extensions receive the versioned `MewraPreFlightAPI` through `vscode.extensions.getExtension(...).activate()`. The host applies `.mewra-preflight.json` `contributedChecks` enablement and severity controls before dashboard or MCP execution.
 
+## 6. MCP bridge
+
+PreFlight registers a native VS Code MCP server definition provider. Its local
+HTTP bridge runs only on `127.0.0.1` with an ephemeral port and a random bearer
+token supplied only through the VS Code server definition. It never exposes a
+workspace path, shell, arbitrary command, or public network listener.
+
+The MCP boundary exposes the latest dashboard snapshot, findings for a known
+check, a re-run of a check registered by the latest pipeline, and explicitly
+allowlisted manual-check updates. Calls are logged to the `Mewra PreFlight MCP`
+output channel. The bridge accepts only bounded JSON-RPC requests and validates
+the loopback host plus bearer token before parsing a request.
+
 Mewra Pounce owns its own `pounce:blast-radius` check and registers it as a companion. PreFlight has no Pounce scanner or activation logic; it renders the generic optional `routes` payload returned by any registered check.
 
 The Webview may request an install only by check ID. The extension host resolves

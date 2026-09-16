@@ -246,27 +246,7 @@ export class PreFlightPanel {
     } else if (msg.type === "launchPR") {
       await this._launchPR();
     } else if (msg.type === "markManualCheck") {
-      this._manualCheckStates.set(msg.checkId, msg.done);
-      if (this._lastSnapshot) {
-        const updatedManual = this._lastSnapshot.manualChecks.map((m) =>
-          m.id === msg.checkId ? { ...m, checked: msg.done } : m,
-        );
-        const updatedSnapshot: PreFlightSnapshot = {
-          ...this._lastSnapshot,
-          manualChecks: updatedManual,
-          overallStatus: deriveOverallStatus(
-            this._lastSnapshot.checks,
-            updatedManual,
-          ),
-        };
-        this._lastSnapshot = updatedSnapshot;
-        this._post({ type: "snapshot", payload: updatedSnapshot });
-        this._mcpHandler.updateSnapshot(updatedSnapshot);
-        const overall = updatedSnapshot.overallStatus;
-        if (overall === "pass" || overall === "warning" || overall === "fail") {
-          this._onStatusChange?.(overall);
-        }
-      }
+      this._updateManualCheck(msg.checkId, msg.done);
     } else if (msg.type === "installTool") {
       await this._handleInstallTool(msg.checkId);
     } else if (msg.type === "configureCheck") {
@@ -460,12 +440,93 @@ export class PreFlightPanel {
 
     this._lastSnapshot = finalSnapshot;
     this._mcpHandler.updateSnapshot(finalSnapshot);
+    this._mcpHandler.setRegisteredCheckRunner(async (checkId) => {
+      if (
+        !this._lastSnapshot?.checks.some(
+          (snapshot) => snapshot.definition.id === checkId,
+        )
+      ) {
+        throw new Error(`Unknown checkId "${checkId}".`);
+      }
+      const check = checks.find((candidate) => candidate.id === checkId);
+      if (!check) throw new Error(`Unknown checkId "${checkId}".`);
+      const rerun = await runChecks(
+        [check],
+        filteredDiff,
+        context,
+        undefined,
+        [],
+        ignoreRules,
+      );
+      const result = rerun.checks[0]?.result;
+      if (!result)
+        throw new Error(`Check "${checkId}" did not return a result.`);
+      if (this._lastSnapshot) {
+        const updatedChecks = this._lastSnapshot.checks.map((snapshot) =>
+          snapshot.definition.id === checkId
+            ? { ...snapshot, result }
+            : snapshot,
+        );
+        const updatedSnapshot: PreFlightSnapshot = {
+          ...this._lastSnapshot,
+          checks: updatedChecks,
+          overallStatus: deriveOverallStatus(
+            updatedChecks,
+            this._lastSnapshot.manualChecks,
+          ),
+        };
+        this._lastSnapshot = updatedSnapshot;
+        this._post({ type: "snapshot", payload: updatedSnapshot });
+        this._mcpHandler.updateSnapshot(updatedSnapshot);
+        const overall = updatedSnapshot.overallStatus;
+        if (overall === "pass" || overall === "warning" || overall === "fail") {
+          this._onStatusChange?.(overall);
+        } else {
+          this._onStatusChange?.("idle");
+        }
+      }
+      return result;
+    });
+    this._mcpHandler.setManualCheckUpdater((checkId, done, allowedChecks) => {
+      const agentCheckable = new Set(
+        (config.manualChecklist ?? [])
+          .filter((manual) => manual.agentCheckable)
+          .map((manual) => manual.id),
+      );
+      if (!allowedChecks.includes(checkId) || !agentCheckable.has(checkId)) {
+        throw new Error(`Manual check "${checkId}" is not agent-checkable.`);
+      }
+      this._updateManualCheck(checkId, done);
+    });
 
     const overall = finalSnapshot.overallStatus;
     if (overall === "pass" || overall === "warning" || overall === "fail") {
       this._onStatusChange?.(overall);
     } else {
       this._onStatusChange?.("idle");
+    }
+  }
+
+  private _updateManualCheck(checkId: string, done: boolean): void {
+    this._manualCheckStates.set(checkId, done);
+    if (!this._lastSnapshot) return;
+    const updatedManual = this._lastSnapshot.manualChecks.map((manual) =>
+      manual.id === checkId ? { ...manual, checked: done } : manual,
+    );
+    const updatedSnapshot: PreFlightSnapshot = {
+      ...this._lastSnapshot,
+      manualChecks: updatedManual,
+      overallStatus: deriveOverallStatus(
+        this._lastSnapshot.checks,
+        updatedManual,
+      ),
+    };
+    this._lastSnapshot = updatedSnapshot;
+    this._post({ type: "snapshot", payload: updatedSnapshot });
+    this._mcpHandler.updateSnapshot(updatedSnapshot);
+    const overall = updatedSnapshot.overallStatus;
+    if (overall === "pass" || overall === "warning" || overall === "fail") {
+      this._onStatusChange?.(overall);
     }
   }
 

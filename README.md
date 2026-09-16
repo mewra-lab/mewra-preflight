@@ -263,6 +263,20 @@ Mewra PreFlight provides built-in Model Context Protocol (MCP) support for works
 - **`run_check`** — Runs a specific registered check to verify code fixes.
 - **`mark_manual_check`** — Toggles an `agentCheckable` checklist item upon verified criteria.
 
+VS Code discovers this server through its MCP tools picker after the extension starts. Run the PreFlight dashboard once before asking an agent to re-run a check or update a checklist item, so it has a current diff-scoped snapshot. MCP is enabled by default; use the workspace config to restrict it:
+
+```json
+{
+  "mcp": {
+    "enabled": true,
+    "exposedTools": ["get_preflight_status", "get_check_findings", "run_check"],
+    "agentCheckableManualChecks": ["manual-migration"]
+  }
+}
+```
+
+An agent can modify a manual item only when it is named in `agentCheckableManualChecks` and the checklist item itself has `"agentCheckable": true`. The server is a VS Code-managed loopback endpoint with an ephemeral bearer token; it is not exposed to the network.
+
 ---
 
 ## The Mewra Tooling Ecosystem

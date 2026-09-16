@@ -65,7 +65,28 @@ MANUAL CHECKS
 | `mewraPreflight.blockingOnWarnings` | `false`                                                                        | Warnings block PR button    |
 | `mewraPreflight.gitHost`            | `"github"`                                                                     | Platform for PR URL         |
 
-## 7. Design principles
+## 7. MCP agent access
+
+Mewra PreFlight appears in VS Code's MCP server management when a workspace is
+open. By default, agents can read the latest pipeline status and check findings,
+and re-run a registered check after the dashboard has run at least once.
+
+Workspace owners can restrict or disable MCP in `.mewra-preflight.json`:
+
+```json
+{
+  "mcp": {
+    "enabled": true,
+    "exposedTools": ["get_preflight_status", "get_check_findings", "run_check"],
+    "agentCheckableManualChecks": ["manual-migration"]
+  }
+}
+```
+
+Manual items remain human-only unless their ID is also explicitly allowlisted.
+The checklist item itself must also set `"agentCheckable": true`.
+
+## 8. Design principles
 
 - VS Code theme variables exclusively — no hardcoded colors in structure.
 - Must remain usable in narrow sidebar-width panels.

@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { PreFlightPanel } from "./preflight-panel.js";
 import { CheckRegistry } from "../core/checks/registry.js";
 import { PreFlightMcpHandler } from "../core/mcp/handler.js";
+import { PreFlightMcpServer } from "./mcp-server.js";
 import { buildUniversalPack } from "../core/checks/packs/universal/index.js";
 import { buildJsTsPack } from "../core/checks/packs/js-ts/index.js";
 import { buildGoPack } from "../core/checks/packs/go/index.js";
@@ -78,6 +79,42 @@ function updateStatusBar(
 // MARK: - Lifecycle
 
 export function activate(context: vscode.ExtensionContext): MewraPreFlightAPI {
+  const mcpOutput = vscode.window.createOutputChannel("Mewra PreFlight MCP");
+  const getMcpConfig = async () => {
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    return workspaceRoot
+      ? (await loadWorkspaceConfig(workspaceRoot))?.mcp
+      : undefined;
+  };
+  const mcpServer = new PreFlightMcpServer(
+    mcpHandler,
+    getMcpConfig,
+    context.extension.packageJSON.version as string,
+  );
+  const didChangeMcpDefinitions = new vscode.EventEmitter<void>();
+  mcpHandler.setAuditLogger((message) => mcpOutput.appendLine(message));
+  context.subscriptions.push(
+    mcpOutput,
+    didChangeMcpDefinitions,
+    mcpServer,
+    vscode.lm.registerMcpServerDefinitionProvider("mewra-preflight", {
+      onDidChangeMcpServerDefinitions: didChangeMcpDefinitions.event,
+      provideMcpServerDefinitions: async () => {
+        const config = await getMcpConfig();
+        const definition = mcpServer.definition;
+        return config?.enabled === false || !definition ? [] : [definition];
+      },
+    }),
+  );
+  void mcpServer
+    .start()
+    .then(() => didChangeMcpDefinitions.fire())
+    .catch((cause) =>
+      mcpOutput.appendLine(
+        `MCP server did not start: ${cause instanceof Error ? cause.message : "unknown error"}`,
+      ),
+    );
+
   statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
     10,

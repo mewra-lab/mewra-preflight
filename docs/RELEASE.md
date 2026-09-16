@@ -17,6 +17,7 @@ Semantic Versioning:
 0.4.0  — contributed-check contract v1 and Mewra Dependency Guard companion extension
 0.5.0  — create GitHub pull requests and GitLab merge requests through authenticated CLIs, with browser fallback
 0.6.0  — Mewra Pounce becomes a companion extension; PreFlight hosts generic contributed route summaries
+0.7.0  — native VS Code MCP bridge for safe pipeline status, findings, known-check re-runs, and explicitly allowlisted manual checks
 1.0.0  — Mewra Drift integration, automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX
 ```
 
@@ -84,6 +85,20 @@ notes, and validation status. Do not claim route tracing when the Pounce pack
 only detects route declarations in changed files.
 
 ## 8. Changelog
+
+### v0.7.0
+
+**Native VS Code MCP bridge**
+
+- **Safe discovery**: VS Code discovers a native MCP server from the extension;
+  it binds only to loopback, validates the host and a random bearer token, and
+  never exposes an arbitrary command surface.
+- **Agent workflow**: configured agents can read the dashboard snapshot and
+  findings, then re-run only checks registered by the latest pipeline.
+- **Explicit manual authority**: agents can update a manual item only when both
+  the item and the workspace MCP allowlist opt in.
+- **Auditability**: MCP calls are recorded in the `Mewra PreFlight MCP` output
+  channel.
 
 ### v0.6.0
 

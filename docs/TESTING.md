@@ -30,6 +30,8 @@ Pure modules testable without VS Code:
 - `context.test.ts` — trusted security-tool resolution excludes workspace executables;
 - `preflight-ignore.ts` — global and check/pack-specific diff filtering;
 - `messages.ts` — Zod schema validation for both directions.
+- `mcp-handler.test.ts` — snapshot, known-check execution, resource access, and
+  manual-check authorization boundaries used by the MCP bridge.
 
 ### Extension tests (@vscode/test-electron)
 
@@ -52,6 +54,8 @@ Manual checklist:
 - [ ] "Create PR / MR" leaves push to Source Control, then creates via `gh`/`glab` or opens the documented browser fallback with the description copied
 - [ ] Button is blocked (greyed out) when any error check fails
 - [ ] Tool missing (e.g., no Prettier) shows `not-configured`, not `fail`
+- [ ] Enable **Mewra PreFlight** in the MCP tools picker; only configured tools
+      are discoverable and `get_preflight_status` returns the latest dashboard run
 
 ## 3. Running tests
 
