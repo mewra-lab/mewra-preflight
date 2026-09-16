@@ -87,6 +87,14 @@ only detects route declarations in changed files.
 
 ## 8. Changelog
 
+### v0.7.4
+
+**Accurate debugger detection**
+
+- Limits the `No debugger` rule to supported source files, so documentation
+  such as `SPEC.md` is not reported as a stray debugger statement.
+- Adds a regression test for documentation references to `debugger`.
+
 ### v0.7.3
 
 **Companion identity documentation**
