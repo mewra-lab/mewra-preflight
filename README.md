@@ -57,7 +57,7 @@ PR button → blocked until errors & required checklists are resolved.
 - **Interactive manual checklist** — Human verification checklist items that trigger conditionally when specific files are touched (e.g. verifying database migrations when schema files are modified).
 - **Custom community JSON packs** — Easily define project-specific linters or script validations in `.mewra-preflight.json` without writing extension code.
 - **AI coding agent MCP server** — Built-in Model Context Protocol (MCP) server exposing pipeline status, findings, and check execution to AI coding assistants and agent workflows.
-- **One-click PR launcher** — Pushes the branch and auto-assembles a rich pull request draft with commit summaries, test-pairing coverage, check results, and (when Pounce is enabled) an embedded Mermaid blast-radius diagram. For GitHub, an authenticated GitHub CLI creates the PR directly; GitHub browser and GitLab use a pre-filled creation page.
+- **One-click PR launcher** — Pushes the branch and auto-assembles a rich pull request draft with commit summaries, test-pairing coverage, check results, and (when Pounce is enabled) an embedded Mermaid blast-radius diagram. GitHub uses an authenticated GitHub CLI; GitLab uses native merge-request push options so the generated description is not constrained by browser URL length.
 - **Graceful degradation (BYOT)** — Never bundles bulky toolchains. Uses your project's local versions (`node_modules`, `.venv`, `vendor`, global `PATH`). Missing tools show `not-configured` rather than failing.
 - **Local-first & private** — No telemetry or background network activity. A Git push and direct GitHub PR creation occur only after you press the PR button.
 
@@ -104,7 +104,7 @@ All checks green. One click to push your branch and create your PR.
 </p>
 
 - **All Clear Indicator**: Status bar and header show `✓ PreFlight: Ready` / `Passed`.
-- **One-Click PR Launcher**: The emerald **↗ Push & Create PR** button pushes your branch, then creates a GitHub PR through an authenticated `gh` CLI session. If `gh` is unavailable or cannot authenticate, it opens a pre-filled GitHub page instead; GitLab always uses its pre-filled MR page.
+- **One-Click PR Launcher**: The emerald **↗ Push & Create PR** button pushes your branch, then creates a GitHub PR through an authenticated `gh` CLI session. If `gh` is unavailable or cannot authenticate, it opens a pre-filled GitHub page instead. GitLab creates the MR through native Git push options, including the generated description; if the server rejects those options, PreFlight opens its MR page and copies the description for paste.
 
 For direct GitHub PR creation, install and authenticate the GitHub CLI once:
 

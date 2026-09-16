@@ -43,7 +43,7 @@ MANUAL CHECKS
 - **Ready** (green): all error-severity checks pass and error manual checks are checked.
 - **Blocked** (muted): one or more error checks or manual checklist items remain unresolved, with live blocker count badge.
 - If `blockingOnWarnings` is `true`, warning-severity failures also block.
-- Clicking a ready button pushes the current branch. For GitHub, PreFlight uses an authenticated `gh` CLI to create a PR directly (or opens an existing PR); if the CLI is missing or unavailable, it opens a pre-filled browser page. GitLab opens a pre-filled MR page after the push.
+- Clicking a ready button pushes the current branch. For GitHub, PreFlight uses an authenticated `gh` CLI to create a PR directly (or opens an existing PR); if the CLI is missing or unavailable, it opens a pre-filled browser page. For GitLab, PreFlight sends the title and generated description as native merge-request Git push options, avoiding browser URL-size limits; if the server rejects those options, it opens the MR page and copies the description for paste.
 
 ## 5. Commands and keybindings
 

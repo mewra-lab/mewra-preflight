@@ -27,6 +27,7 @@ import { buildCustomChecks } from "../core/checks/packs/custom/custom-runner.js"
 import {
   buildPRUrl,
   createGitHubPullRequest,
+  pushGitLabMergeRequest,
   pushCurrentBranch,
 } from "../core/pr/pr-launcher.js";
 import {
@@ -670,11 +671,39 @@ export class PreFlightPanel {
       return;
     }
 
-    const push = await pushCurrentBranch(root, prUrl.branch);
+    const gitLabPush =
+      config.gitHost === "gitlab"
+        ? await pushGitLabMergeRequest(root, prUrl)
+        : undefined;
+    const push =
+      gitLabPush?.ok === false
+        ? await pushCurrentBranch(root, prUrl.branch)
+        : (gitLabPush ?? (await pushCurrentBranch(root, prUrl.branch)));
     if (!push.ok) {
       void vscode.window.showErrorMessage(
         `Could not push '${prUrl.branch}' to origin. Resolve the Git error and try again.`,
       );
+      return;
+    }
+
+    if (config.gitHost === "gitlab") {
+      if (gitLabPush?.ok && gitLabPush.url) {
+        void vscode.window.showInformationMessage(
+          "GitLab merge request created.",
+        );
+        await vscode.env.openExternal(vscode.Uri.parse(gitLabPush.url));
+      } else if (gitLabPush?.ok) {
+        void vscode.window.showInformationMessage(
+          "GitLab merge request was requested. GitLab did not return its URL, so the merge-request page was opened.",
+        );
+        await vscode.env.openExternal(vscode.Uri.parse(prUrl.url));
+      } else {
+        await vscode.env.clipboard.writeText(prUrl.body);
+        void vscode.window.showWarningMessage(
+          "GitLab did not accept merge-request push options. Opened the pre-filled MR page and copied the description for paste.",
+        );
+        await vscode.env.openExternal(vscode.Uri.parse(prUrl.url));
+      }
       return;
     }
 

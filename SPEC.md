@@ -296,9 +296,13 @@ GitHub: https://github.com/{org}/{repo}/compare/{target}...{source}?quick_pull=1
 GitLab: https://gitlab.com/{org}/{repo}/-/merge_requests/new?merge_request[source_branch]={source}...
 ```
 
-GitLab uses the pre-filled MR page after the branch is pushed. The PR launcher
-uses trusted `git`/`gh` executables and fixed argument arrays; neither command
-is derived from Webview input.
+GitLab sends `merge_request.create`, `merge_request.title`, and
+`merge_request.description` as native Git push options. This creates the MR on
+the GitLab server without placing the generated description in a browser URL.
+If a server rejects push options, PreFlight uses the pre-filled MR page and
+copies the generated description for paste. The PR launcher uses trusted
+`git`/`gh` executables and fixed argument arrays; neither command is derived
+from Webview input.
 
 Checks that require machine-level tools can set `installable: false` in the
 check contract. The dashboard then shows their setup message without offering

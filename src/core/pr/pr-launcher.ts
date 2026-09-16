@@ -210,6 +210,8 @@ type PRLauncherDependencies = {
 
 export type PushResult = { ok: true } | { ok: false };
 
+export type GitLabPushResult = { ok: true; url: string | null } | { ok: false };
+
 export type GitHubPullRequestResult = {
   kind: "created" | "existing";
   url: string;
@@ -265,6 +267,54 @@ export async function pushCurrentBranch(
       workspaceRoot,
     );
     return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
+function mergeRequestUrl(output: string): string | null {
+  return output.match(/https:\/\/\S+\/-\/merge_requests\/\d+/)?.[0] ?? null;
+}
+
+/**
+ * Pushes a branch and asks GitLab to create its merge request server-side.
+ * Git push options avoid browser URL-size limits for generated descriptions.
+ */
+export async function pushGitLabMergeRequest(
+  workspaceRoot: string,
+  draft: PRUrl,
+  dependencies: PRLauncherDependencies = {},
+): Promise<GitLabPushResult> {
+  const { resolveTool, runCommand: execute } = launcherDependencies(
+    workspaceRoot,
+    dependencies,
+  );
+  const git = await resolveTool("git");
+  if (!git) return { ok: false };
+
+  try {
+    const result = await execute(
+      git,
+      [
+        "push",
+        "--set-upstream",
+        "-o",
+        "merge_request.create",
+        "-o",
+        `merge_request.target=${draft.targetBranch}`,
+        "-o",
+        `merge_request.title=${draft.title}`,
+        "-o",
+        `merge_request.description=${draft.body}`,
+        "origin",
+        draft.branch,
+      ],
+      workspaceRoot,
+    );
+    return {
+      ok: true,
+      url: mergeRequestUrl(`${result.stdout}\n${result.stderr}`),
+    };
   } catch {
     return { ok: false };
   }

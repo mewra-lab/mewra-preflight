@@ -91,6 +91,7 @@ only detects route declarations in changed files.
 - **Truthful PR action**: the dashboard now pushes the current branch to `origin` with its upstream configured before launching the PR flow.
 - **GitHub CLI integration**: when a trusted, authenticated `gh` installation is available, PreFlight creates the pull request directly and opens the resulting PR. Existing open PRs are opened instead of duplicated.
 - **Transparent fallback**: GitHub falls back to a pre-filled compare page if direct creation is unavailable; GitLab continues to open a pre-filled merge-request page after push.
+- **Reliable GitLab descriptions**: GitLab MRs now use native `merge_request.title` and `merge_request.description` push options, avoiding browser URL limits that could leave a generated description blank. If a GitLab server rejects push options, PreFlight copies the description before opening the fallback page.
 - **Privacy and safety**: GitHub communication occurs only after the explicit button click, through the user's existing `gh` authentication. Git and GitHub CLI commands use fixed argument arrays and trusted executable resolution.
 - **Safe dependency-scanner setup**: contributed checks can opt out of the generic package-manager installer. Dependency Guard's OSV/Trivy scanner no longer attempts to install a nonexistent `security-scan` npm package.
 
