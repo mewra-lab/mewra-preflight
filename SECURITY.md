@@ -83,7 +83,7 @@ Never introduce:
 - shell command strings built from workspace or user input;
 - unvalidated Webview messages;
 - `innerHTML` assignment with untrusted content;
-- network calls from the extension host or Webview (v1 is fully local);
+- background network calls from the extension host or Webview; GitHub communication is limited to the user's explicit PR action through their existing `gh` CLI authentication;
 - telemetry or usage analytics.
 
 ---

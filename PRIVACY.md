@@ -11,7 +11,7 @@ Mewra PreFlight:
 - does **not** require an account;
 - does **not** send telemetry, analytics, or usage data to Mewra or any third party;
 - does **not** upload your source code, file paths, or diff content to any server;
-- does **not** make network requests of any kind (v1 is 100% offline);
+- does **not** make background network requests of any kind;
 - does **not** read `.env` files, credentials, or secrets (the `no-env-leak` check scans only diff line content locally);
 - stores **no** persistent user data between sessions.
 
@@ -32,11 +32,13 @@ All of this stays entirely within your local VS Code instance and is discarded w
 
 ## PR launch
 
-When you click "Open Pull Request", the extension:
+When you click "Create PR / MR", the extension:
 
-1. reads the git remote URL via `git remote get-url origin`;
-2. constructs a PR URL from the remote URL and current branch;
-3. opens the URL in your default browser via `vscode.env.openExternal`.
+1. reads the git remote URL via `git remote get-url origin` without modifying the repository;
+2. constructs the PR draft locally from the branch, commits, and PreFlight results;
+3. asks the user's authenticated `gh` or `glab` CLI to create the PR/MR (or opens an existing GitHub PR); otherwise it opens a provider page and copies the description for paste.
+
+This explicit action can send the branch and PR title/body to the configured Git host. The extension itself does not send source code, diff content, telemetry, analytics, or usage data to Mewra.
 
 No data is sent to Mewra.
 
@@ -55,4 +57,4 @@ No data is sent to Mewra.
 
 ## Changes to this policy
 
-If a future version introduces network functionality, it will be documented here and in the changelog before release, and will require explicit user consent.
+Any future background or non-user-initiated network functionality will be documented here and in the changelog before release.

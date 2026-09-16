@@ -4,7 +4,7 @@
 
 Mewra PreFlight must remain:
 
-- deterministic and local-first (no AI, no network calls in v1);
+- deterministic and local-first (no AI or background network calls);
 - tool-agnostic at the core (check packs registered per ecosystem, not spread through logic);
 - safe when handling untrusted Webview messages;
 - gracefully degraded when tools are missing (`not-configured`, never `failed`);
@@ -40,7 +40,7 @@ VS Code Workbench
 │   │   ├── ecosystem/
 │   │   │   └── detect-ecosystem.ts
 │   │   └── pr/
-│   │       └── pr-launcher.ts     — PR URL builder
+│   │       └── pr-launcher.ts     — GitHub PR / GitLab MR creator with browser fallback
 │   │
 │   └── security/
 │       └── nonce.ts
@@ -132,6 +132,12 @@ Each check pack exposes a `build<Pack>Pack(): CheckRunner[]` factory (or `buildC
 Before a check runs, `.preflightignore` rules filter its `GitDiff` input. Global rules remove paths for every consumer, while targeted rules remove paths only for the named check or pack.
 
 Installed companion extensions receive the versioned `MewraPreFlightAPI` through `vscode.extensions.getExtension(...).activate()`. The host applies `.mewra-preflight.json` `contributedChecks` enablement and severity controls before dashboard or MCP execution.
+
+The Webview may request an install only by check ID. The extension host resolves
+that ID through its fixed built-in allowlist before composing a terminal command;
+it never accepts a package name or shell fragment from the Webview. Advisory
+links are opened only when they match an HTTPS URL in the current validated
+check snapshot.
 
 Security-sensitive companion checks can use `PreFlightContext.resolveTrustedTool()`. It resolves only user-owned or system tool locations and never a binary from the opened workspace. The method is additive to API v1, so a companion can return `not-configured` rather than fall back to an untrusted executable on an older host.
 

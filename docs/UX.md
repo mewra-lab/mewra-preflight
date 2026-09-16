@@ -8,12 +8,12 @@
 
 ## 2. Panel states
 
-| State       | What is shown                                              |
-| ----------- | ---------------------------------------------------------- |
-| **Idle**    | Tagline + "▶ Run Pipeline" button                          |
-| **Running** | Check rows with live status updates + spinner in header    |
-| **Done**    | All rows resolved + "↗ Open Pull Request" button in footer |
-| **Error**   | Warning icon + error message + "▶ Re-run" button           |
+| State       | What is shown                                           |
+| ----------- | ------------------------------------------------------- |
+| **Idle**    | Tagline + "▶ Run Pipeline" button                       |
+| **Running** | Check rows with live status updates + spinner in header |
+| **Done**    | All rows resolved + "↗ Create PR / MR" button in footer |
+| **Error**   | Warning icon + error message + "▶ Re-run" button        |
 
 ## 3. Check row anatomy
 
@@ -28,6 +28,9 @@
 - When status is `not-configured`, an `[ Install ]` button is shown to install the tool into project devDependencies via integrated terminal.
 - QuickFix buttons (`[Fix All]` and `[Fix]`) trigger linter/formatter auto-fix with spinner feedback.
 - Route-summary checks may show colour-coded HTTP method/path chips. Each chip opens its source file and line when available.
+- Dependency-security findings group by package/version. They show severity,
+  CVSS, fixed version, and an advisory link when the scanner provides those
+  fields; lockfile findings do not expose a misleading `:0` source location.
 
 ## 4. Manual checklist & PR launch button
 
@@ -36,21 +39,22 @@ MANUAL CHECKS
 [ ] Applied DB migration to dev cluster
     (Triggered: prisma/migrations/** was modified)
 
-[ 🚀 Push & Create PR (2 blockers remaining) ]
+[ 🚀 Create PR / MR (2 blockers remaining) ]
 ```
 
 - Triggered manual checks display condition trigger note and toggleable checkbox.
 - **Ready** (green): all error-severity checks pass and error manual checks are checked.
 - **Blocked** (muted): one or more error checks or manual checklist items remain unresolved, with live blocker count badge.
 - If `blockingOnWarnings` is `true`, warning-severity failures also block.
+- Clicking a ready button never pushes the current branch; users keep their normal Source Control workflow for that action. For GitHub, PreFlight uses an authenticated `gh` CLI to create a PR directly (or opens an existing PR). For GitLab, it uses an authenticated `glab` CLI to create an MR with the generated description. If either CLI is unavailable, PreFlight opens the provider page and copies the description for paste.
 
 ## 5. Commands and keybindings
 
-| Command ID                      | Title               | Keybinding          |
-| ------------------------------- | ------------------- | ------------------- |
-| `mewra-preflight.runPipeline`   | Run Pipeline        | `Alt+Shift+P`       |
-| `mewra-preflight.openDashboard` | Open Dashboard      | —                   |
-| `mewra-preflight.launchPR`      | Launch Pull Request | Webview button only |
+| Command ID                      | Title          | Keybinding          |
+| ------------------------------- | -------------- | ------------------- |
+| `mewra-preflight.runPipeline`   | Run Pipeline   | `Alt+Shift+P`       |
+| `mewra-preflight.openDashboard` | Open Dashboard | —                   |
+| `mewra-preflight.launchPR`      | Create PR / MR | Webview button only |
 
 ## 6. Settings
 
@@ -68,3 +72,5 @@ MANUAL CHECKS
 - Keyboard-navigable (buttons reachable by Tab, findings by Enter).
 - No external fonts or remote resources loaded by the Webview.
 - Live updates via `postMessage` — no polling.
+- A Webview action identifies a check or finding only; the extension host owns
+  all terminal commands and validates advisory links against the active snapshot.

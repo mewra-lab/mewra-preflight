@@ -10,7 +10,7 @@
   <a href="https://github.com/mewra-lab/mewra-preflight/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a>
 </p>
 
-> **Run diff-scoped checks before every push. One dashboard. One button to open your PR.**
+> **Run diff-scoped checks before every push. One dashboard. One button to push and create your PR.**
 
 Mewra PreFlight is an open-source VS Code extension that runs an in-editor pre-push sanity pipeline scoped to your git diff. It surfaces linter, formatter, type-checker, and sanity issues across your project in a live dashboard, and unlocks a one-click PR launch button once the pipeline is clean.
 
@@ -52,13 +52,14 @@ PR button → blocked until errors & required checklists are resolved.
 - **Universal sanity checks** — Built-in guards detecting stray `console.log` / debuggers, exposed environment configurations, hardcoded localhost URLs, git merge conflict markers, and oversized binary files.
 - **Mewra Pounce — Route Summary** _(v0.2.0)_ — The built-in `pounce` pack detects route declarations in changed Next.js, Hono, Express, Fastify, NestJS, Go, Python, and PHP files. It shows colour-coded route chips and adds a Mermaid summary of the changed routes and files to the PR draft.
 - **Contributed security checks** _(v0.4.0)_ — Installed companion extensions register checks through the PreFlight API. Mewra Dependency Guard scans only changed lockfiles with OSV Scanner and Trivy, while preserving the insecure dependency-source guard.
+- **Safe setup actions** _(v0.5.0)_ — A contributed check can mark itself as environment-managed, preventing PreFlight from incorrectly treating its check name as an npm package. Dependency Guard's scanner check instead reports its OSV/Trivy or Docker requirements.
 - **`.preflightignore` support** _(v0.2.0)_ — Place a `.preflightignore` file in the workspace root to exclude files/folders from diff analysis globally (`dist/**`) or per-check/pack (`scripts/**: universal:no-console-log`, `legacy/**: js-ts`).
 - **Interactive manual checklist** — Human verification checklist items that trigger conditionally when specific files are touched (e.g. verifying database migrations when schema files are modified).
 - **Custom community JSON packs** — Easily define project-specific linters or script validations in `.mewra-preflight.json` without writing extension code.
 - **AI coding agent MCP server** — Built-in Model Context Protocol (MCP) server exposing pipeline status, findings, and check execution to AI coding assistants and agent workflows.
-- **One-click PR launcher** — Auto-assembles a rich pull request draft with commit summaries, test-pairing coverage, check results, and (when Pounce is enabled) an embedded Mermaid blast-radius diagram for GitHub or GitLab.
+- **One-click PR launcher** — Auto-assembles a rich pull request draft with commit summaries, test-pairing coverage, check results, and (when Pounce is enabled) an embedded Mermaid blast-radius diagram. After you push through your normal Git workflow, GitHub uses `gh` and GitLab uses `glab` to create the PR/MR with that description directly.
 - **Graceful degradation (BYOT)** — Never bundles bulky toolchains. Uses your project's local versions (`node_modules`, `.venv`, `vendor`, global `PATH`). Missing tools show `not-configured` rather than failing.
-- **100% local & private** — No telemetry, no external network calls, no cloud dependencies.
+- **Local-first & private** — No telemetry or background network activity. A Git push and direct GitHub PR creation occur only after you press the PR button.
 
 ---
 
@@ -76,7 +77,7 @@ Catch issues before git push. Findings link directly to the exact file and line,
 - **In-Editor Findings**: Clickable file:line diagnostics (`src/webview/app.tsx:1 ↗`).
 - **One-Click QuickFix**: Directly re-formats via Prettier (`Fix` / `Fix All`) without terminal commands.
 - **Graceful Degradation**: Missing tools (e.g. ESLint not in `node_modules` or `PATH`) surface as neutral `not-configured` with a one-click `Install` button, never crashing or failing your build.
-- **Gatekeeper Lock**: The **Push & Create PR** button is safely locked until blocking errors are resolved.
+- **Gatekeeper Lock**: The **Create PR / MR** button is safely locked until blocking errors are resolved.
 
 ---
 
@@ -96,14 +97,28 @@ Handle informational warnings and file-triggered human checklists without blocki
 
 ### 3. Green Pipeline & One-Click PR Launch
 
-All checks green. One click to push your branch and open your PR in the browser.
+All checks green. One click to push your branch and create your PR.
 
 <p align="center">
   <img src="./assets/pass.png" width="100%" alt="Mewra PreFlight: Green Pipeline Ready to Push" />
 </p>
 
 - **All Clear Indicator**: Status bar and header show `✓ PreFlight: Ready` / `Passed`.
-- **One-Click PR Launcher**: The emerald **↗ Push & Create PR** button pushes your commits to the remote and generates a pre-filled PR draft on GitHub or GitLab with test pairing and check summaries.
+- **One-Click PR Launcher**: The emerald **↗ Create PR / MR** button never pushes. It creates a GitHub PR through an authenticated `gh` session or a GitLab MR through an authenticated `glab` session, including the generated description. If the CLI is unavailable or cannot authenticate, PreFlight opens the provider page and copies the description for paste.
+
+For direct GitHub PR creation, install and authenticate the GitHub CLI once:
+
+```bash
+brew install gh # macOS
+gh auth login
+```
+
+For a self-managed GitLab instance, install and authenticate GitLab CLI once:
+
+```bash
+brew install glab # macOS
+glab auth login --hostname git.inet.co.th
+```
 
 ---
 
@@ -134,12 +149,12 @@ All checks green. One click to push your branch and open your PR in the browser.
 
 ## Commands
 
-| Command                         | Title                  | Default keybinding | Description                                        |
-| :------------------------------ | :--------------------- | :----------------- | :------------------------------------------------- |
-| `mewra-preflight.runPipeline`   | Run PreFlight Pipeline | `Alt+Shift+P`      | Re-scans git diff and runs all enabled checks      |
-| `mewra-preflight.openDashboard` | Open Dashboard         | —                  | Focuses or reveals the PreFlight Webview panel     |
-| `mewra-preflight.launchPR`      | Launch Pull Request    | Dashboard button   | Pushes current branch and opens PR creation URL    |
-| `mewra-preflight.openConfig`    | Open Configuration     | —                  | Opens `.mewra-preflight.json` in the active editor |
+| Command                         | Title                  | Default keybinding | Description                                              |
+| :------------------------------ | :--------------------- | :----------------- | :------------------------------------------------------- |
+| `mewra-preflight.runPipeline`   | Run PreFlight Pipeline | `Alt+Shift+P`      | Re-scans git diff and runs all enabled checks            |
+| `mewra-preflight.openDashboard` | Open Dashboard         | —                  | Focuses or reveals the PreFlight Webview panel           |
+| `mewra-preflight.launchPR`      | Create PR / MR         | Dashboard button   | Creates and opens its PR or MR after you push the branch |
+| `mewra-preflight.openConfig`    | Open Configuration     | —                  | Opens `.mewra-preflight.json` in the active editor       |
 
 ---
 
@@ -281,7 +296,8 @@ Mewra PreFlight is designed as the orchestration host for the Mewra suite:
 | **0.1.0** | Released    | Core diff-scoped runner (branch, staged, working tree), Universal pack (secrets, console.log, debuggers, localhost, conflicts, file size), Polyglot packs (JS/TS, Python, Go, PHP), Community JSON custom packs, interactive manual checklist with file triggers, monorepo resolution, Built-in Model Context Protocol (MCP) server |
 | **0.2.0** | Released    | Pounce route detection with dashboard/PR Mermaid summaries, per-folder check-pack overrides (`.preflightignore`)                                                                                                                                                                                                                    |
 | **0.3.0** | Released    | First-party local, diff-scoped packs: Dependency Guard (insecure dependency sources), ORM Cost Sentry (query-in-loop and destructive migration heuristics), and Style Guardian (static Tailwind utility conflicts).                                                                                                                 |
-| **0.4.0** | **Current** | Versioned contributed-check API, workspace enablement/severity controls, and Mewra Dependency Guard as a separate OSV/Trivy companion extension that retains secure dependency-source checking.                                                                                                                                     |
+| **0.4.0** | Released    | Versioned contributed-check API, workspace enablement/severity controls, and Mewra Dependency Guard as a separate OSV/Trivy companion extension that retains secure dependency-source checking.                                                                                                                                     |
+| **0.5.0** | **Current** | Creates GitHub PRs through authenticated `gh` and GitLab MRs through authenticated `glab`, without pushing the branch; provider-page fallback copies the generated description for paste.                                                                                                                                           |
 | **1.0.0** | Future      | **Mewra Drift integration** (API contract drift detection), automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX                                                                                                                                                                  |
 
 ---
@@ -297,7 +313,12 @@ pnpm install
 pnpm build
 ```
 
-Press `F5` in VS Code to launch the Extension Development Host.
+Press `F5` in VS Code to launch the Extension Development Host. To test the
+sibling Mewra Dependency Guard source at the same time, select **Run PreFlight
+
+- Dependency Guard (Extension Development Host)** from Run and Debug. This
+  builds and loads both development extensions rather than mixing PreFlight
+  source with an installed Dependency Guard VSIX.
 
 **Quality gate:**
 
@@ -401,7 +422,7 @@ Please report security issues privately. See [SECURITY.md](./SECURITY.md).
 
 ## Privacy
 
-Mewra PreFlight is 100% local. See [PRIVACY.md](./PRIVACY.md).
+Mewra PreFlight is local-first and has no telemetry. See [PRIVACY.md](./PRIVACY.md).
 
 ## License
 

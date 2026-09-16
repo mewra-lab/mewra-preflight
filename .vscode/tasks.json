@@ -7,6 +7,18 @@
       "command": "pnpm build",
       "group": "build",
       "problemMatcher": []
+    },
+    {
+      "label": "Mewra PreFlight + Dependency Guard: Build",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Mewra PreFlight: Build", "Mewra Dependency Guard: Build"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Mewra Dependency Guard: Build",
+      "type": "shell",
+      "command": "pnpm --dir ../mewra-dependency-guard build",
+      "problemMatcher": []
     }
   ]
 }

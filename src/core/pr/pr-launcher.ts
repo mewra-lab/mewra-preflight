@@ -6,6 +6,7 @@ import type {
   PounceRouteChip,
 } from "../../shared/types.js";
 import { buildRouteSectionMermaid } from "../checks/packs/pounce/entry-point-scanner.js";
+import { resolveTrustedTool } from "../checks/context.js";
 
 // MARK: - Helpers
 
@@ -188,9 +189,163 @@ export function formatPRBody(
 export type PRUrl = {
   url: string;
   branch: string;
+  targetBranch: string;
   title: string;
   body: string;
 };
+
+type CommandOutput = {
+  stdout: string;
+  stderr: string;
+};
+
+type PRLauncherDependencies = {
+  resolveTool?: (binName: string) => Promise<string | null>;
+  runCommand?: (
+    command: string,
+    args: string[],
+    cwd: string,
+  ) => Promise<CommandOutput>;
+};
+
+export type GitHubPullRequestResult = {
+  kind: "created" | "existing";
+  url: string;
+};
+
+async function runCommand(
+  command: string,
+  args: string[],
+  cwd: string,
+): Promise<CommandOutput> {
+  const { stdout, stderr } = await execFileAsync(command, args, { cwd });
+  return { stdout, stderr };
+}
+
+function outputUrl(stdout: string): string | null {
+  return (
+    stdout
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .find((line) => /^https:\/\//.test(line)) ?? null
+  );
+}
+
+function launcherDependencies(
+  workspaceRoot: string,
+  dependencies: PRLauncherDependencies,
+) {
+  return {
+    resolveTool:
+      dependencies.resolveTool ??
+      ((binName: string) => resolveTrustedTool(workspaceRoot, binName)),
+    runCommand: dependencies.runCommand ?? runCommand,
+  };
+}
+
+/**
+ * Creates a GitLab merge request through the user's authenticated GitLab CLI.
+ * The source branch must already be pushed by the user's normal Git workflow.
+ */
+export async function createGitLabMergeRequest(
+  workspaceRoot: string,
+  draft: PRUrl,
+  dependencies: PRLauncherDependencies = {},
+): Promise<GitHubPullRequestResult | null> {
+  const { resolveTool, runCommand: execute } = launcherDependencies(
+    workspaceRoot,
+    dependencies,
+  );
+  const glab = await resolveTool("glab");
+  if (!glab) return null;
+
+  try {
+    const result = await execute(
+      glab,
+      [
+        "mr",
+        "create",
+        "--source-branch",
+        draft.branch,
+        "--target-branch",
+        draft.targetBranch,
+        "--title",
+        draft.title,
+        "--description",
+        draft.body,
+        "--yes",
+      ],
+      workspaceRoot,
+    );
+    const url = outputUrl(result.stdout);
+    return url ? { kind: "created", url } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Creates a GitHub pull request through the user's authenticated GitHub CLI.
+ * A null result lets the caller use the browser-based fallback instead.
+ */
+export async function createGitHubPullRequest(
+  workspaceRoot: string,
+  draft: PRUrl,
+  dependencies: PRLauncherDependencies = {},
+): Promise<GitHubPullRequestResult | null> {
+  const { resolveTool, runCommand: execute } = launcherDependencies(
+    workspaceRoot,
+    dependencies,
+  );
+  const gh = await resolveTool("gh");
+  if (!gh) return null;
+
+  try {
+    const existing = await execute(
+      gh,
+      [
+        "pr",
+        "list",
+        "--head",
+        draft.branch,
+        "--state",
+        "open",
+        "--json",
+        "url",
+        "--jq",
+        ".[0].url",
+      ],
+      workspaceRoot,
+    );
+    const url = outputUrl(existing.stdout);
+    if (url) return { kind: "existing", url };
+  } catch {
+    // No PR exists yet, or the CLI cannot query it. Try creating the draft.
+  }
+
+  try {
+    const created = await execute(
+      gh,
+      [
+        "pr",
+        "create",
+        "--base",
+        draft.targetBranch,
+        "--head",
+        draft.branch,
+        "--title",
+        draft.title,
+        "--body",
+        draft.body,
+      ],
+      workspaceRoot,
+    );
+    const url = outputUrl(created.stdout);
+    return url ? { kind: "created", url } : null;
+  } catch {
+    return null;
+  }
+}
 
 // MARK: - Launcher
 
@@ -217,6 +372,7 @@ export async function buildPRUrl(
     return {
       url: `${base}/-/merge_requests/new?merge_request[source_branch]=${encoded}&merge_request[target_branch]=${encodeURIComponent(config.targetBranch)}&merge_request[title]=${encodeURIComponent(title)}&merge_request[description]=${encodeURIComponent(body)}`,
       branch,
+      targetBranch: config.targetBranch,
       title,
       body,
     };
@@ -225,6 +381,7 @@ export async function buildPRUrl(
   return {
     url: `${base}/compare/${encodeURIComponent(config.targetBranch)}...${encoded}?quick_pull=1&expand=1&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`,
     branch,
+    targetBranch: config.targetBranch,
     title,
     body,
   };

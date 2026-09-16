@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { resolve, isAbsolute } from "node:path";
+import { resolve, isAbsolute, relative } from "node:path";
 import { access, readFile, writeFile } from "node:fs/promises";
 import { generateNonce } from "./security/nonce.js";
 import { WebviewMessageSchema } from "../shared/messages.js";
@@ -24,7 +24,11 @@ import { buildPouncePack } from "../core/checks/packs/pounce/index.js";
 import { buildOrmCostSentryPack } from "../core/checks/packs/orm-cost-sentry/index.js";
 import { buildStyleGuardianPack } from "../core/checks/packs/style-guardian/index.js";
 import { buildCustomChecks } from "../core/checks/packs/custom/custom-runner.js";
-import { buildPRUrl } from "../core/pr/pr-launcher.js";
+import {
+  buildPRUrl,
+  createGitHubPullRequest,
+  createGitLabMergeRequest,
+} from "../core/pr/pr-launcher.js";
 import {
   loadWorkspaceConfig,
   mergeWorkspaceConfig,
@@ -58,6 +62,32 @@ async function detectJsPackageManager(root: string): Promise<string> {
   if ((await check("bun.lockb")) || (await check("bun.lock")))
     return "bun add -d";
   return "npm install -D";
+}
+
+type ToolInstall =
+  | { kind: "js"; packageName: string }
+  | { kind: "python"; packageName: string }
+  | { kind: "php"; packageName: string };
+
+const INSTALLABLE_CHECKS: Record<string, ToolInstall> = {
+  "js-ts:prettier": { kind: "js", packageName: "prettier" },
+  "js-ts:eslint": { kind: "js", packageName: "eslint" },
+  "js-ts:tsc": { kind: "js", packageName: "typescript" },
+  "python:format": { kind: "python", packageName: "ruff" },
+  "python:lint": { kind: "python", packageName: "ruff" },
+  "python:mypy": { kind: "python", packageName: "mypy" },
+  "php:cs-fixer": {
+    kind: "php",
+    packageName: "friendsofphp/php-cs-fixer",
+  },
+  "php:analyze": { kind: "php", packageName: "phpstan/phpstan" },
+};
+
+function isWorkspacePath(workspaceRoot: string, candidate: string): boolean {
+  const path = relative(workspaceRoot, candidate);
+  return (
+    path !== "" && path !== ".." && !path.startsWith("..") && !isAbsolute(path)
+  );
 }
 
 // MARK: - Panel Class
@@ -240,7 +270,9 @@ export class PreFlightPanel {
         }
       }
     } else if (msg.type === "installTool") {
-      await this._handleInstallTool(msg.tool, msg.pack);
+      await this._handleInstallTool(msg.checkId);
+    } else if (msg.type === "configureCheck") {
+      await this._handleConfigureCheck(msg.checkId);
     } else if (msg.type === "openFile") {
       const root = this._workspaceRoot();
       if (!root || !msg.path || msg.path === "(diff)") return;
@@ -248,6 +280,7 @@ export class PreFlightPanel {
       const fullPath = isAbsolute(msg.path)
         ? msg.path
         : resolve(root, msg.path);
+      if (!isWorkspacePath(root, fullPath)) return;
 
       try {
         const uri = vscode.Uri.file(fullPath);
@@ -262,33 +295,41 @@ export class PreFlightPanel {
       } catch {
         void vscode.window.showErrorMessage(`Could not open file: ${msg.path}`);
       }
+    } else if (msg.type === "openExternal") {
+      const uri = vscode.Uri.parse(msg.url);
+      const advisoryUrls = this._lastSnapshot?.checks.flatMap((check) =>
+        check.result.findings
+          .map((finding) => finding.metadata?.advisoryUrl)
+          .filter((url): url is string => url !== undefined),
+      );
+      if (uri.scheme === "https" && advisoryUrls?.includes(msg.url)) {
+        await vscode.env.openExternal(uri);
+      }
     } else if (msg.type === "openConfig") {
       await this.openConfig();
     }
   }
 
-  private async _handleInstallTool(
-    toolName: string,
-    pack?: string,
-  ): Promise<void> {
+  private async _handleInstallTool(checkId: string): Promise<void> {
     const root = this._workspaceRoot();
     if (!root) return;
+    const definition = this._lastSnapshot?.checks.find(
+      (check) => check.definition.id === checkId,
+    )?.definition;
+    const install =
+      definition?.installable === false
+        ? undefined
+        : INSTALLABLE_CHECKS[checkId];
+    if (!install) return;
 
     let cmd: string;
-    if (pack === "python") {
-      cmd = `pip install ${toolName}`;
-    } else if (pack === "php") {
-      const pkgMap: Record<string, string> = {
-        "php-cs-fixer": "friendsofphp/php-cs-fixer",
-        phpstan: "phpstan/phpstan",
-        psalm: "vimeo/psalm",
-      };
-      const pkg = pkgMap[toolName] ?? toolName;
-      cmd = `composer require --dev ${pkg}`;
+    if (install.kind === "python") {
+      cmd = `pip install ${install.packageName}`;
+    } else if (install.kind === "php") {
+      cmd = `composer require --dev ${install.packageName}`;
     } else {
-      const pkg = toolName === "tsc" ? "typescript" : toolName;
       const pm = await detectJsPackageManager(root);
-      cmd = `${pm} ${pkg}`;
+      cmd = `${pm} ${install.packageName}`;
     }
 
     const terminal = vscode.window.createTerminal({
@@ -297,6 +338,15 @@ export class PreFlightPanel {
     });
     terminal.show(true);
     terminal.sendText(cmd);
+  }
+
+  private async _handleConfigureCheck(checkId: string): Promise<void> {
+    const setupCommand = this._lastSnapshot?.checks.find(
+      (check) => check.definition.id === checkId,
+    )?.definition.setupCommand;
+    if (!setupCommand) return;
+
+    await vscode.commands.executeCommand(setupCommand);
   }
 
   private async _runPipeline(): Promise<void> {
@@ -670,6 +720,38 @@ export class PreFlightPanel {
       title: prUrl.title,
       body: prUrl.body,
     });
+
+    if (config.gitHost === "github") {
+      const pullRequest = await createGitHubPullRequest(root, prUrl);
+      if (pullRequest) {
+        const action =
+          pullRequest.kind === "created" ? "created" : "already exists";
+        void vscode.window.showInformationMessage(
+          `GitHub pull request ${action}.`,
+        );
+        await vscode.env.openExternal(vscode.Uri.parse(pullRequest.url));
+        return;
+      }
+
+      await vscode.env.clipboard.writeText(prUrl.body);
+      void vscode.window.showWarningMessage(
+        "GitHub CLI could not create the pull request. Opened a pre-filled GitHub page and copied the description for paste. Install and authenticate gh for direct creation.",
+      );
+    } else {
+      const mergeRequest = await createGitLabMergeRequest(root, prUrl);
+      if (mergeRequest) {
+        void vscode.window.showInformationMessage(
+          "GitLab merge request created.",
+        );
+        await vscode.env.openExternal(vscode.Uri.parse(mergeRequest.url));
+        return;
+      }
+
+      await vscode.env.clipboard.writeText(prUrl.body);
+      void vscode.window.showWarningMessage(
+        "GitLab CLI could not create the merge request. Opened the MR page and copied the description for paste. Install and authenticate glab for direct creation.",
+      );
+    }
 
     await vscode.env.openExternal(vscode.Uri.parse(prUrl.url));
   }

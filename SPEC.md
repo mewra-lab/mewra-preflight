@@ -31,7 +31,7 @@ Mewra PreFlight is **not a single checker — it's a host**. It owns exactly thr
 
 1. Compute the diff (staged/unstaged changes) once per run.
 2. Run a configurable list of _checks_ against that diff — some built in, some contributed by other Mewra extensions, some fully custom per project.
-3. Render one dashboard with the aggregate result, and offer a one-click "push + open PR" action once everything passes.
+3. Render one dashboard with the aggregate result, and offer a one-click "push + create PR" action once everything passes.
 
 Every other Mewra extension (Style Guardian, Mewra Drift, ORM Cost Sentry, a future dependency-vulnerability scanner) becomes **a check that plugs into this host** rather than a standalone gate the developer has to remember to run separately. PreFlight's own job is deliberately narrow: diffing, orchestration, UI, and the PR handoff — never the actual analysis logic for any one language or framework.
 
@@ -268,7 +268,7 @@ These run regardless of detected ecosystem, over added (`+`) diff lines only:
 │  [ ] Applied DB migration to dev cluster                  │
 │      (Triggered: prisma/migrations/** was modified)       │
 ├──────────────────────────────────────────────────────────┤
-│  [ 🚀 Push & Create GitHub PR  (2 blockers remaining)    ] │
+│  [ 🚀 Create GitHub PR / GitLab MR (2 blockers remaining)] │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -285,12 +285,26 @@ Status legend used consistently across every check, built-in or contributed:
 
 ## 8. PR Launcher
 
-Unchanged in spirit from the original PreFlight PR concept, now generalized:
+After all blocking checks pass, users push their branch through their normal
+Git workflow. PreFlight does not push. For GitHub, it uses the user's
+authenticated `gh` CLI to find an existing open PR or create one with the
+generated base, head, title, and body. For GitLab, it uses the user's
+authenticated `glab` CLI to create an MR with the generated description.
+When the relevant CLI is missing, unauthenticated, or fails, PreFlight opens
+this browser fallback instead and copies the generated description for paste:
 
 ```
 GitHub: https://github.com/{org}/{repo}/compare/{target}...{source}?quick_pull=1&title={title}&body={body}
 GitLab: https://gitlab.com/{org}/{repo}/-/merge_requests/new?merge_request[source_branch]={source}...
 ```
+
+The PR launcher uses trusted `gh`/`glab` executables and fixed argument arrays;
+neither command is derived from Webview input.
+
+Checks that require machine-level tools can set `installable: false` in the
+check contract. The dashboard then shows their setup message without offering
+the generic package-manager Install action; this prevents logical check IDs
+from being mistaken for package names.
 
 The generated PR body is assembled from:
 
@@ -377,7 +391,8 @@ The generated PR body is assembled from:
 | **0.1.0** | Released    | Core diff-scoped runner (branch, staged, working tree), Universal pack (secrets, console.log, debuggers, localhost, conflicts, file size), Polyglot packs (JS/TS, Python, Go, PHP), Community JSON custom packs, Interactive manual checklist with file triggers, Monorepo resolution, Built-in Model Context Protocol (MCP) server |
 | **0.2.0** | Released    | **Mewra Pounce route summary** (detect changed route declarations, surface route chips in the dashboard, and attach Mermaid route/file summaries to PR drafts), per-folder check-pack overrides (`.preflightignore`)                                                                                                                |
 | **0.3.0** | Released    | **First-party local packs**: Dependency Guard (insecure dependency source detection), ORM Cost Sentry (query-in-loop and destructive migration heuristics), and Style Guardian (static Tailwind utility conflicts).                                                                                                                 |
-| **0.4.0** | **Current** | **Contributed-check contract v1**: Mewra Dependency Guard runs OSV and Trivy plus the insecure dependency-source guard as a separate extension; workspace contributed-check enablement/severity configuration is enforced by the host.                                                                                              |
+| **0.4.0** | Released    | **Contributed-check contract v1**: Mewra Dependency Guard runs OSV and Trivy plus the insecure dependency-source guard as a separate extension; workspace contributed-check enablement/severity configuration is enforced by the host.                                                                                              |
+| **0.5.0** | **Current** | **Direct PR/MR creation**: leaves pushing to the user's Git workflow, then finds or creates a GitHub PR through `gh` or a GitLab MR through `glab`, with browser fallback and description copy when direct creation is unavailable.                                                                                                 |
 | **1.0.0** | Future      | **Mewra Drift integration** (API contract drift detection), automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX                                                                                                                                                                  |
 
 ---

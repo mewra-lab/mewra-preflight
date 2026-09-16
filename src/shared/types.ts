@@ -31,6 +31,7 @@ export const CheckFindingSchema = z.object({
   column: z.number().int().nonnegative().optional(),
   message: z.string(),
   rule: z.string().optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
 });
 
 export type CheckFinding = z.infer<typeof CheckFindingSchema>;
@@ -52,6 +53,8 @@ export const CheckDefinitionSchema = z.object({
   severity: CheckSeveritySchema,
   pack: z.string(),
   fixable: z.boolean().optional(),
+  installable: z.boolean().optional(),
+  setupCommand: z.string().optional(),
 });
 
 export type CheckDefinition = z.infer<typeof CheckDefinitionSchema>;

@@ -15,6 +15,7 @@ Semantic Versioning:
 0.2.0  — Mewra Pounce route summary (changed route declarations in dashboard/PR), .preflightignore per-folder check-pack overrides
 0.3.0  — first-party local packs: Dependency Guard (insecure dependency sources), ORM Cost Sentry (query-in-loop and destructive migrations), Style Guardian (static Tailwind conflicts)
 0.4.0  — contributed-check contract v1 and Mewra Dependency Guard companion extension
+0.5.0  — create GitHub pull requests and GitLab merge requests through authenticated CLIs, with browser fallback
 1.0.0  — Mewra Drift integration, automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX
 ```
 
@@ -82,6 +83,18 @@ notes, and validation status. Do not claim route tracing when the Pounce pack
 only detects route declarations in changed files.
 
 ## 8. Changelog
+
+### v0.5.0
+
+**Direct GitHub PR creation**
+
+- **Separated push and creation**: the dashboard never pushes; users keep their normal Source Control workflow and run Create PR / MR after their branch is available remotely.
+- **GitHub and GitLab CLI integration**: trusted, authenticated `gh` and `glab` installations create the generated PR/MR descriptions directly. Existing GitHub PRs are opened instead of duplicated.
+- **Transparent fallback**: if a provider CLI is unavailable or cannot create the PR/MR, PreFlight opens the provider page and copies the generated description for paste.
+- **Privacy and safety**: provider communication occurs only after the explicit button click, through the user's existing CLI authentication. CLI commands use fixed argument arrays and trusted executable resolution.
+- **Safe dependency-scanner setup**: contributed checks can opt out of the generic package-manager installer. Dependency Guard's OSV/Trivy scanner no longer attempts to install a nonexistent `security-scan` npm package.
+- **Actionable dependency findings**: Security Scan groups vulnerabilities by package and displays scanner-provided severity, CVSS, fixed-version, and advisory details when available.
+- **Webview hardening**: tool-install requests resolve through a fixed host-side allowlist, and advisory links must belong to the current validated result snapshot.
 
 ### v0.4.0
 
