@@ -87,6 +87,14 @@ only detects route declarations in changed files.
 
 ## 8. Changelog
 
+### v0.7.3
+
+**Companion identity documentation**
+
+- Updates Dependency Guard's Marketplace ID to
+  `mewra.mewra-dependency-guard-companion`; its PreFlight check IDs and
+  `.mewra-preflight.json` configuration remain unchanged.
+
 ### v0.7.2
 
 **Reliable companion and style checks**
@@ -95,9 +103,9 @@ only detects route declarations in changed files.
   duplicate companion contribution from running twice or rendering two rows.
 - Treats Tailwind modifier scopes independently, so base, `hover:`, `focus:`,
   and responsive utilities are no longer reported as conflicts with each other.
-- Documents the new Dependency Guard Marketplace ID
-  `mewra.mewra-dependency-guard-vscode`; its existing PreFlight check IDs and
-  `.mewra-preflight.json` configuration remain unchanged.
+- Documents the then-current Dependency Guard Marketplace ID; its existing
+  PreFlight check IDs and `.mewra-preflight.json` configuration remain
+  unchanged.
 - Excludes a repository-local `.mewra-preflight.json` from the distributable
   VSIX; the schema and tracked example remain available to users.
 

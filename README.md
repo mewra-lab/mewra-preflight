@@ -296,7 +296,7 @@ Mewra PreFlight is designed as the orchestration host for the Mewra suite:
 ```
 
 - **[Mewra Pounce](https://github.com/mewra-lab/mewra-pounce)** (`mewra.mewra-pounce`): Traces reverse call hierarchy and surfaces blast radius directly in the PreFlight dashboard (affected public API routes, background workers, and jobs).
-- **Mewra Dependency Guard** (`mewra.mewra-dependency-guard-vscode`): Registers a lockfile-only OSV and Trivy security scan plus the insecure dependency-source guard with PreFlight. Its check IDs remain `mewra-dependency-guard:security-scan` and `dependency-guard:unsafe-source`.
+- **Mewra Dependency Guard** (`mewra.mewra-dependency-guard-companion`): Registers a lockfile-only OSV and Trivy security scan plus the insecure dependency-source guard with PreFlight. Its check IDs remain `mewra-dependency-guard:security-scan` and `dependency-guard:unsafe-source`.
 - **ORM Cost Sentry**: Detects N+1 query patterns and unindexed migration risks across Prisma, Drizzle, and SQLAlchemy.
 - **Mewra Style Guardian**: Enforces AST design tokens and catches Tailwind CSS conflicts.
 - **Mewra Drift**: Detects contract drift between API implementations and schemas.
