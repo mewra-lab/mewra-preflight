@@ -960,38 +960,6 @@ pre {
   border-bottom: none;
 }
 
-.roadmap-table .ver {
-  font-weight: 700;
-  color: var(--text-primary);
-  white-space: nowrap;
-}
-
-.roadmap-table .badge-status {
-  display: inline-block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 4px;
-}
-
-.badge-status.current {
-  background: rgba(16, 185, 129, 0.18);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.35);
-}
-
-.badge-status.planned {
-  background: rgba(99, 102, 241, 0.18);
-  color: #818cf8;
-  border: 1px solid rgba(99, 102, 241, 0.35);
-}
-
-.badge-status.future {
-  background: rgba(255, 255, 255, 0.07);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-}
-
 /* MARK: - CTA Section */
 .cta-section {
   max-width: 900px;

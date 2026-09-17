@@ -126,10 +126,10 @@ glab auth login --hostname git.inet.co.th
 
 ### From GitHub Releases (.vsix)
 
-1. Download `mewra-preflight-0.1.0.vsix` from [GitHub Releases](https://github.com/mewra-lab/mewra-preflight/releases/tag/v0.1.0).
+1. Download the latest VSIX from [GitHub Releases](https://github.com/mewra-lab/mewra-preflight/releases).
 2. Install via terminal:
    ```bash
-   code --install-extension mewra-preflight-0.1.0.vsix
+   code --install-extension /path/to/mewra-preflight-x.y.z.vsix
    ```
    Or in VS Code: Extensions view (`Ctrl+Shift+X` / `Cmd+Shift+X`) → `···` (Views and More Actions) → `Install from VSIX…`.
 
@@ -303,16 +303,13 @@ Mewra PreFlight is designed as the orchestration host for the Mewra suite:
 
 ---
 
-## Roadmap
+## Release History & Roadmap
 
-| Version   | Status      | Scope                                                                                                                                                                                                                                                                                                                               |
-| :-------- | :---------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **0.1.0** | Released    | Core diff-scoped runner (branch, staged, working tree), Universal pack (secrets, console.log, debuggers, localhost, conflicts, file size), Polyglot packs (JS/TS, Python, Go, PHP), Community JSON custom packs, interactive manual checklist with file triggers, monorepo resolution, Built-in Model Context Protocol (MCP) server |
-| **0.2.0** | Released    | Pounce route detection with dashboard/PR Mermaid summaries, per-folder check-pack overrides (`.preflightignore`)                                                                                                                                                                                                                    |
-| **0.3.0** | Released    | First-party local, diff-scoped packs: Dependency Guard (insecure dependency sources), ORM Cost Sentry (query-in-loop and destructive migration heuristics), and Style Guardian (static Tailwind utility conflicts).                                                                                                                 |
-| **0.4.0** | Released    | Versioned contributed-check API, workspace enablement/severity controls, and Mewra Dependency Guard as a separate OSV/Trivy companion extension that retains secure dependency-source checking.                                                                                                                                     |
-| **0.5.0** | **Current** | Creates GitHub PRs through authenticated `gh` and GitLab MRs through authenticated `glab`, without pushing the branch; provider-page fallback copies the generated description for paste.                                                                                                                                           |
-| **1.0.0** | Future      | **Mewra Drift integration** (API contract drift detection), automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX                                                                                                                                                                  |
+GitHub is the source of truth for versioned release notes and future work:
+
+- [Releases](https://github.com/mewra-lab/mewra-preflight/releases)
+- [Release guide and changelog](./docs/RELEASE.md)
+- [Open issues and roadmap](https://github.com/mewra-lab/mewra-preflight/issues)
 
 ---
 
