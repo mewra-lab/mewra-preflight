@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { resolve, isAbsolute, relative } from "node:path";
-import { access, readFile, writeFile } from "node:fs/promises";
+import { resolve, isAbsolute, relative, dirname } from "node:path";
+import { access, readFile, readdir, writeFile } from "node:fs/promises";
 import { generateNonce } from "./security/nonce.js";
 import { WebviewMessageSchema } from "../shared/messages.js";
 import type { ExtensionMessage } from "../shared/messages.js";
@@ -9,7 +9,11 @@ import type {
   PreFlightSnapshot,
   DiffScope,
 } from "../shared/types.js";
-import { computeGitDiff, listGitBranches } from "../core/diff/git-diff.js";
+import {
+  computeGitDiff,
+  listGitBranches,
+  resolveGitRepositoryRoot,
+} from "../core/diff/git-diff.js";
 import { deriveOverallStatus, runChecks } from "../core/checks/runner.js";
 import { createPreFlightContext } from "../core/checks/context.js";
 import { CheckRegistry } from "../core/checks/registry.js";
@@ -43,6 +47,12 @@ import {
 export type StatusChangeCallback = (
   status: "idle" | "running" | "pass" | "warning" | "fail",
 ) => void;
+
+type RepositoryCandidate = {
+  root: string;
+  label: string;
+  detail: string;
+};
 
 // MARK: - Helpers
 
@@ -104,6 +114,7 @@ export class PreFlightPanel {
   private _isDisposed = false;
   private _selectedScope: DiffScope | undefined;
   private _selectedTargetBranch: string | null = null;
+  private _repositoryRoot: string | null = null;
   private _manualCheckStates: Map<string, boolean> = new Map();
   private _lastSnapshot: PreFlightSnapshot | undefined;
 
@@ -222,7 +233,96 @@ export class PreFlightPanel {
   }
 
   private _workspaceRoot(): string | null {
-    return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? null;
+    return this._repositoryRoot;
+  }
+
+  private async _resolveWorkspaceRoot(): Promise<string | null> {
+    const workspaceFolders = vscode.workspace.workspaceFolders ?? [];
+    const activeDocument = vscode.window.activeTextEditor?.document;
+    const activeFolder =
+      activeDocument?.uri.scheme === "file"
+        ? vscode.workspace.getWorkspaceFolder(activeDocument.uri)
+        : undefined;
+    const candidates = new Map<string, RepositoryCandidate>();
+
+    const addCandidate = (root: string, source: string): void => {
+      if (candidates.has(root)) return;
+      candidates.set(root, {
+        root,
+        label: root.split(/[\\/]/).filter(Boolean).at(-1) ?? root,
+        detail: source,
+      });
+    };
+
+    if (activeDocument?.uri.scheme === "file" && activeFolder) {
+      const activeRepository = await resolveGitRepositoryRoot(
+        dirname(activeDocument.uri.fsPath),
+      );
+      if (activeRepository) {
+        this._repositoryRoot = activeRepository;
+        return activeRepository;
+      }
+    }
+
+    for (const folder of workspaceFolders) {
+      const repositoryRoot = await resolveGitRepositoryRoot(folder.uri.fsPath);
+      if (repositoryRoot) {
+        addCandidate(repositoryRoot, folder.name);
+        continue;
+      }
+
+      try {
+        const entries = await readdir(folder.uri.fsPath, {
+          withFileTypes: true,
+        });
+        for (const entry of entries) {
+          if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+          const repositoryRoot = await resolveGitRepositoryRoot(
+            resolve(folder.uri.fsPath, entry.name),
+          );
+          if (repositoryRoot) addCandidate(repositoryRoot, folder.name);
+        }
+      } catch {}
+    }
+
+    if (
+      this._repositoryRoot &&
+      Array.from(candidates.values()).some(
+        (candidate) => candidate.root === this._repositoryRoot,
+      )
+    ) {
+      return this._repositoryRoot;
+    }
+
+    const candidateList = Array.from(candidates.values());
+    if (candidateList.length === 1) {
+      const candidate = candidateList[0];
+      if (!candidate) return null;
+      this._repositoryRoot = candidate.root;
+      return candidate.root;
+    }
+
+    if (candidateList.length > 1) {
+      const selected = await vscode.window.showQuickPick(candidateList, {
+        placeHolder: "Select the Git repository to run PreFlight against",
+      });
+      if (selected) {
+        this._repositoryRoot = selected.root;
+        return selected.root;
+      }
+    }
+
+    if (activeFolder) {
+      const repositoryRoot = await resolveGitRepositoryRoot(
+        activeFolder.uri.fsPath,
+      );
+      if (repositoryRoot) {
+        this._repositoryRoot = repositoryRoot;
+        return repositoryRoot;
+      }
+    }
+
+    return null;
   }
 
   private async _handleWebviewMessage(raw: unknown): Promise<void> {
@@ -328,9 +428,13 @@ export class PreFlightPanel {
   }
 
   private async _runPipeline(): Promise<void> {
-    const root = this._workspaceRoot();
+    const root = await this._resolveWorkspaceRoot();
     if (!root) {
-      this._post({ type: "error", message: "No workspace folder open." });
+      this._post({
+        type: "error",
+        message:
+          "No Git repository found. Open a repository folder or select a repository from the workspace.",
+      });
       this._onStatusChange?.("idle");
       return;
     }
@@ -818,7 +922,7 @@ export class PreFlightPanel {
   }
 
   async openConfig(): Promise<void> {
-    const root = this._workspaceRoot();
+    const root = this._workspaceRoot() ?? (await this._resolveWorkspaceRoot());
     if (!root) return;
 
     const configPath = resolve(root, ".mewra-preflight.json");
@@ -888,7 +992,6 @@ ${ecosystemsBlock}  "universalChecks": {
     "noMergeConflicts": "error",
     "largeFileThresholdMb": 1
   },
-  // Custom manual checklist items (press Ctrl+Space inside to insert a template)
   "manualChecklist": [
     {
       "id": "db-migration",

@@ -16,6 +16,15 @@ function isExecError(e: unknown): e is ExecError {
   return typeof e === "object" && e !== null && "code" in e;
 }
 
+function gitErrorSummary(stderr: string | undefined): string {
+  const lines = (stderr ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const diagnostic = lines.find((line) => /^(fatal|error):/i.test(line));
+  return diagnostic ?? lines[0] ?? "Git command failed.";
+}
+
 async function runGit(cwd: string, args: readonly string[]): Promise<string> {
   try {
     const { stdout } = await execFileAsync("git", [...args], { cwd });
@@ -23,10 +32,25 @@ async function runGit(cwd: string, args: readonly string[]): Promise<string> {
   } catch (e) {
     if (isExecError(e) && e.code !== undefined) {
       throw new Error(
-        `git ${args[0]} exited with code ${e.code}: ${(e as { stderr?: string }).stderr ?? ""}`,
+        `Git ${args[0]} failed (exit code ${e.code}): ${gitErrorSummary(e.stderr)}`,
       );
     }
     throw e;
+  }
+}
+
+export async function resolveGitRepositoryRoot(
+  cwd: string,
+): Promise<string | null> {
+  try {
+    const insideWorkTree = await runGit(cwd, [
+      "rev-parse",
+      "--is-inside-work-tree",
+    ]);
+    if (insideWorkTree !== "true") return null;
+    return await runGit(cwd, ["rev-parse", "--show-toplevel"]);
+  } catch {
+    return null;
   }
 }
 
@@ -189,6 +213,13 @@ export async function computeGitDiff(
   baseBranch: string,
   scope: DiffScope = "branch",
 ): Promise<GitDiff> {
+  const repositoryRoot = await resolveGitRepositoryRoot(workspaceRoot);
+  if (!repositoryRoot) {
+    throw new Error(
+      "No Git repository was found. Select a repository folder or open a file inside one.",
+    );
+  }
+  workspaceRoot = repositoryRoot;
   const headBranch = await resolveCurrentBranch(workspaceRoot);
   const resolvedBase = await resolveBaseRef(workspaceRoot, baseBranch);
 
