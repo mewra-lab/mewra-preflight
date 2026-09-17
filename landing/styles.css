@@ -960,6 +960,45 @@ pre {
   border-bottom: none;
 }
 
+.companion-repository-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: max-content;
+  padding: 7px 10px;
+  border: 1px solid rgba(129, 140, 248, 0.28);
+  border-radius: 8px;
+  background: rgba(99, 102, 241, 0.1);
+  color: #c7d2fe;
+  font-size: 0.88rem;
+  font-weight: 650;
+  line-height: 1.2;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.companion-repository-link span {
+  color: #7dd3fc;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.companion-repository-link:hover {
+  border-color: rgba(125, 211, 252, 0.6);
+  background: rgba(56, 189, 248, 0.12);
+  color: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.companion-repository-link:focus-visible {
+  outline: 2px solid var(--accent-secondary);
+  outline-offset: 3px;
+}
+
 /* MARK: - CTA Section */
 .cta-section {
   max-width: 900px;
