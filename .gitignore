@@ -1,6 +1,8 @@
 node_modules/
 dist/
 coverage/
+artifacts/*.vsix
+artifacts/SHA256SUMS.txt
 
 .DS_Store
 *.vsix

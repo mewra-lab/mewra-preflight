@@ -23,6 +23,7 @@ SPEC.md
 **/*.map
 node_modules/**
 *.vsix
+artifacts/**
 landing/**
 assets/failed.png
 assets/pass.png

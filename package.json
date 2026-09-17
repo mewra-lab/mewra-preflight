@@ -203,7 +203,7 @@
     "prepare": "husky",
     "validate": "pnpm format:check && pnpm check && pnpm test && pnpm build",
     "vscode:prepublish": "pnpm build",
-    "package": "vsce package --no-dependencies",
+    "package": "node scripts/package.mjs",
     "publish:marketplace": "vsce publish --no-dependencies",
     "deploy:landing": "npx wrangler deploy --config landing/wrangler.toml"
   },
