@@ -70,6 +70,11 @@ pnpm validate
 matches `package.json`, runs the full quality gate, builds the VSIX, and uploads
 both the VSIX and `SHA256SUMS.txt`.
 
+`pnpm package` writes local package output to `artifacts/`. The directory is
+tracked only with a placeholder; VSIX files and checksums are ignored and the
+directory is excluded from the extension package. GitHub Releases remain the
+distributable archive of record.
+
 For an existing tag created before this workflow was merged, run **Release**
 from the Actions tab with the tag as the `tag` input. For a new release, merge
 the release PR, update `package.json`, and push its matching tag.
