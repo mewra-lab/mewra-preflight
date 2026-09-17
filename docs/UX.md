@@ -104,3 +104,13 @@ The checklist item itself must also set `"agentCheckable": true`.
   for versioned release history and the roadmap.
 - Installation messaging must state that PreFlight creates a PR or MR after the
   user has pushed with their normal Git workflow; it never pushes a branch.
+
+## 10. Repository selection
+
+- One pipeline run always targets exactly one Git repository so its diff,
+  configuration, check tools, and PR/MR draft remain coherent.
+- In a multi-root workspace, PreFlight uses the Git repository containing the
+  active file. If no active file identifies a repository, it offers a picker
+  for workspace repositories and immediate repository children.
+- A folder that is not itself a Git repository must show a concise selection
+  error, never raw Git usage output.

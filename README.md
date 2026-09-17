@@ -158,6 +158,15 @@ glab auth login --hostname git.inet.co.th
 
 ---
 
+## Multi-Repository Workspaces
+
+Each pipeline run targets one Git repository. When several projects are open,
+PreFlight uses the repository containing the active file. When you open a
+parent folder that contains several repositories, it asks you to select the
+repository to check and keeps that selection for the open dashboard.
+
+---
+
 ## Settings
 
 Configure via VS Code Settings (`settings.json`):

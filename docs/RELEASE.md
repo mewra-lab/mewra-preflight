@@ -92,6 +92,19 @@ only detects route declarations in changed files.
 
 ## 8. Changelog
 
+### v0.7.5
+
+**Multi-repository workspace support**
+
+- Uses the Git repository containing the active file when a VS Code workspace
+  contains several projects.
+- Offers a repository picker when opening a folder that contains multiple
+  immediate Git repositories and no active file identifies one.
+- Validates that a pipeline target is a Git worktree before computing a diff
+  and replaces raw Git usage output with a concise recovery message.
+- Generates comment-free `.mewra-preflight.json` starter files so they remain
+  valid JSON in VS Code.
+
 ### v0.7.4
 
 **Accurate debugger detection**

@@ -34,6 +34,7 @@ describe("parseNameStatus (internal helper via module boundary)", () => {
 import {
   computeGitDiff,
   listGitBranches,
+  resolveGitRepositoryRoot,
 } from "../../src/core/diff/git-diff.js";
 
 describe("computeGitDiff scopes", () => {
@@ -62,5 +63,16 @@ describe("computeGitDiff scopes", () => {
     const branches = await listGitBranches(process.cwd());
     expect(Array.isArray(branches)).toBe(true);
     expect(branches.length).toBeGreaterThan(0);
+  });
+
+  it("resolves the enclosing Git repository root", async () => {
+    const root = await resolveGitRepositoryRoot(process.cwd());
+    expect(root).not.toBeNull();
+    expect(root).toContain("mewra-preflight");
+  });
+
+  it("returns null for a directory outside a Git repository", async () => {
+    const root = await resolveGitRepositoryRoot("/private/tmp");
+    expect(root).toBeNull();
   });
 });
