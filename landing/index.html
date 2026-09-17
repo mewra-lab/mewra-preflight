@@ -46,7 +46,7 @@
           <a href="#why">Why In-Editor?</a>
           <a href="#ecosystems">Ecosystems</a>
           <a href="#mcp">AI / MCP</a>
-          <a href="#roadmap">Roadmap</a>
+          <a href="#companions">Companions</a>
           <a
             href="https://github.com/mewra-lab/mewra-preflight"
             target="_blank"
@@ -651,13 +651,14 @@
         </div>
       </section>
 
-      <!-- MARK: - Roadmap & Companion Extensions -->
-      <section class="roadmap-section" id="roadmap">
+      <!-- MARK: - Companion Extensions -->
+      <section class="roadmap-section" id="companions">
         <div class="section-head">
-          <h2>Mewra Suite Synergy & Roadmap</h2>
+          <h2>Designed for focused companion checks</h2>
           <p>
-            PreFlight acts as the host for first-party companion extensions and
-            upcoming releases.
+            PreFlight is the host. Companion extensions add specialized checks
+            without turning your editor into a CI server. Follow release notes
+            and the roadmap on GitHub.
           </p>
         </div>
 
@@ -665,59 +666,59 @@
           <table class="roadmap-table">
             <thead>
               <tr>
-                <th>Version</th>
-                <th>Status</th>
-                <th>Scope & Companion Integrations</th>
+                <th>Extension</th>
+                <th>What it adds</th>
+                <th>Explore</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td class="ver">v0.1.0</td>
-                <td><span class="badge-status current">Current</span></td>
                 <td>
-                  <strong>Diff-scoped Host & Built-in Packs</strong>: Universal
-                  guardrails, Polyglot packs (JS/TS, Python, Go, PHP), Community
-                  JSON packs, Interactive manual checklists, Native Model
-                  Context Protocol (MCP) server.
+                  <strong>Mewra PreFlight</strong>
+                </td>
+                <td>
+                  Diff-scoped guardrails, ecosystem checks, manual checklists,
+                  direct PR/MR creation, and a native VS Code MCP bridge.
+                </td>
+                <td>
+                  <a
+                    href="https://github.com/mewra-lab/mewra-preflight"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >Repository ↗</a
+                  >
                 </td>
               </tr>
               <tr>
-                <td class="ver">v0.2.0</td>
-                <td><span class="badge-status planned">Planned</span></td>
                 <td>
-                  <strong
-                    ><a
-                      href="https://pounce.mewra.app"
-                      style="color: #818cf8; text-decoration: underline"
-                      >Mewra Pounce</a
-                    >
-                    Integration</strong
-                  >: Surface blast radius & impacted API routes directly in the
-                  PreFlight dashboard; auto-attach Mermaid reverse call
-                  hierarchy diagrams to PR drafts;
-                  <code>.preflightignore</code> file support.
+                  <strong>Mewra Pounce</strong>
+                </td>
+                <td>
+                  Reverse call tracing and diff-scoped blast-radius route
+                  summaries in the PreFlight dashboard and PR/MR drafts.
+                </td>
+                <td>
+                  <a
+                    href="https://github.com/mewra-lab/mewra-pounce"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >Repository ↗</a
+                  >
                 </td>
               </tr>
               <tr>
-                <td class="ver">v0.3.0</td>
-                <td><span class="badge-status planned">Planned</span></td>
+                <td><strong>Mewra Dependency Guard</strong></td>
                 <td>
-                  <strong>First-Party Contributed Packs</strong>:
-                  <em>Mewra Dependency Guard</em> (OSV/Trivy lockfile CVE
-                  scans), <em>ORM Cost Sentry</em> (N+1 query & unindexed
-                  migration alerts), <em>Mewra Style Guardian</em> (AST token &
-                  Tailwind conflict checks), Local trend & history tracking.
+                  Diff-scoped OSV and Trivy lockfile scanning plus secure
+                  dependency-source checks, using Docker or your local tools.
                 </td>
-              </tr>
-              <tr>
-                <td class="ver">v1.0.0</td>
-                <td><span class="badge-status future">Future</span></td>
                 <td>
-                  <strong>Mewra Drift & Git Hooks</strong>: API contract drift
-                  detection (OpenAPI vs implementation), automated one-click
-                  <code>.git/hooks/pre-push</code> headless CLI installer, first
-                  official production-stable release across VS Code Marketplace
-                  and Open VSX.
+                  <a
+                    href="https://github.com/mewra-lab/mewra-dependency-guard"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >Repository ↗</a
+                  >
                 </td>
               </tr>
             </tbody>
@@ -828,6 +829,12 @@
             target="_blank"
             rel="noopener noreferrer"
             >GitHub</a
+          >
+          <a
+            href="https://github.com/mewra-lab/mewra-preflight/releases"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Releases</a
           >
           <a
             href="https://github.com/mewra-lab/mewra-preflight/blob/main/PRIVACY.md"

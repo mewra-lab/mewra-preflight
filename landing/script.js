@@ -34,13 +34,13 @@ document.addEventListener("DOMContentLoaded", () => {
     },
     pass: {
       img: "./assets/pass.png",
-      alt: "Mewra PreFlight: Green Pipeline Ready to Push",
-      title: "All Diff Checks Passed — One-Click Push & Open PR",
-      desc: "All universal guardrails and ecosystem packs passed cleanly in milliseconds. PreFlight unlocks the emerald 'Push & Create PR' button to push your commits and draft the PR automatically.",
+      alt: "Mewra PreFlight: Green Pipeline Ready to Create a PR or MR",
+      title: "All Diff Checks Passed — Ready to Create a PR / MR",
+      desc: "All universal guardrails and ecosystem packs passed cleanly in milliseconds. PreFlight unlocks the emerald 'Create PR / MR' button. Your normal Git workflow remains responsible for pushing the branch.",
       tags: [
         { label: "All Passed (Green)", class: "emerald" },
         { label: "Status Bar: Ready", class: "emerald" },
-        { label: "1-Click GitHub/GitLab PR", class: "emerald" },
+        { label: "Create GitHub PR / GitLab MR", class: "emerald" },
         { label: "Diff-Scoped (1ms - 248ms)", class: "neutral" },
       ],
     },

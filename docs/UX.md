@@ -95,3 +95,12 @@ The checklist item itself must also set `"agentCheckable": true`.
 - Live updates via `postMessage` — no polling.
 - A Webview action identifies a check or finding only; the extension host owns
   all terminal commands and validates advisory links against the active snapshot.
+
+## 9. Public landing page
+
+- The landing page describes stable product capabilities and companion
+  extensions without presenting a pinned extension version or release status.
+- GitHub Releases, `docs/RELEASE.md`, and GitHub issues are the source of truth
+  for versioned release history and the roadmap.
+- Installation messaging must state that PreFlight creates a PR or MR after the
+  user has pushed with their normal Git workflow; it never pushes a branch.
