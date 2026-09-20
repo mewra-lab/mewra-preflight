@@ -34,6 +34,7 @@ export type CheckRunner = {
   readonly installable?: boolean;
   /** Registered command that opens the check's own setup experience. */
   readonly setupCommand?: string;
+  readonly resultCommand?: string;
   appliesTo(diff: GitDiff): boolean;
   run(diff: GitDiff, context: PreFlightContext): Promise<CheckResult>;
 };

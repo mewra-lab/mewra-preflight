@@ -17,6 +17,7 @@ import {
 import { deriveOverallStatus, runChecks } from "../core/checks/runner.js";
 import { createPreFlightContext } from "../core/checks/context.js";
 import { CheckRegistry } from "../core/checks/registry.js";
+import { resolveResultCommand } from "../core/checks/result-action.js";
 import { PreFlightMcpHandler } from "../core/mcp/handler.js";
 import { detectActiveEcosystems } from "../core/ecosystem/detect-ecosystem.js";
 import { buildUniversalPack } from "../core/checks/packs/universal/index.js";
@@ -351,6 +352,8 @@ export class PreFlightPanel {
       await this._handleInstallTool(msg.checkId);
     } else if (msg.type === "configureCheck") {
       await this._handleConfigureCheck(msg.checkId);
+    } else if (msg.type === "openCheckResults") {
+      await this._handleOpenCheckResults(msg.checkId);
     } else if (msg.type === "openFile") {
       const root = this._workspaceRoot();
       if (!root || !msg.path || msg.path === "(diff)") return;
@@ -425,6 +428,18 @@ export class PreFlightPanel {
     if (!setupCommand) return;
 
     await vscode.commands.executeCommand(setupCommand);
+  }
+
+  private async _handleOpenCheckResults(checkId: string): Promise<void> {
+    const root = this._workspaceRoot();
+    if (!root) return;
+    const config = await loadWorkspaceConfig(root);
+    const command = resolveResultCommand(
+      this._lastSnapshot,
+      this._registry.getConfiguredChecks(config?.contributedChecks),
+      checkId,
+    );
+    if (command) await vscode.commands.executeCommand(command);
   }
 
   private async _runPipeline(): Promise<void> {

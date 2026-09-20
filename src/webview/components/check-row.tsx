@@ -14,6 +14,7 @@ type CheckRowProps = {
   onQuickFix?: (checkId: string, file?: string) => void;
   onInstallTool?: (checkId: string) => void;
   onConfigureCheck?: (checkId: string) => void;
+  onOpenResults?: (checkId: string) => void;
   onOpenExternal?: (url: string) => void;
   fixingTarget?: string | null;
 };
@@ -205,6 +206,7 @@ export function CheckRow({
   onQuickFix,
   onInstallTool,
   onConfigureCheck,
+  onOpenResults,
   onOpenExternal,
   fixingTarget,
 }: CheckRowProps) {
@@ -274,6 +276,21 @@ export function CheckRow({
         )}
 
         <div class="check-row__meta">
+          {definition.resultCommand &&
+            onOpenResults &&
+            result.status !== "pending" &&
+            result.status !== "running" && (
+              <button
+                class="quick-fix-btn"
+                title={`Open results for ${definition.label}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenResults(definition.id);
+                }}
+              >
+                Open results
+              </button>
+            )}
           {result.status === "not-configured" &&
             definition.setupCommand &&
             onConfigureCheck && (

@@ -15,6 +15,7 @@ import { loadWorkspaceConfig } from "../core/config/workspace-config.js";
 
 export interface MewraPreFlightAPI {
   readonly apiVersion: 1;
+  readonly capabilities: { readonly resultActions: true };
   registerCheck(check: CheckRunner): vscode.Disposable;
   readonly mcpHandler: PreFlightMcpHandler;
 }
@@ -179,6 +180,7 @@ export function activate(context: vscode.ExtensionContext): MewraPreFlightAPI {
 
   return {
     apiVersion: 1,
+    capabilities: { resultActions: true },
     registerCheck(check: CheckRunner): vscode.Disposable {
       const disposable = registry.register(check);
       context.subscriptions.push(disposable);

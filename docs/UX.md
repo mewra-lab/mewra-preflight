@@ -27,6 +27,7 @@
 - Click a finding to jump to that file and line.
 - When status is `not-configured`, an `[ Install ]` button is shown to install the tool into project devDependencies via integrated terminal.
 - QuickFix buttons (`[Fix All]` and `[Fix]`) trigger linter/formatter auto-fix with spinner feedback.
+- Completed contributed checks with `resultCommand` show a keyboard-accessible **Open results** button for pass, warning, fail, skipped, and not-configured states. It opens the companion's own result experience and does not change the check outcome. Pending/running rows do not offer that action.
 - Route-summary checks may show colour-coded HTTP method/path chips. Each chip opens its source file and line when available.
 - Dependency-security findings group by package/version. They show severity,
   CVSS, fixed version, and an advisory link when the scanner provides those
