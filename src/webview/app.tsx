@@ -183,6 +183,10 @@ export function App() {
     post({ type: "configureCheck", checkId });
   }, []);
 
+  const handleCheckAction = useCallback((checkId: string) => {
+    post({ type: "runCheckAction", checkId });
+  }, []);
+
   if (state.phase === "idle") {
     return (
       <div class="glass-shell">
@@ -454,7 +458,15 @@ export function App() {
           ))}
 
         {snapshot.checks.some((snap) => snap.result.status === "skipped") && (
-          <details class="skipped-section">
+          <details
+            class="skipped-section"
+            open={snapshot.checks.some(
+              (snap) =>
+                snap.result.status === "skipped" &&
+                snap.result.message === "Skipped (no matching files in diff)" &&
+                snap.definition.actionCommand,
+            )}
+          >
             <summary class="skipped-section__summary">
               <svg
                 class="skipped-section__chevron"
@@ -481,6 +493,19 @@ export function App() {
                 (no matching files in diff)
               </span>
             </summary>
+            {snapshot.checks.some(
+              (snap) =>
+                snap.result.status === "skipped" &&
+                snap.result.message === "Skipped (no matching files in diff)" &&
+                snap.definition.actionCommand,
+            ) && (
+              <div class="skipped-section__hint">
+                <span>
+                  Some checks only run when their files change. You can run a
+                  broader scan from the action on the affected check.
+                </span>
+              </div>
+            )}
             <div class="skipped-section__list">
               {snapshot.checks
                 .filter((snap) => snap.result.status === "skipped")
@@ -491,6 +516,23 @@ export function App() {
                       {snap.definition.label}
                     </span>
                     <span class="skipped-row__tag">{snap.definition.pack}</span>
+                    {snap.result.message ===
+                      "Skipped (no matching files in diff)" &&
+                      snap.definition.actionCommand && (
+                        <button
+                          class="skipped-row__action"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleCheckAction(snap.definition.id);
+                          }}
+                          title={
+                            snap.definition.actionLabel ??
+                            "Run the check action"
+                          }
+                        >
+                          {snap.definition.actionLabel ?? "Configure"}
+                        </button>
+                      )}
                   </div>
                 ))}
             </div>

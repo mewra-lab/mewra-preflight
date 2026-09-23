@@ -133,6 +133,22 @@ describe("runChecks", () => {
     );
   });
 
+  it("preserves a contributed skipped-check action in the snapshot", async () => {
+    const check = makeCheck({
+      id: "mewra-dependency-guard:security-scan",
+      actionCommand: "mewra-dependency-guard.configureScanScope",
+      actionLabel: "Configure scope",
+      appliesTo: () => false,
+    });
+
+    const snapshot = await runChecks([check], MOCK_DIFF, CONTEXT);
+
+    expect(snapshot.checks[0]?.definition.actionCommand).toBe(
+      "mewra-dependency-guard.configureScanScope",
+    );
+    expect(snapshot.checks[0]?.definition.actionLabel).toBe("Configure scope");
+  });
+
   it("calls onProgress for each check transition", async () => {
     const progress = vi.fn();
     const check = makeCheck({ id: "c1" });

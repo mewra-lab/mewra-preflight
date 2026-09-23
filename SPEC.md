@@ -116,6 +116,8 @@ interface CheckDefinition {
   label: string; // shown in the dashboard
   type: CheckType;
   severity: "error" | "warning";
+  actionCommand?: string; // optional host-resolved action when skipped
+  actionLabel?: string; // button label for the optional action
   appliesTo(diff: GitDiff): boolean; // e.g. only run if *.prisma files changed
   run(diff: GitDiff, context: PreFlightContext): Promise<CheckResult>;
 }

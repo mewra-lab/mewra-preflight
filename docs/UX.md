@@ -26,6 +26,7 @@
 - Status icon: ✓ pass, ✗ fail, ⚠ warning, — not-configured, ⊘ skipped, ⟳ running, ○ pending.
 - Click a finding to jump to that file and line.
 - When status is `not-configured`, an `[ Install ]` button is shown to install the tool into project devDependencies via integrated terminal.
+- When a contributed check is skipped because its files are not in the current diff, it may expose a safe action (for example, Dependency Guard's `[ Configure scope ]` button). The action is resolved by the extension host from the current snapshot; the Webview never sends a command ID or shell command.
 - QuickFix buttons (`[Fix All]` and `[Fix]`) trigger linter/formatter auto-fix with spinner feedback.
 - Route-summary checks may show colour-coded HTTP method/path chips. Each chip opens its source file and line when available.
 - Dependency-security findings group by package/version. They show severity,

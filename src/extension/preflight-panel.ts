@@ -99,6 +99,10 @@ function isWorkspacePath(workspaceRoot: string, candidate: string): boolean {
   );
 }
 
+function isSafeCommandId(command: string): boolean {
+  return /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(command);
+}
+
 // MARK: - Panel Class
 
 export class PreFlightPanel {
@@ -351,6 +355,8 @@ export class PreFlightPanel {
       await this._handleInstallTool(msg.checkId);
     } else if (msg.type === "configureCheck") {
       await this._handleConfigureCheck(msg.checkId);
+    } else if (msg.type === "runCheckAction") {
+      await this._handleCheckAction(msg.checkId);
     } else if (msg.type === "openFile") {
       const root = this._workspaceRoot();
       if (!root || !msg.path || msg.path === "(diff)") return;
@@ -422,9 +428,18 @@ export class PreFlightPanel {
     const setupCommand = this._lastSnapshot?.checks.find(
       (check) => check.definition.id === checkId,
     )?.definition.setupCommand;
-    if (!setupCommand) return;
+    if (!setupCommand || !isSafeCommandId(setupCommand)) return;
 
     await vscode.commands.executeCommand(setupCommand);
+  }
+
+  private async _handleCheckAction(checkId: string): Promise<void> {
+    const actionCommand = this._lastSnapshot?.checks.find(
+      (check) => check.definition.id === checkId,
+    )?.definition.actionCommand;
+    if (!actionCommand || !isSafeCommandId(actionCommand)) return;
+
+    await vscode.commands.executeCommand(actionCommand);
   }
 
   private async _runPipeline(): Promise<void> {
