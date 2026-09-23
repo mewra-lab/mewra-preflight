@@ -124,6 +124,7 @@ Snapshot → PostMessage (validated) → Webview
 Each check pack exposes a `build<Pack>Pack(): CheckRunner[]` factory (or `buildCustomChecks` for community JSON-based packs). A `CheckRunner` must:
 
 - declare `id`, `label`, `severity`, `pack`;
+- optionally declare a host-resolved `actionCommand` and `actionLabel` for a skipped-check action;
 - implement `appliesTo(diff): boolean` to decide if it should run against the diff;
 - implement `run(diff, context): Promise<CheckResult>`;
 - return `not-configured` (not `fail`) when the underlying tool is absent;
@@ -153,6 +154,11 @@ that ID through its fixed built-in allowlist before composing a terminal command
 it never accepts a package name or shell fragment from the Webview. Advisory
 links are opened only when they match an HTTPS URL in the current validated
 check snapshot.
+
+The Webview may request a contributed check action only by check ID. The
+extension host looks up the action command in the latest validated snapshot,
+verifies its command-ID shape, and executes it through the VS Code command
+registry. The Webview cannot provide an arbitrary command or shell fragment.
 
 Security-sensitive companion checks can use `PreFlightContext.resolveTrustedTool()`. It resolves only user-owned or system tool locations and never a binary from the opened workspace. The method is additive to API v1, so a companion can return `not-configured` rather than fall back to an untrusted executable on an older host.
 
