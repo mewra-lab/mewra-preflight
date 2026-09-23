@@ -20,6 +20,7 @@ Semantic Versioning:
 0.7.0  — native VS Code MCP bridge for safe pipeline status, findings, known-check re-runs, and explicitly allowlisted manual checks
 0.7.1  — release workflow shell-conditional fix
 0.8.0  — discoverable, host-validated actions for skipped contributed checks
+0.9.0  — clearer skipped-check guidance and scan-scope actions
 1.0.0  — Mewra Drift integration, automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX
 ```
 
@@ -93,13 +94,21 @@ only detects route declarations in changed files.
 
 ## 8. Changelog
 
+### v0.9.0
+
+**Clearer skipped-check guidance**
+
+- Opens the skipped section when an unmatched contributed check exposes a safe action.
+- Explains that no matching files changed and that the action can broaden the scan scope.
+- Avoids showing the diff-specific reason for skipped checks that were skipped for another reason.
+
 ### v0.8.0
 
 **Discoverable contributed-check actions**
 
 - Adds an additive `actionCommand`/`actionLabel` contract for contributed checks.
 - Shows a safe action on an unmatched skipped row, with Dependency Guard's
-  **Configure scope** action available without opening the Command Palette.
+  **Configure scan scope** action available without opening the Command Palette.
 - Resolves and validates command IDs in the extension host; Webview messages
   contain only the check ID.
 
