@@ -251,6 +251,7 @@ export function createPreFlightContext(
         const { stdout, stderr } = await execFileAsync(cmd, args, {
           cwd: cwd ?? workspaceRoot,
           timeout: timeoutMs,
+          maxBuffer: 32 * 1024 * 1024,
         });
         return { stdout, stderr, code: 0 };
       } catch (err: unknown) {
@@ -261,6 +262,12 @@ export function createPreFlightContext(
           killed?: boolean;
           signal?: string;
         };
+
+        if (error.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER") {
+          throw new Error(
+            "Check output exceeds the 32 MiB safety limit; partial output was discarded.",
+          );
+        }
 
         const isTimeout =
           error.killed ||

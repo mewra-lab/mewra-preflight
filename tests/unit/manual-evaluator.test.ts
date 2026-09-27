@@ -1,8 +1,19 @@
 import { describe, it, expect } from "vitest";
-import { evaluateManualChecks } from "../../src/core/checks/manual-evaluator.js";
+import {
+  evaluateManualChecks,
+  doesFileMatch,
+} from "../../src/core/checks/manual-evaluator.js";
 import type { ChangedFile, ManualCheckConfig } from "../../src/shared/types.js";
 
 describe("evaluateManualChecks", () => {
+  it("matches zero or more globstar directories and question marks", () => {
+    expect(doesFileMatch("src/app.ts", "src/**/*.ts")).toBe(true);
+    expect(doesFileMatch("src/deep/app.ts", "src/**/*.ts")).toBe(true);
+    expect(doesFileMatch("src/a.ts", "src/?.ts")).toBe(true);
+    expect(doesFileMatch("src/ab.ts", "src/?.ts")).toBe(false);
+    expect(doesFileMatch("other/src/a.ts", "src/**/*.ts")).toBe(false);
+    expect(doesFileMatch("apps/web/src/app.ts", "apps/*/src/**")).toBe(true);
+  });
   it("triggers unconditional manual checks", () => {
     const configs: ManualCheckConfig[] = [
       { id: "review-env", label: "Reviewed environment changes" },

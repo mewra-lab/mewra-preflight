@@ -15,9 +15,17 @@ import {
   resolveGitRepositoryRoot,
 } from "../core/diff/git-diff.js";
 import { deriveOverallStatus, runChecks } from "../core/checks/runner.js";
+import {
+  configureChecks,
+  getCheckSettings,
+} from "../core/config/check-settings.js";
 import { createPreFlightContext } from "../core/checks/context.js";
 import { CheckRegistry } from "../core/checks/registry.js";
 import { PreFlightMcpHandler } from "../core/mcp/handler.js";
+import {
+  assertSnapshotInputsCurrent,
+  snapshotInputs,
+} from "../core/mcp/snapshot-policy.js";
 import { detectActiveEcosystems } from "../core/ecosystem/detect-ecosystem.js";
 import { buildUniversalPack } from "../core/checks/packs/universal/index.js";
 import { buildJsTsPack } from "../core/checks/packs/js-ts/index.js";
@@ -37,6 +45,7 @@ import {
   mergeWorkspaceConfig,
 } from "../core/config/workspace-config.js";
 import { evaluateManualChecks } from "../core/checks/manual-evaluator.js";
+import { createStarterConfig } from "../core/config/starter-config.js";
 import {
   parsePreflightIgnore,
   filterDiffByPreflightIgnore,
@@ -237,6 +246,10 @@ export class PreFlightPanel {
   }
 
   private _workspaceRoot(): string | null {
+    return this._repositoryRoot;
+  }
+
+  get repositoryRoot(): string | null {
     return this._repositoryRoot;
   }
 
@@ -443,6 +456,21 @@ export class PreFlightPanel {
   }
 
   private async _runPipeline(): Promise<void> {
+    try {
+      await this._runPipelineCore();
+    } catch (error) {
+      this._post({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Pipeline could not complete.",
+      });
+      this._onStatusChange?.("fail");
+    }
+  }
+
+  private async _runPipelineCore(): Promise<void> {
     const root = await this._resolveWorkspaceRoot();
     if (!root) {
       this._post({
@@ -460,12 +488,13 @@ export class PreFlightPanel {
 
     this._onStatusChange?.("running");
 
-    const fileConfig = await loadWorkspaceConfig(root);
-    const config = this._getConfig(fileConfig);
-
-    const scope = this._selectedScope ?? config.diffScope;
+    let fileConfig;
+    let config;
     let diff;
     try {
+      fileConfig = await loadWorkspaceConfig(root);
+      config = this._getConfig(fileConfig);
+      const scope = this._selectedScope ?? config.diffScope;
       diff = await computeGitDiff(root, config.targetBranch, scope);
     } catch (e) {
       this._post({
@@ -506,7 +535,7 @@ export class PreFlightPanel {
       );
     };
 
-    const checks = [
+    const rawChecks = [
       ...buildUniversalPack(
         config.universalChecks ?? config.largeFileThresholdMb,
       ),
@@ -523,6 +552,20 @@ export class PreFlightPanel {
       ...customChecks,
       ...this._registry.getConfiguredChecks(fileConfig?.contributedChecks),
     ];
+    let checks;
+    try {
+      checks = configureChecks(rawChecks, fileConfig);
+    } catch (error) {
+      this._post({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Invalid check configuration.",
+      });
+      this._onStatusChange?.("fail");
+      return;
+    }
 
     let ignoreRules;
     try {
@@ -531,8 +574,15 @@ export class PreFlightPanel {
         "utf-8",
       );
       ignoreRules = parsePreflightIgnore(ignoreContent);
-    } catch {
-      ignoreRules = undefined;
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === "ENOENT"
+      )
+        ignoreRules = undefined;
+      else throw error;
     }
 
     const filteredDiff = ignoreRules
@@ -561,6 +611,49 @@ export class PreFlightPanel {
     this._mcpHandler.updateSnapshot(finalSnapshot);
     this._mcpHandler.setRegisteredCheckRunner(async (checkId) => {
       if (
+        this._isDisposed ||
+        !vscode.workspace.isTrusted ||
+        this._repositoryRoot !== root ||
+        this._lastSnapshot?.runId !== finalSnapshot.runId
+      ) {
+        throw new Error(
+          "Run PreFlight Pipeline again in the current trusted repository before using MCP.",
+        );
+      }
+      const currentConfig = await loadWorkspaceConfig(root);
+      const currentEffectiveConfig = this._getConfig(currentConfig);
+      const currentDiff = await computeGitDiff(
+        root,
+        currentEffectiveConfig.targetBranch,
+        this._selectedScope ?? currentEffectiveConfig.diffScope,
+      );
+      let currentIgnores;
+      try {
+        currentIgnores = parsePreflightIgnore(
+          await readFile(resolve(root, ".preflightignore"), "utf-8"),
+        );
+      } catch (error) {
+        if (!(
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          error.code === "ENOENT"
+        ))
+          throw error;
+      }
+      assertSnapshotInputsCurrent(
+        snapshotInputs(
+          diff,
+          { file: fileConfig, resolved: config },
+          ignoreRules,
+        ),
+        snapshotInputs(
+          currentDiff,
+          { file: currentConfig, resolved: currentEffectiveConfig },
+          currentIgnores,
+        ),
+      );
+      if (
         !this._lastSnapshot?.checks.some(
           (snapshot) => snapshot.definition.id === checkId,
         )
@@ -569,21 +662,48 @@ export class PreFlightPanel {
       }
       const check = checks.find((candidate) => candidate.id === checkId);
       if (!check) throw new Error(`Unknown checkId "${checkId}".`);
+      const required = new Set<string>();
+      const include = (candidate: typeof check): void => {
+        if (required.has(candidate.id)) return;
+        required.add(candidate.id);
+        for (const id of candidate.dependsOn ?? []) {
+          const dependency = checks.find((item) => item.id === id);
+          if (!dependency) throw new Error(`Missing dependency ${id}.`);
+          include(dependency);
+        }
+      };
+      include(check);
       const rerun = await runChecks(
-        [check],
+        checks.filter((candidate) => required.has(candidate.id)),
         filteredDiff,
         context,
         undefined,
         [],
         ignoreRules,
       );
-      const result = rerun.checks[0]?.result;
+      const result = rerun.checks.find(
+        (snapshot) => snapshot.definition.id === checkId,
+      )?.result;
       if (!result)
         throw new Error(`Check "${checkId}" did not return a result.`);
+      if (
+        this._isDisposed ||
+        this._repositoryRoot !== root ||
+        this._lastSnapshot?.runId !== finalSnapshot.runId
+      ) {
+        throw new Error(
+          "PreFlight repository or pipeline changed during the MCP re-run; result discarded.",
+        );
+      }
       if (this._lastSnapshot) {
         const updatedChecks = this._lastSnapshot.checks.map((snapshot) =>
-          snapshot.definition.id === checkId
-            ? { ...snapshot, result }
+          required.has(snapshot.definition.id)
+            ? {
+                ...snapshot,
+                result: rerun.checks.find(
+                  (updated) => updated.definition.id === snapshot.definition.id,
+                )!.result,
+              }
             : snapshot,
         );
         const updatedSnapshot: PreFlightSnapshot = {
@@ -607,6 +727,16 @@ export class PreFlightPanel {
       return result;
     });
     this._mcpHandler.setManualCheckUpdater((checkId, done, allowedChecks) => {
+      if (
+        this._isDisposed ||
+        !vscode.workspace.isTrusted ||
+        this._repositoryRoot !== root ||
+        this._lastSnapshot?.runId !== finalSnapshot.runId
+      ) {
+        throw new Error(
+          "Run PreFlight Pipeline again in the current trusted repository before updating manual checks.",
+        );
+      }
       const agentCheckable = new Set(
         (config.manualChecklist ?? [])
           .filter((manual) => manual.agentCheckable)
@@ -656,6 +786,20 @@ export class PreFlightPanel {
     try {
       await vscode.workspace.saveAll(false);
       const context = createPreFlightContext(root);
+
+      const fileConfig = await loadWorkspaceConfig(root);
+      const settings = getCheckSettings(
+        checkId,
+        checkId.split(":")[0] ?? "",
+        fileConfig,
+      );
+      if (settings?.enabled === false)
+        throw new Error("This check is disabled in configuration.");
+      if (settings?.timeoutMs !== undefined) {
+        const runCommand = context.runCommand;
+        context.runCommand = (cmd, args, cwd) =>
+          runCommand(cmd, args, cwd, settings.timeoutMs);
+      }
 
       if (checkId === "js-ts:prettier") {
         const tool = await context.resolveTool("prettier");
@@ -731,8 +875,12 @@ export class PreFlightPanel {
         await vscode.workspace.saveAll(false);
         await this._runPipeline();
       } else if (checkId === "python:format") {
-        const ruffTool = await context.resolveTool("ruff");
-        const blackTool = !ruffTool ? await context.resolveTool("black") : null;
+        const ruffTool =
+          settings?.tool === "black" ? null : await context.resolveTool("ruff");
+        const blackTool =
+          !ruffTool && settings?.tool !== "ruff"
+            ? await context.resolveTool("black")
+            : null;
         const tool = ruffTool ?? blackTool;
         if (!tool) {
           this._post({ type: "quickFixFailed", checkId, file });
@@ -944,84 +1092,49 @@ export class PreFlightPanel {
     let shouldWriteStarter = false;
 
     try {
-      const content = await readFile(configPath, "utf-8");
-      if (content.trim().length === 0) {
+      await access(configPath);
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === "ENOENT"
+      ) {
         shouldWriteStarter = true;
+      } else {
+        void vscode.window.showErrorMessage(
+          "Could not read .mewra-preflight.json. Check repository permissions.",
+        );
+        return;
       }
-    } catch {
-      shouldWriteStarter = true;
     }
 
     if (shouldWriteStarter) {
-      const activeEcosystems = await detectActiveEcosystems(root);
-      const ecoEntries: string[] = [];
-
-      if (activeEcosystems.includes("python")) {
-        ecoEntries.push(`    "python": {
-      "enabled": true,
-      "format": { "tool": "ruff", "enabled": true },
-      "lint": { "tool": "ruff", "enabled": true },
-      "typecheck": { "tool": "mypy", "enabled": true },
-      "testPairing": { "enabled": true }
-    }`);
-      }
-      if (activeEcosystems.includes("js-ts")) {
-        ecoEntries.push(`    "js-ts": {
-      "enabled": true,
-      "format": { "tool": "prettier", "enabled": true },
-      "lint": { "tool": "eslint", "enabled": true },
-      "typecheck": { "tool": "tsc", "enabled": true },
-      "testPairing": { "enabled": true }
-    }`);
-      }
-      if (activeEcosystems.includes("go")) {
-        ecoEntries.push(`    "go": {
-      "enabled": true,
-      "format": { "tool": "gofmt", "enabled": true },
-      "vet": { "enabled": true },
-      "lint": { "tool": "golangci-lint", "enabled": true },
-      "testPairing": { "enabled": true }
-    }`);
-      }
-      if (activeEcosystems.includes("php")) {
-        ecoEntries.push(`    "php": {
-      "enabled": true,
-      "format": { "tool": "php-cs-fixer", "enabled": true },
-      "analyze": { "tool": "phpstan", "enabled": true },
-      "testPairing": { "enabled": true }
-    }`);
-      }
-
-      const ecosystemsBlock =
-        ecoEntries.length > 0
-          ? `  "ecosystems": {\n${ecoEntries.join(",\n")}\n  },\n`
-          : "";
-
-      const template = `{
-  "$schema": "https://raw.githubusercontent.com/mewra-lab/mewra-preflight/main/schemas/preflight.schema.json",
-  "targetBranch": "main",
-${ecosystemsBlock}  "universalChecks": {
-    "noDebugStatements": "error",
-    "noSecrets": "error",
-    "noLocalhostUrls": "error",
-    "noMergeConflicts": "error",
-    "largeFileThresholdMb": 1
-  },
-  "manualChecklist": [
-    {
-      "id": "db-migration",
-      "label": "Did you apply database migration to dev DB?",
-      "severity": "error",
-      "condition": { "modifiedFilesMatch": "prisma/migrations/**" }
-    }
-  ]
-}
-`;
+      const template =
+        JSON.stringify(
+          createStarterConfig(this._getConfig(null).targetBranch),
+          null,
+          2,
+        ) + "\n";
       try {
-        await writeFile(configPath, template, "utf-8");
-      } catch {}
+        await writeFile(configPath, template, {
+          encoding: "utf-8",
+          flag: "wx",
+        });
+      } catch (error) {
+        if (!(
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          error.code === "EEXIST"
+        )) {
+          void vscode.window.showErrorMessage(
+            "Could not create .mewra-preflight.json. Check repository write permissions.",
+          );
+          return;
+        }
+      }
     }
-
     try {
       const uri = vscode.Uri.file(configPath);
       const doc = await vscode.workspace.openTextDocument(uri);

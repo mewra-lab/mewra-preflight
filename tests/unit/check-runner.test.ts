@@ -33,6 +33,61 @@ function makeCheck(overrides: Partial<CheckRunner>): CheckRunner {
 }
 
 describe("runChecks", () => {
+  it("runs dependencies first even when listed after their consumers", async () => {
+    const order: string[] = [];
+    const first = makeCheck({
+      id: "first",
+      run: async () => {
+        order.push("first");
+        return { status: "pass", findings: [] };
+      },
+    });
+    const second = makeCheck({
+      id: "second",
+      dependsOn: ["first"],
+      run: async () => {
+        order.push("second");
+        return { status: "pass", findings: [] };
+      },
+    });
+    await runChecks([second, first], MOCK_DIFF, CONTEXT);
+    expect(order).toEqual(["first", "second"]);
+  });
+  it("does not execute a consumer after its dependency fails", async () => {
+    const run = vi.fn(async () => ({ status: "pass" as const, findings: [] }));
+    const snapshot = await runChecks(
+      [
+        makeCheck({
+          id: "first",
+          run: async () => ({ status: "fail", findings: [] }),
+        }),
+        makeCheck({ id: "second", dependsOn: ["first"], run }),
+      ],
+      MOCK_DIFF,
+      CONTEXT,
+    );
+    expect(run).not.toHaveBeenCalled();
+    expect(snapshot.overallStatus).toBe("fail");
+  });
+  it("rejects missing dependencies and cycles before running anything", async () => {
+    await expect(
+      runChecks(
+        [makeCheck({ id: "a", dependsOn: ["absent"] })],
+        MOCK_DIFF,
+        CONTEXT,
+      ),
+    ).rejects.toThrow("Missing dependency");
+    await expect(
+      runChecks(
+        [
+          makeCheck({ id: "a", dependsOn: ["b"] }),
+          makeCheck({ id: "b", dependsOn: ["a"] }),
+        ],
+        MOCK_DIFF,
+        CONTEXT,
+      ),
+    ).rejects.toThrow("cycle");
+  });
   it("runs applicable checks and returns a snapshot", async () => {
     const check1 = makeCheck({ id: "c1", label: "Check 1" });
     const check2 = makeCheck({ id: "c2", label: "Check 2" });

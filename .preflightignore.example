@@ -1,0 +1,23 @@
+# Optional: copy this file to .preflightignore in your repository root.
+# All rules below are disabled until you remove the leading #.
+# Global rules bypass ALL checks, including secret and dependency checks.
+# Prefer targeted exceptions for a specific check and keep the reason in a comment.
+
+# Generated output (enable only when these paths contain no maintained source):
+# dist/**
+# coverage/**
+
+# Seed scripts intentionally print progress:
+# scripts/seed.ts: universal:no-console-log
+
+# A reviewed fake credential in one test fixture (do not ignore all tests):
+# tests/fixtures/fake-credentials.ts: universal:no-env-leak
+
+# Legacy module lint exceptions (other checks still run):
+# src/legacy/**: js-ts:eslint
+
+# Entire pack exception (use sparingly):
+# vendor/**: pack:js-ts
+
+# Supported: *, **, ?, leading /, trailing /, full-line # comments.
+# Not supported: ! re-inclusion, extglobs, character classes, inline comments.

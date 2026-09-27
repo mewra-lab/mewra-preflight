@@ -3,23 +3,12 @@ import type {
   ManualCheckConfig,
   ManualCheckItem,
 } from "../../shared/types.js";
+import { globToRegex } from "../config/preflight-ignore.js";
 
 // MARK: - Helpers
 
-function globToRegex(pattern: string): RegExp {
-  const escaped = pattern
-    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
-    .replace(/\*\*/g, ".*")
-    .replace(/(?<!\.)\*/g, "[^/]*");
-  return new RegExp(`^${escaped}$`);
-}
-
 export function doesFileMatch(file: string, pattern: string): boolean {
-  if (pattern.endsWith("/**")) {
-    const prefix = pattern.slice(0, -3);
-    return file.startsWith(`${prefix}/`) || file === prefix;
-  }
-  return globToRegex(pattern).test(file);
+  return globToRegex(pattern, false).test(file.replace(/^\.\//, ""));
 }
 
 // MARK: - Evaluator

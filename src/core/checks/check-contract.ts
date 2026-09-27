@@ -36,6 +36,8 @@ export type CheckRunner = {
   readonly setupCommand?: string;
   readonly actionCommand?: string;
   readonly actionLabel?: string;
+  readonly timeoutMs?: number;
+  readonly dependsOn?: readonly string[];
   appliesTo(diff: GitDiff): boolean;
   run(diff: GitDiff, context: PreFlightContext): Promise<CheckResult>;
 };

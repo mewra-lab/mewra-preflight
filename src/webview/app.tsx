@@ -296,6 +296,14 @@ export function App() {
   const isRunning = state.phase === "running";
   const changedCount = snapshot.diff?.changedFiles.length ?? 0;
   const currentScope = snapshot.diff?.scope ?? "branch";
+  const skippedChecks = snapshot.checks.filter(
+    (snap) => snap.result.status === "skipped",
+  );
+  const hasActionableDiffSkippedCheck = skippedChecks.some(
+    (snap) =>
+      snap.result.message === "Skipped (no matching files in diff)" &&
+      snap.definition.actionCommand,
+  );
 
   return (
     <div class="glass-shell">
@@ -457,16 +465,8 @@ export function App() {
             />
           ))}
 
-        {snapshot.checks.some((snap) => snap.result.status === "skipped") && (
-          <details
-            class="skipped-section"
-            open={snapshot.checks.some(
-              (snap) =>
-                snap.result.status === "skipped" &&
-                snap.result.message === "Skipped (no matching files in diff)" &&
-                snap.definition.actionCommand,
-            )}
-          >
+        {skippedChecks.length > 0 && (
+          <details class="skipped-section" open={hasActionableDiffSkippedCheck}>
             <summary class="skipped-section__summary">
               <svg
                 class="skipped-section__chevron"
@@ -482,59 +482,48 @@ export function App() {
                 <polyline points="9 18 15 12 9 6" />
               </svg>
               <span class="skipped-section__title">
-                {
-                  snapshot.checks.filter(
-                    (snap) => snap.result.status === "skipped",
-                  ).length
-                }{" "}
-                skipped
+                {skippedChecks.length} skipped
               </span>
-              <span class="skipped-section__reason">
-                (no matching files in diff)
-              </span>
+              {hasActionableDiffSkippedCheck && (
+                <span class="skipped-section__reason">
+                  (no matching files in diff)
+                </span>
+              )}
             </summary>
-            {snapshot.checks.some(
-              (snap) =>
-                snap.result.status === "skipped" &&
-                snap.result.message === "Skipped (no matching files in diff)" &&
-                snap.definition.actionCommand,
-            ) && (
+            {hasActionableDiffSkippedCheck && (
               <div class="skipped-section__hint">
                 <span>
-                  Some checks only run when their files change. You can run a
-                  broader scan from the action on the affected check.
+                  No matching files changed, so these checks were skipped. Use
+                  the action below to choose a broader scan scope.
                 </span>
               </div>
             )}
             <div class="skipped-section__list">
-              {snapshot.checks
-                .filter((snap) => snap.result.status === "skipped")
-                .map((snap) => (
-                  <div key={snap.definition.id} class="skipped-row">
-                    <span class="skipped-row__dot" />
-                    <span class="skipped-row__label">
-                      {snap.definition.label}
-                    </span>
-                    <span class="skipped-row__tag">{snap.definition.pack}</span>
-                    {snap.result.message ===
-                      "Skipped (no matching files in diff)" &&
-                      snap.definition.actionCommand && (
-                        <button
-                          class="skipped-row__action"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleCheckAction(snap.definition.id);
-                          }}
-                          title={
-                            snap.definition.actionLabel ??
-                            "Run the check action"
-                          }
-                        >
-                          {snap.definition.actionLabel ?? "Configure"}
-                        </button>
-                      )}
-                  </div>
-                ))}
+              {skippedChecks.map((snap) => (
+                <div key={snap.definition.id} class="skipped-row">
+                  <span class="skipped-row__dot" />
+                  <span class="skipped-row__label">
+                    {snap.definition.label}
+                  </span>
+                  <span class="skipped-row__tag">{snap.definition.pack}</span>
+                  {snap.result.message ===
+                    "Skipped (no matching files in diff)" &&
+                    snap.definition.actionCommand && (
+                      <button
+                        class="skipped-row__action"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleCheckAction(snap.definition.id);
+                        }}
+                        title={
+                          snap.definition.actionLabel ?? "Run the check action"
+                        }
+                      >
+                        {snap.definition.actionLabel ?? "Configure"}
+                      </button>
+                    )}
+                </div>
+              ))}
             </div>
           </details>
         )}

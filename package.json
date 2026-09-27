@@ -2,7 +2,7 @@
   "name": "mewra-preflight",
   "displayName": "Mewra PreFlight — Pre-Push Sanity Pipeline",
   "description": "Run diff-scoped checks before every push. One dashboard. One button to create your PR or MR.",
-  "version": "0.8.0",
+  "version": "0.9.2",
   "publisher": "mewra",
   "license": "MIT",
   "pricing": "Free",
@@ -50,6 +50,11 @@
       }
     ],
     "commands": [
+      {
+        "command": "mewra-preflight.copyMcpConnection",
+        "title": "Copy MCP Connection for AI Agent",
+        "category": "Mewra PreFlight"
+      },
       {
         "command": "mewra-preflight.openDashboard",
         "title": "Open Dashboard",

@@ -221,45 +221,17 @@ Mewra PreFlight is **Zero-Config by default** — it automatically detects your 
 
 If you wish to customize checks, define manual checklist items, or add custom tools:
 
-- Click the **⚙️ Settings icon** in the PreFlight Dashboard header (or run `Mewra PreFlight: Open Configuration` via the Command Palette) — this automatically generates a tailored `.mewra-preflight.json` starter file based on your project's detected ecosystems.
+- Click the **⚙️ Settings icon** in the PreFlight Dashboard header (or run `Mewra PreFlight: Open Configuration` via the Command Palette) to create a minimal starter using your configured target branch. Existing files are never overwritten.
 - Or copy and edit [`.mewra-preflight.json.example`](./.mewra-preflight.json.example):
 
-```jsonc
+```json
 {
-  "$schema": "./schemas/preflight.schema.json",
   "targetBranch": "main",
-  "ecosystems": {
-    "js-ts": { "enabled": true },
-    "python": { "enabled": true },
-    "go": { "enabled": true },
-    "php": { "enabled": false },
-  },
-  "universalChecks": {
-    "noDebugStatements": "error",
-    "noSecrets": "error",
-    "noLocalhostUrls": "error",
-    "largeFileThresholdMb": 1,
-  },
-  "customChecks": [
-    {
-      "id": "custom:shellcheck",
-      "label": "ShellCheck",
-      "tool": "shellcheck",
-      "args": ["-x"],
-      "severity": "warning",
-      "fileExtensions": [".sh"],
-    },
-  ],
-  "manualChecklist": [
-    {
-      "id": "manual-migration",
-      "label": "Applied DB migration to dev cluster",
-      "condition": { "modifiedFilesMatch": "prisma/migrations/**" },
-      "agentCheckable": true,
-    },
-  ],
+  "manualChecklist": []
 }
 ```
+
+Omitted checks keep their defaults and tool auto-detection. Change `main` to your target branch. See [configuration and ignore guide](docs/CONFIGURATION.md) for per-check overrides and safe exceptions. Schema completion is provided offline by the installed extension; no repository-local schema file is required.
 
 ---
 
@@ -285,6 +257,8 @@ VS Code discovers this server through its MCP tools picker after the extension s
 ```
 
 An agent can modify a manual item only when it is named in `agentCheckableManualChecks` and the checklist item itself has `"agentCheckable": true`. The server is a VS Code-managed loopback endpoint with an ephemeral bearer token; it is not exposed to the network.
+
+External agents do not automatically inherit VS Code's MCP server definitions. Run **Mewra PreFlight: Copy MCP Connection for AI Agent**, choose Codex, Claude Code, Cursor, VS Code/Copilot, or another HTTP MCP client, and confirm the credential warning. Paste the generated configuration into the client's private user configuration. See [MCP setup and verification](docs/MCP.md). Never commit connection credentials. An empty `exposedTools` array exposes no tools; `enabled: false` rejects existing connections as well.
 
 ---
 
@@ -417,16 +391,12 @@ Supported frameworks: **Next.js** App Router route handlers, **Express/Fastify**
 Create a `.preflightignore` file in your workspace root to exclude files from diff analysis:
 
 ```gitignore
-# Completely ignore these paths
-dist/**
-fixtures/**
-*.generated.ts
-
-# Ignore specific checks or packs for a path
-scripts/**: universal:no-console-log
-legacy/**: js-ts
-vendor/**: *
+# Prefer a narrow exception to excluding a file from every check
+scripts/seed.ts: universal:no-console-log
+tests/fixtures/fake-credentials.ts: universal:no-env-leak
 ```
+
+Global rules bypass **all checks**, including security checks, for matching diff files. Start with [`.preflightignore.example`](./.preflightignore.example), whose optional rules are commented out. This is a simple glob format, not full gitignore syntax: `!` re-inclusion is not supported. Standalone full dependency scans have their own scope; these rules filter PreFlight's diff.
 
 ---
 

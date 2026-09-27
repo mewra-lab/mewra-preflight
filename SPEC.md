@@ -31,7 +31,7 @@ Mewra PreFlight is **not a single checker — it's a host**. It owns exactly thr
 
 1. Compute the diff (staged/unstaged changes) once per run.
 2. Run a configurable list of _checks_ against that diff — some built in, some contributed by other Mewra extensions, some fully custom per project.
-3. Render one dashboard with the aggregate result, and offer a one-click "push + create PR" action once everything passes.
+3. Render one dashboard with the aggregate result, and offer a one-click "Create PR / MR" action after the user pushes through their normal Git workflow.
 
 Every other Mewra extension (Style Guardian, Mewra Drift, ORM Cost Sentry, a future dependency-vulnerability scanner) becomes **a check that plugs into this host** rather than a standalone gate the developer has to remember to run separately. PreFlight's own job is deliberately narrow: diffing, orchestration, UI, and the PR handoff — never the actual analysis logic for any one language or framework.
 
@@ -54,7 +54,7 @@ Every other Mewra extension (Style Guardian, Mewra Drift, ORM Cost Sentry, a fut
 - Detect the project's ecosystem automatically (JS/TS, Go, Python, PHP, …) and pre-populate a sensible default checklist
 - Never hard-require a tool to be installed — every check degrades gracefully if its underlying binary/package is missing (§3)
 - Let other Mewra extensions (and third-party ones, eventually) register checks without PreFlight needing to know anything about them ahead of time
-- One-click push + PR/MR creation once the dashboard is green
+- One-click PR/MR creation once the dashboard is green; PreFlight never pushes
 
 ### 2.2 Non-Goals (v1)
 
@@ -277,11 +277,11 @@ These run regardless of detected ecosystem, over added (`+`) diff lines only:
 Status legend used consistently across every check, built-in or contributed:
 
 - ✅ pass
-- ❌ fail (blocks the push button if severity is `error`)
+- ❌ fail (blocks the PR/MR button if severity is `error`)
 - ⚠️ fail (severity `warning` — visible but non-blocking)
 - 🔄 running
 - ⚪ not-configured (tool missing, or the check chose to skip itself for this diff)
-- `[ ]` manual — unchecked boxes with `error` severity block the push button too
+- `[ ]` manual — unchecked boxes with `error` severity block the PR/MR button too
 
 ---
 
@@ -328,7 +328,7 @@ The generated PR body is assembled from:
       "typecheck": { "tool": "tsc", "enabled": true },
       "testPairing": {
         "enabled": true,
-        "pattern": "src/services/**/!(*.test).ts",
+        "pattern": "src/services/**",
       },
     },
     "go": {
@@ -382,34 +382,41 @@ The generated PR body is assembled from:
 - Everything is diff-scoped by default: format/lint tools are invoked only on changed files, not the whole repo
 - Exception: type checkers (`tsc`, `mypy`) generally can't type-check a single file in isolation meaningfully — these run project-wide but the _displayed_ findings are filtered down to lines that intersect the diff
 - Contributed checks are run in parallel (via `Promise.all`) unless they declare a `dependsOn` relationship (rare — e.g. a hypothetical "auto-fix" check that must run after lint)
+- Dependency IDs must exist and form an acyclic graph. A consumer waits for its dependencies and does not run when a dependency fails, is skipped, or is not configured. MCP re-runs include the requested check's dependency closure.
 - CLI-based checks (`command` type) get a configurable timeout (default 30s) after which they're marked `fail` with a timeout message, so one hung process can't freeze the whole dashboard indefinitely
+- Configure `timeoutMs` (1–600000) on ecosystem check settings, contributed-check settings, or a custom check. It bounds each CLI invocation, not arbitrary JavaScript inside companion checks.
+- Invalid workspace configuration stops the pipeline with a diagnostic. JSONC comments are supported without altering string values; generated `.json` files remain comment-free.
 
 ---
 
 ## 11. Roadmap
 
-| Version   | Status   | Scope                                                                                                                                                                                                                                                                                                                               |
-| :-------- | :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **0.1.0** | Released | Core diff-scoped runner (branch, staged, working tree), Universal pack (secrets, console.log, debuggers, localhost, conflicts, file size), Polyglot packs (JS/TS, Python, Go, PHP), Community JSON custom packs, Interactive manual checklist with file triggers, Monorepo resolution, Built-in Model Context Protocol (MCP) server |
-| **0.2.0** | Released | **Mewra Pounce route summary** (detect changed route declarations, surface route chips in the dashboard, and attach Mermaid route/file summaries to PR drafts), per-folder check-pack overrides (`.preflightignore`)                                                                                                                |
-| **0.3.0** | Released | **First-party local packs**: Dependency Guard (insecure dependency source detection), ORM Cost Sentry (query-in-loop and destructive migration heuristics), and Style Guardian (static Tailwind utility conflicts).                                                                                                                 |
-| **0.4.0** | Released | **Contributed-check contract v1**: Mewra Dependency Guard runs OSV and Trivy plus the insecure dependency-source guard as a separate extension; workspace contributed-check enablement/severity configuration is enforced by the host.                                                                                              |
-| **0.5.0** | Released | **Direct PR/MR creation**: leaves pushing to the user's Git workflow, then finds or creates a GitHub PR through `gh` or a GitLab MR through `glab`, with browser fallback and description copy when direct creation is unavailable.                                                                                                 |
-| **0.6.0** | Released | **Pounce companion integration**: Pounce owns and registers its blast-radius check through the extension API; PreFlight remains a tool-agnostic host and renders contributed route summaries generically.                                                                                                                           |
-| **0.7.0** | Current  | **Native MCP bridge**: VS Code discovers a loopback-only, bearer-protected MCP server that exposes the current PreFlight snapshot, finding lookup, registered-check re-runs, and explicitly allowlisted manual-check updates.                                                                                                       |
-| **1.0.0** | Future   | **Mewra Drift integration** (API contract drift detection), automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX                                                                                                                                                                  |
+| Version   | Status                      | Scope                                                                                                                                                                                                                                                                                                                               |
+| :-------- | :-------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **0.1.0** | Released                    | Core diff-scoped runner (branch, staged, working tree), Universal pack (secrets, console.log, debuggers, localhost, conflicts, file size), Polyglot packs (JS/TS, Python, Go, PHP), Community JSON custom packs, Interactive manual checklist with file triggers, Monorepo resolution, Built-in Model Context Protocol (MCP) server |
+| **0.2.0** | Released                    | **Mewra Pounce route summary** (detect changed route declarations, surface route chips in the dashboard, and attach Mermaid route/file summaries to PR drafts), per-folder check-pack overrides (`.preflightignore`)                                                                                                                |
+| **0.3.0** | Released                    | **First-party local packs**: Dependency Guard (insecure dependency source detection), ORM Cost Sentry (query-in-loop and destructive migration heuristics), and Style Guardian (static Tailwind utility conflicts).                                                                                                                 |
+| **0.4.0** | Released                    | **Contributed-check contract v1**: Mewra Dependency Guard runs OSV and Trivy plus the insecure dependency-source guard as a separate extension; workspace contributed-check enablement/severity configuration is enforced by the host.                                                                                              |
+| **0.5.0** | Released                    | **Direct PR/MR creation**: leaves pushing to the user's Git workflow, then finds or creates a GitHub PR through `gh` or a GitLab MR through `glab`, with browser fallback and description copy when direct creation is unavailable.                                                                                                 |
+| **0.6.0** | Released                    | **Pounce companion integration**: Pounce owns and registers its blast-radius check through the extension API; PreFlight remains a tool-agnostic host and renders contributed route summaries generically.                                                                                                                           |
+| **0.7.0** | Released                    | **Native MCP bridge**: VS Code discovers a loopback-only, bearer-protected MCP server that exposes the current PreFlight snapshot, finding lookup, registered-check re-runs, and explicitly allowlisted manual-check updates.                                                                                                       |
+| **0.8.0** | Released                    | **Contributed-check actions**: the host resolves and validates optional actions for skipped contributed checks while Webview messages carry only check IDs.                                                                                                                                                                         |
+| **0.9.0** | Included in pending release | **Clearer contributed-check UX**: unmatched skipped checks open their actionable section, explain why they were skipped, and expose clearer scan-scope actions.                                                                                                                                                                     |
+| **0.9.1** | Pending                     | **Large-diff support**, configuration enforcement, dependency scheduling, and fail-closed check execution. Not released until the release PR is merged and the tag workflow succeeds.                                                                                                                                               |
+| **0.9.2** | Current                     | Safe configuration starters, ignore guidance, multi-agent MCP connection exports, and HTTP MCP policy/encoding hardening.                                                                                                                                                                                                           |
+| **1.0.0** | Future                      | **Mewra Drift integration** (API contract drift detection), automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX                                                                                                                                                                  |
 
 ---
 
 ## 12. Risks
 
-| Risk                                                      | Impact                                                           | Mitigation                                                                                                                       |
-| --------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Type checkers can't be scoped to just the diff            | Slower checks, noisy findings from unrelated pre-existing errors | Filter _displayed_ findings to diff-intersecting lines; still run the full compile in the background                             |
-| Ecosystem detection false positives in polyglot monorepos | Wrong pack activates for a subfolder                             | Allow per-subtree pack overrides in config (`"paths": { "backend/": "go", "frontend/": "js-ts" }`)                               |
-| Contributed-check extensions not installed                | Dashboard shows perpetual "not configured" rows                  | Treat as neutral, never blocking; optionally suggest installing the missing Mewra extension via a one-time hint                  |
-| Tool version drift between local machine and CI           | PreFlight passes locally but CI fails (or vice versa)            | Always resolve the _project-local_ tool version first (§3.2) so local checks match what CI actually runs, as closely as possible |
-| Long-running CLI checks blocking the "push" button        | Frustrating UX on large monorepos                                | Configurable timeout per check; allow marking specific checks as "informational only" (never blocks push)                        |
+| Risk                                                      | Impact                                                           | Mitigation                                                                                                                                                 |
+| --------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Type checkers can't be scoped to just the diff            | Slower checks, noisy findings from unrelated pre-existing errors | Filter _displayed_ findings to diff-intersecting lines; still run the full compile in the background                                                       |
+| Ecosystem detection false positives in polyglot monorepos | Wrong pack activates for a subfolder                             | Use ecosystem enablement and targeted `.preflightignore` rules. A `paths` configuration map is not implemented.                                            |
+| Contributed-check extensions not installed                | Dashboard shows perpetual "not configured" rows                  | Treat as neutral, never blocking; optionally suggest installing the missing Mewra extension via a one-time hint                                            |
+| Tool version drift between local machine and CI           | PreFlight passes locally but CI fails (or vice versa)            | Always resolve the _project-local_ tool version first (§3.2) so local checks match what CI actually runs, as closely as possible                           |
+| Long-running CLI checks blocking the "push" button        | Frustrating UX on large monorepos                                | Configurable timeout per check; allow marking specific checks as "informational only" (does not block PR/MR creation unless blockingOnWarnings is enabled) |
 
 ---
 
@@ -495,7 +502,7 @@ interface McpResources {
 
 ### 13.8 Known limitations (as of this writing)
 
-- MCP tool discovery inside the Claude Code VS Code extension has had real bugs (servers showing "connected" but tools never reaching the model, tool-call concurrency errors) — treat this integration as an enhancement layer, never a required path. The dashboard and push button must work fully with zero agents attached.
+- MCP tool discovery inside the Claude Code VS Code extension has had real bugs (servers showing "connected" but tools never reaching the model, tool-call concurrency errors) — treat this integration as an enhancement layer, never a required path. The dashboard and PR/MR button must work fully with zero agents attached.
 - Only rely on parity between agents (Claude Code, Codex, opencode) after testing each directly — MCP client behavior varies per tool and is still evolving.
 
 ---

@@ -71,6 +71,24 @@ export async function runChecks(
   ignoreRules?: PreflightIgnoreRules,
 ): Promise<PreFlightSnapshot> {
   const uniqueChecks = deduplicateChecks(checks);
+  const byId = new Map(uniqueChecks.map((check) => [check.id, check]));
+  const visited = new Set<string>();
+  const visiting = new Set<string>();
+  const visit = (check: CheckRunner): void => {
+    if (visiting.has(check.id))
+      throw new Error("Check dependencies contain a cycle.");
+    if (visited.has(check.id)) return;
+    visiting.add(check.id);
+    for (const id of check.dependsOn ?? []) {
+      const dependency = byId.get(id);
+      if (!dependency)
+        throw new Error(`Missing dependency ${id} for ${check.id}.`);
+      visit(dependency);
+    }
+    visiting.delete(check.id);
+    visited.add(check.id);
+  };
+  uniqueChecks.forEach(visit);
   const runId = crypto.randomUUID();
   const startedAt = Date.now();
 
@@ -106,10 +124,34 @@ export async function runChecks(
 
   emit();
 
-  await Promise.all(
-    uniqueChecks.map(async (check, i) => {
+  const executions = new Map<string, Promise<void>>();
+  const execute = (check: CheckRunner): Promise<void> => {
+    const existing = executions.get(check.id);
+    if (existing) return existing;
+    const execution = Promise.resolve().then(async () => {
+      await Promise.all(
+        (check.dependsOn ?? []).map((id) => execute(byId.get(id)!)),
+      );
+      const i = uniqueChecks.indexOf(check);
       const snapshot = snapshots[i];
       if (!snapshot) return;
+      if (
+        (check.dependsOn ?? []).some((id) => {
+          const dependency = snapshots[uniqueChecks.indexOf(byId.get(id)!)];
+          return (
+            dependency?.result.status !== "pass" &&
+            dependency?.result.status !== "warning"
+          );
+        })
+      ) {
+        snapshot.result = {
+          status: "not-configured",
+          findings: [],
+          message: "A required dependency did not complete successfully.",
+        };
+        emit();
+        return;
+      }
 
       const checkDiff = ignoreRules
         ? filterDiffForCheck(diff, check.id, check.pack, ignoreRules)
@@ -140,7 +182,21 @@ export async function runChecks(
 
       const t0 = Date.now();
       try {
-        const result = await check.run(checkDiff, context);
+        const result = await check.run(
+          checkDiff,
+          check.timeoutMs === undefined
+            ? context
+            : {
+                ...context,
+                runCommand: (cmd, args, cwd, timeoutMs) =>
+                  context.runCommand(
+                    cmd,
+                    args,
+                    cwd,
+                    check.timeoutMs ?? timeoutMs ?? 30_000,
+                  ),
+              },
+        );
         let findings = result.findings;
         if (ignoreRules) {
           findings = findings.filter(
@@ -177,18 +233,24 @@ export async function runChecks(
           status,
           durationMs: Date.now() - t0,
         };
-      } catch {
+      } catch (error) {
         snapshot.result = {
           status: "fail",
           findings: [],
-          message: "Check threw an unexpected error.",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Check threw an unexpected error.",
           durationMs: Date.now() - t0,
         };
       }
 
       emit();
-    }),
-  );
+    });
+    executions.set(check.id, execution);
+    return execution;
+  };
+  await Promise.all(uniqueChecks.map(execute));
 
   const finishedAt = Date.now();
   emit(finishedAt);

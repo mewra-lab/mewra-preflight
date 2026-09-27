@@ -1,5 +1,32 @@
 import { describe, it, expect } from "vitest";
-import { parseAddedLines } from "../../src/core/diff/parse-patch.js";
+import {
+  parseAddedLines,
+  decodeGitPath,
+} from "../../src/core/diff/parse-patch.js";
+
+describe("Git quoted paths", () => {
+  it("does not treat added ++ code as a destination header", () => {
+    expect(
+      parseAddedLines(
+        "+++ b/src/app.ts\n@@ -0,0 +1,3 @@\n+++ counter;\n+debugger;\n+console.log('test');",
+      ),
+    ).toEqual([
+      { file: "src/app.ts", line: 1, content: "++ counter;" },
+      { file: "src/app.ts", line: 2, content: "debugger;" },
+      { file: "src/app.ts", line: 3, content: "console.log('test');" },
+    ]);
+  });
+  it("decodes C-quoted Unicode byte sequences", () => {
+    expect(decodeGitPath('"b/\\340\\270\\201.ts"')).toBe("b/ก.ts");
+  });
+  it("preserves tabs, newlines, and trailing spaces in finding paths", () => {
+    const path = "src/a\tb\nc .ts ";
+    const lines = parseAddedLines(
+      `+++ ${JSON.stringify(`b/${path}`)}\n@@ -0,0 +1 @@\n+debugger;`,
+    );
+    expect(lines[0]?.file).toBe(path);
+  });
+});
 
 const samplePatch = `
 diff --git a/src/calc.ts b/src/calc.ts
