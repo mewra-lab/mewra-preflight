@@ -19,6 +19,11 @@ Testing must protect:
 Pure modules testable without VS Code:
 
 - `git-diff.ts` — name-status parsing logic;
+- Configuration regression tests cover invalid runtime values, comment-like strings,
+  check enablement, supported tool selection, patterns, and CLI timeout overrides.
+- Runner tests cover dependency ordering, failure propagation, missing IDs, and cycles.
+- TypeScript tests ensure execution failures cannot become a false pass.
+- Rename and untracked regression tests use real temporary Git repositories.
 - Large-diff integration tests — complete patches above 1 MiB in branch, staged,
   and working scopes; rejection above the 32 MiB output limit without partial results.
 - `runner.ts` — execution lifecycle, parallel scheduling, error recovery;

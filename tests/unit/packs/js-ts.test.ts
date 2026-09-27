@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { buildJsTsPack } from "../../../src/core/checks/packs/js-ts/index.js";
 import type { GitDiff } from "../../../src/shared/types.js";
 import type { PreFlightContext } from "../../../src/core/checks/check-contract.js";
@@ -102,6 +105,52 @@ describe("js-ts pack — vue and polyglot support", () => {
 });
 
 describe("js-ts pack — test-pairing", () => {
+  it("finds nested .spec.js tests on disk even when they are not in the diff", async () => {
+    const root = await mkdtemp(join(tmpdir(), "preflight-pairing-"));
+    try {
+      await mkdir(join(root, "tests/unit/auth"), { recursive: true });
+      await writeFile(
+        join(root, "tests/unit/auth/user.spec.js"),
+        "test fixture",
+      );
+      const check = buildJsTsPack().find(
+        (item) => item.id === "js-ts:test-pairing",
+      )!;
+      const result = await check.run(
+        makeDiff([{ path: "src/auth/user.ts", status: "added" }]),
+        mockContext({ workspaceRoot: root }),
+      );
+      expect(result.status).toBe("pass");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+  it("does not pair a test from a different module or a deleted test", async () => {
+    const pairing = buildJsTsPack().find(
+      (check) => check.id === "js-ts:test-pairing",
+    )!;
+    const result = await pairing.run(
+      makeDiff([
+        { path: "src/auth/user.ts", status: "added" },
+        { path: "tests/unit/billing/user.spec.ts", status: "added" },
+        { path: "tests/unit/auth/user.spec.ts", status: "deleted" },
+      ]),
+      mockContext(),
+    );
+    expect(result.status).toBe("warning");
+  });
+
+  it("pairs nested monorepo JSX tests", async () => {
+    const pairing = buildJsTsPack().find(
+      (check) => check.id === "js-ts:test-pairing",
+    )!;
+    const diff = makeDiff([
+      { path: "apps/web/src/components/Card.tsx", status: "added" },
+      { path: "apps/web/tests/unit/components/Card.spec.jsx", status: "added" },
+    ]);
+    expect(pairing.appliesTo(diff)).toBe(true);
+    expect((await pairing.run(diff, mockContext())).status).toBe("pass");
+  });
   it("flags missing test for newly added src source file", async () => {
     const checks = buildJsTsPack();
     const pairing = checks.find((c) => c.id === "js-ts:test-pairing")!;
@@ -117,9 +166,42 @@ describe("js-ts pack — test-pairing", () => {
     const pairing = checks.find((c) => c.id === "js-ts:test-pairing")!;
     const diff = makeDiff([
       { path: "src/utils/calc.ts", status: "added" },
-      { path: "tests/unit/calc.test.ts", status: "added" },
+      { path: "tests/unit/utils/calc.test.ts", status: "added" },
     ]);
     const result = await pairing.run(diff, mockContext());
+    expect(result.status).toBe("pass");
+  });
+});
+
+describe("TypeScript execution failures", () => {
+  it.each(["Command timed out.", "Invalid compiler configuration.", ""])(
+    "fails closed when the compiler fails without diagnostics: %s",
+    async (stderr) => {
+      const check = buildJsTsPack().find((item) => item.id === "js-ts:tsc")!;
+      const result = await check.run(
+        makeDiff([{ path: "src/app.ts" }]),
+        mockContext({
+          resolveTool: async () => "/tool/tsc",
+          runCommand: async () => ({ stdout: "", stderr, code: 1 }),
+        }),
+      );
+      expect(result.status).toBe("fail");
+    },
+  );
+
+  it("keeps filtering real diagnostics in unchanged files", async () => {
+    const check = buildJsTsPack().find((item) => item.id === "js-ts:tsc")!;
+    const result = await check.run(
+      makeDiff([{ path: "src/app.ts" }]),
+      mockContext({
+        resolveTool: async () => "/tool/tsc",
+        runCommand: async () => ({
+          stdout: "src/other.ts(1,1): error TS1234: error",
+          stderr: "",
+          code: 2,
+        }),
+      }),
+    );
     expect(result.status).toBe("pass");
   });
 });

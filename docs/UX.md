@@ -59,6 +59,13 @@ MANUAL CHECKS
 
 ## 6. Settings
 
+Invalid `.mewra-preflight.json` shows a pipeline error rather than silently using
+defaults. Fix the named fields and re-run. Each ecosystem check supports
+`enabled` and a CLI `timeoutMs` (1–600000, default 30000). Supported `tool` choices
+are enforced; an explicitly selected missing tool shows `not-configured`.
+`testPairing.pattern` limits source matching using simple `*`/`**` globs, not extglobs.
+Dependency failures explain why a consumer cannot run.
+
 | Key                                 | Default                                                                        | Description                 |
 | ----------------------------------- | ------------------------------------------------------------------------------ | --------------------------- |
 | `mewraPreflight.targetBranch`       | `"main"`                                                                       | Branch to diff against      |

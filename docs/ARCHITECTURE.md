@@ -126,6 +126,29 @@ Snapshot → PostMessage (validated) → Webview
 
 ## 5. Check pack contract
 
+Workspace configuration is validated at runtime before checks are built. Missing
+files use defaults; malformed or unsupported fields stop the pipeline. Ecosystem
+check settings enforce enabled flags, allowlisted tool choices, test-pairing
+patterns, and CLI timeouts. Explicit tool choices do not silently fall back.
+
+The runner validates dependency IDs and cycles before executing checks. Independent
+checks run concurrently; dependent checks wait for successful prerequisites. MCP
+re-runs execute and update only the requested check and its prerequisite closure.
+
+Check-command output is bounded to 32 MiB per stream, just like Git output.
+Oversized output is discarded and fails the check rather than reaching a parser.
+TypeScript execution errors without valid diagnostics fail closed; actual diagnostics
+outside the selected changed files remain filtered.
+
+Git name/status and untracked metadata use NUL-delimited records. Rename destinations
+are the current paths. Untracked text files above 1 MiB are included, subject to
+the same 32 MiB aggregate patch limit; unreadable files abort the pipeline instead
+of silently disappearing. Working scope never falls back to the previous commit.
+
+JS/TS test pairing looks for colocated or mirrored `tests/` and `tests/unit/`
+paths, including monorepo package roots and `.test`/`.spec` JS/TS/JSX/TSX files.
+A same-named test in another module or a deleted test does not satisfy pairing.
+
 Each check pack exposes a `build<Pack>Pack(): CheckRunner[]` factory (or `buildCustomChecks` for community JSON-based packs). A `CheckRunner` must:
 
 - declare `id`, `label`, `severity`, `pack`;
@@ -143,7 +166,9 @@ Installed companion extensions receive the versioned `MewraPreFlightAPI` through
 
 PreFlight registers a native VS Code MCP server definition provider. Its local
 HTTP bridge runs only on `127.0.0.1` with an ephemeral port and a random bearer
-token supplied only through the VS Code server definition. It never exposes a
+token supplied through the VS Code server definition or an explicitly confirmed
+clipboard export for a local MCP client. Export requires a trusted workspace and
+does not persist credentials or edit client configuration. It never exposes a
 workspace path, shell, arbitrary command, or public network listener.
 
 The MCP boundary exposes the latest dashboard snapshot, findings for a known
@@ -151,6 +176,17 @@ check, a re-run of a check registered by the latest pipeline, and explicitly
 allowlisted manual-check updates. Calls are logged to the `Mewra PreFlight MCP`
 output channel. The bridge accepts only bounded JSON-RPC requests and validates
 the loopback host plus bearer token before parsing a request.
+
+Every request rechecks the selected dashboard repository's MCP configuration.
+Disabled MCP rejects existing connections; an explicit empty tool allowlist
+exposes no tools. Arrays and null tool results use text content rather than
+invalid non-object structured content. See `docs/MCP.md` for client setup.
+
+MCP re-runs verify that the current diff, resolved configuration, and ignore
+rules still match the pipeline snapshot; changed inputs require a full dashboard
+refresh. Results from obsolete repositories or pipeline runs are discarded.
+Manual authority is intersected with the current agent-checkable items on each
+request, so revocation does not wait for a dashboard refresh.
 
 Mewra Pounce owns its own `pounce:blast-radius` check and registers it as a companion. PreFlight has no Pounce scanner or activation logic; it renders the generic optional `routes` payload returned by any registered check.
 

@@ -73,6 +73,24 @@ describe("createPreFlightContext — resolveTrustedTool", () => {
 });
 
 describe("createPreFlightContext — runCommand", () => {
+  it("captures output above 1 MiB completely", async () => {
+    const context = createPreFlightContext(process.cwd());
+    const result = await context.runCommand(process.execPath, [
+      "-e",
+      "process.stdout.write('a'.repeat(2 * 1024 * 1024))",
+    ]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.length).toBe(2 * 1024 * 1024);
+  });
+  it("never returns partial output above the safety limit", async () => {
+    const context = createPreFlightContext(process.cwd());
+    await expect(
+      context.runCommand(process.execPath, [
+        "-e",
+        "process.stdout.write('a'.repeat(33 * 1024 * 1024))",
+      ]),
+    ).rejects.toThrow("32 MiB safety limit");
+  });
   it("executes safe commands with fixed arguments", async () => {
     const context = createPreFlightContext(process.cwd());
     const res = await context.runCommand("node", [

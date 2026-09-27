@@ -52,6 +52,143 @@ async function request(
 }
 
 describe("PreFlightMcpServer", () => {
+  it("completes HTTP initialization, discovery, reads and a registered rerun", async () => {
+    const { definition, handler } = await createServer();
+    const rpc = async (method: string, params?: unknown) => {
+      const result = await request(definition, {
+        jsonrpc: "2.0",
+        id: 1,
+        method,
+        ...(params ? { params } : {}),
+      });
+      expect(result.status).toBe(200);
+      return result.json();
+    };
+    expect(
+      await rpc("initialize", {
+        protocolVersion: "2025-06-18",
+        capabilities: {},
+        clientInfo: { name: "preflight-smoke", version: "1" },
+      }),
+    ).toMatchObject({
+      result: {
+        protocolVersion: "2025-06-18",
+        serverInfo: { name: "mewra-preflight" },
+      },
+    });
+    const notification = await request(definition, {
+      jsonrpc: "2.0",
+      method: "notifications/initialized",
+    });
+    expect(notification.status).toBe(202);
+    expect(
+      (await rpc("tools/list")).result.tools.map(
+        (tool: { name: string }) => tool.name,
+      ),
+    ).toEqual(["get_preflight_status", "get_check_findings", "run_check"]);
+    const initial = await rpc("tools/call", {
+      name: "get_preflight_status",
+      arguments: {},
+    });
+    expect(initial.result.content[0].text).toBe("null");
+    expect(initial.result).not.toHaveProperty("structuredContent");
+    const finding = {
+      file: "src/app.ts",
+      line: 1,
+      message: "Smoke fixture",
+      rule: "smoke",
+    };
+    handler.updateSnapshot({
+      runId: "http-smoke",
+      startedAt: 1,
+      checks: [
+        {
+          definition: {
+            id: "universal:smoke",
+            label: "Smoke",
+            pack: "universal",
+            severity: "error",
+          },
+          result: { status: "fail", findings: [finding] },
+        },
+      ],
+      manualChecks: [],
+      overallStatus: "fail",
+    });
+    handler.setRegisteredCheckRunner(async (id) => {
+      if (id !== "universal:smoke") throw new Error("Unknown registered check");
+      return { status: "pass", findings: [] };
+    });
+    expect(
+      (await rpc("tools/call", { name: "get_preflight_status", arguments: {} }))
+        .result.structuredContent.runId,
+    ).toBe("http-smoke");
+    const findings = await rpc("tools/call", {
+      name: "get_check_findings",
+      arguments: { checkId: "universal:smoke" },
+    });
+    expect(JSON.parse(findings.result.content[0].text)).toEqual([finding]);
+    expect(findings.result).not.toHaveProperty("structuredContent");
+    expect((await rpc("resources/list")).result.resources).toHaveLength(2);
+    expect(
+      JSON.parse(
+        (await rpc("resources/read", { uri: "preflight://dashboard" })).result
+          .contents[0].text,
+      ).runId,
+    ).toBe("http-smoke");
+    expect(
+      (
+        await rpc("tools/call", {
+          name: "run_check",
+          arguments: { checkId: "universal:smoke" },
+        })
+      ).result.structuredContent.status,
+    ).toBe("pass");
+    expect(
+      (
+        await rpc("tools/call", {
+          name: "run_check",
+          arguments: { checkId: "arbitrary:command" },
+        })
+      ).error.message,
+    ).toBe("Unknown registered check");
+  });
+
+  it("honors disabled configuration even for an authenticated existing connection", async () => {
+    const { definition } = await createServer({ enabled: false });
+    const result = await request(definition, {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/list",
+    });
+    expect((await result.json()).error.message).toContain("MCP is disabled");
+  });
+
+  it("keeps an explicit empty tool allowlist empty", async () => {
+    const { definition } = await createServer({ exposedTools: [] });
+    const result = await request(definition, {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/list",
+    });
+    expect((await result.json()).result.tools).toEqual([]);
+  });
+
+  it("rejects null JSON without crashing the HTTP server", async () => {
+    const { definition } = await createServer();
+    const result = await fetch(definition.uri.toString(), {
+      method: "POST",
+      headers: { ...definition.headers, "content-type": "application/json" },
+      body: "null",
+    });
+    expect((await result.json()).error.code).toBe(-32600);
+    const healthy = await request(definition, {
+      jsonrpc: "2.0",
+      id: 2,
+      method: "ping",
+    });
+    expect((await healthy.json()).result).toEqual({});
+  });
   it("requires the ephemeral bearer token before parsing requests", async () => {
     const { definition } = await createServer();
 

@@ -1,10 +1,11 @@
 import { execFile } from "node:child_process";
-import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, writeFile, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, describe, expect, it } from "vitest";
 import { computeGitDiff } from "../../src/core/diff/git-diff.js";
+import { parseAddedLines } from "../../src/core/diff/parse-patch.js";
 
 const execFileAsync = promisify(execFile);
 const repositories: string[] = [];
@@ -45,6 +46,86 @@ afterEach(async () => {
 });
 
 describe("large Git diffs", () => {
+  it("does not scan the last commit when the working tree is clean", async () => {
+    const root = await createRepository(24);
+    await execFileAsync(
+      "git",
+      [
+        "-c",
+        "user.name=Test",
+        "-c",
+        "user.email=test@example.invalid",
+        "-c",
+        "commit.gpgsign=false",
+        "commit",
+        "-m",
+        "source",
+      ],
+      { cwd: root },
+    );
+    const diff = await computeGitDiff(root, "main", "working");
+    expect(diff.changedFiles).toEqual([]);
+    expect(diff.rawPatch).toBe("");
+  });
+  it("does not read outside the repository through an untracked symlink", async () => {
+    const root = await createRepository(0);
+    const outside = await mkdtemp(join(tmpdir(), "preflight-link-target-"));
+    repositories.push(outside);
+    await writeFile(join(outside, "target"), "REAL_SECRET_CANARY");
+    await symlink(join(outside, "target"), join(root, "link.ts"));
+    const diff = await computeGitDiff(root, "main", "working");
+    expect(diff.rawPatch).not.toContain("REAL_SECRET_CANARY");
+  });
+  it("preserves untracked filename whitespace in metadata and findings", async () => {
+    const root = await createRepository(0);
+    const path = " a\tb.ts ";
+    await writeFile(join(root, path), "debugger;\n");
+    const diff = await computeGitDiff(root, "main", "working");
+    expect(diff.changedFiles.some((file) => file.path === path)).toBe(true);
+    expect(
+      parseAddedLines(diff.rawPatch).some(
+        (line) => line.file === path && line.content === "debugger;",
+      ),
+    ).toBe(true);
+  });
+  it("preserves rename paths containing tabs and Unicode", async () => {
+    const root = await createRepository(24);
+    await execFileAsync(
+      "git",
+      [
+        "-c",
+        "user.name=Test",
+        "-c",
+        "user.email=test@example.invalid",
+        "-c",
+        "commit.gpgsign=false",
+        "commit",
+        "-m",
+        "source",
+      ],
+      { cwd: root },
+    );
+    await execFileAsync("git", ["mv", "--", "large.ts", "new\tไฟล์.ts"], {
+      cwd: root,
+    });
+    const diff = await computeGitDiff(root, "main", "staged");
+    expect(diff.changedFiles).toEqual([
+      { path: "new\tไฟล์.ts", status: "renamed", oldPath: "large.ts" },
+    ]);
+  });
+  it("includes untracked text files above 1 MiB", async () => {
+    const root = await createRepository(0);
+    await writeFile(
+      join(root, "untracked.ts"),
+      "const value = 1;\n".repeat(100000),
+    );
+    const diff = await computeGitDiff(root, "main", "working");
+    expect(diff.changedFiles.some((file) => file.path === "untracked.ts")).toBe(
+      true,
+    );
+    expect(diff.rawPatch).toContain('+++ "b/untracked.ts"');
+    expect(diff.rawPatch).toContain("+const value = 1;");
+  });
   it.each(["staged", "working", "branch"] as const)(
     "preserves the complete patch above 1 MiB in %s scope",
     async (scope) => {

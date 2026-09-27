@@ -1,4 +1,5 @@
 import type { GitDiff } from "../../shared/types.js";
+import { patchDestination } from "../diff/parse-patch.js";
 
 // MARK: - Types
 
@@ -15,10 +16,12 @@ export interface PreflightIgnoreRules {
 
 // MARK: - Glob Matching
 
-function globToRegex(glob: string): RegExp {
-  const normalized = glob.replace(/^\.\//, "").trim();
+export function globToRegex(glob: string, matchBasename = true): RegExp {
+  const trimmed = glob.replace(/^\.\//, "").trim();
+  const normalized = trimmed.replace(/^\//, "").replace(/\/$/, "/**");
   const hasSlash = normalized.includes("/");
-  let regexStr = hasSlash ? "" : "(?:.*\\/)?";
+  let regexStr =
+    hasSlash || !matchBasename || trimmed.startsWith("/") ? "" : "(?:.*\\/)?";
   let i = 0;
   while (i < normalized.length) {
     const c = normalized[i];
@@ -62,10 +65,15 @@ export function parsePreflightIgnore(content: string): PreflightIgnoreRules {
   const targetedIgnores: IgnoreEntry[] = [];
 
   const lines = content.split(/\r?\n/);
-  for (const rawLine of lines) {
+  for (const [index, rawLine] of lines.entries()) {
     const trimmed = rawLine.trim();
     if (!trimmed || trimmed.startsWith("#")) {
       continue;
+    }
+    if (trimmed.startsWith("!")) {
+      throw new Error(
+        `.preflightignore line ${index + 1}: ! re-inclusion is not supported. Remove this rule or use a targeted exception.`,
+      );
     }
 
     const colonIdx = trimmed.indexOf(":");
@@ -135,8 +143,8 @@ function filterRawPatch(rawPatch: string, allowedPaths: Set<string>): string {
   return rawPatch
     .split(/(?=^diff --git )/m)
     .filter((section) => {
-      const match = /^diff --git a\/.* b\/(.*)$/m.exec(section);
-      return match ? allowedPaths.has(match[1]!) : false;
+      const path = patchDestination(section);
+      return path !== undefined && allowedPaths.has(path);
     })
     .join("\n");
 }

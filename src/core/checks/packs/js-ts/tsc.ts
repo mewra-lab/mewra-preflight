@@ -92,11 +92,20 @@ export const tscCheck: CheckRunner = {
 
     let combinedStdout = "";
     let anyFailed = false;
+    let executionFailed = false;
+    let parsedDiagnosticCount = 0;
 
     for (const args of runs) {
-      const { stdout, code } = await context.runCommand(tool, args);
+      const { stdout, stderr, code } = await context.runCommand(tool, args);
       combinedStdout += `\n${stdout}`;
       if (code !== 0) anyFailed = true;
+      if (
+        code !== 0 &&
+        (stderr.trim() ||
+          !stdout.split("\n").some((line) => TSC_LINE_RE.test(line)))
+      ) {
+        executionFailed = true;
+      }
     }
 
     if (!anyFailed) {
@@ -114,6 +123,7 @@ export const tscCheck: CheckRunner = {
         if (!match) return [];
         const [, rawFile, rawLine, rawCol, message] = match;
         if (!rawFile || !rawLine || !rawCol || !message) return [];
+        parsedDiagnosticCount++;
         const normalizedFile = rawFile.replace(/\\/g, "/");
 
         const isChanged = Array.from(changedPaths).some((p) =>
@@ -132,6 +142,14 @@ export const tscCheck: CheckRunner = {
         ];
       });
 
+    if (executionFailed || parsedDiagnosticCount === 0) {
+      return {
+        status: "fail",
+        findings,
+        message:
+          "TypeScript could not complete successfully. Check compiler configuration, timeout, and output limits.",
+      };
+    }
     return { status: findings.length > 0 ? "fail" : "pass", findings };
   },
 };

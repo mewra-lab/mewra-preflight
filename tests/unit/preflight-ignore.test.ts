@@ -11,6 +11,11 @@ import type { GitDiff } from "../../src/shared/types.js";
 // MARK: - Tests
 
 describe("preflight-ignore — parser", () => {
+  it("anchors a leading slash even for a bare file pattern", () => {
+    const rules = parsePreflightIgnore("/app.ts");
+    expect(isPathIgnoredGlobally("app.ts", rules)).toBe(true);
+    expect(isPathIgnoredGlobally("nested/app.ts", rules)).toBe(false);
+  });
   it("ignores comments and empty lines", () => {
     const text = `
     # This is a comment

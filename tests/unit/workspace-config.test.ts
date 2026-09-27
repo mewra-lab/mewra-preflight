@@ -19,6 +19,40 @@ describe("workspace-config", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
+  it.each([
+    "{",
+    "[]",
+    '{"ecosystems":{"js-ts":{"lint":{"enabled":"false"}}}}',
+    '{"manualChecklist":[{"id":"x"}]}',
+    '{"unknown":true}',
+  ])(
+    "rejects invalid config instead of silently using defaults: %s",
+    async (content) => {
+      await writeFile(join(tempDir, ".mewra-preflight.json"), content);
+      await expect(loadWorkspaceConfig(tempDir)).rejects.toThrow(
+        "Cannot load .mewra-preflight.json",
+      );
+    },
+  );
+
+  it("preserves comment-like text inside JSON strings", async () => {
+    await writeFile(
+      join(tempDir, ".mewra-preflight.json"),
+      JSON.stringify({
+        manualChecklist: [
+          {
+            id: "x",
+            label: "check /* value */ and // literal https://example.test",
+          },
+        ],
+      }),
+    );
+    const loaded = await loadWorkspaceConfig(tempDir);
+    expect(loaded?.manualChecklist?.[0]?.label).toBe(
+      "check /* value */ and // literal https://example.test",
+    );
+  });
+
   it("returns null when configuration file does not exist", async () => {
     const config = await loadWorkspaceConfig(tempDir);
     expect(config).toBeNull();

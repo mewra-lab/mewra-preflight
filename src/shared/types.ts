@@ -132,6 +132,8 @@ export type CustomCheckConfig = {
   severity?: "error" | "warning";
   pack?: string;
   fixArgs?: string[];
+  timeoutMs?: number;
+  dependsOn?: string[];
 };
 
 export type CustomPackConfig = {
@@ -164,7 +166,7 @@ export type McpConfig = {
 
 export type PreFlightConfigFile = {
   targetBranch?: string;
-  ecosystems?: Record<string, { enabled?: boolean; [key: string]: unknown }>;
+  ecosystems?: Record<string, EcosystemSettings>;
   universalChecks?: {
     noDebugStatements?: "error" | "warning" | "off";
     noSecrets?: "error" | "warning" | "off";
@@ -174,12 +176,29 @@ export type PreFlightConfigFile = {
   };
   contributedChecks?: Record<
     string,
-    { enabled?: boolean; severity?: "error" | "warning" }
+    { enabled?: boolean; severity?: "error" | "warning"; timeoutMs?: number }
   >;
   mcp?: McpConfig;
   manualChecklist?: ManualCheckConfig[];
   customPacks?: CustomPackConfig[];
   customChecks?: CustomCheckConfig[];
+};
+
+export type EcosystemSettings = {
+  enabled?: boolean;
+  format?: CheckSettings;
+  lint?: CheckSettings;
+  typecheck?: CheckSettings;
+  vet?: CheckSettings;
+  analyze?: CheckSettings;
+  testPairing?: CheckSettings;
+};
+
+export type CheckSettings = {
+  enabled?: boolean;
+  tool?: string;
+  pattern?: string;
+  timeoutMs?: number;
 };
 
 export type PreFlightConfig = {

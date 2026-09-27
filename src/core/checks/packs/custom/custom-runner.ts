@@ -94,6 +94,8 @@ export function createCustomCheckRunner(
     label: config.label,
     severity: config.severity ?? "error",
     pack: config.pack ?? packId,
+    ...(config.timeoutMs !== undefined ? { timeoutMs: config.timeoutMs } : {}),
+    ...(config.dependsOn !== undefined ? { dependsOn: config.dependsOn } : {}),
     fixable: Boolean(config.fixArgs && config.fixArgs.length > 0),
 
     appliesTo(diff: GitDiff): boolean {

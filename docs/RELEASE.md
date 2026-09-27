@@ -22,6 +22,7 @@ Semantic Versioning:
 0.8.0  — discoverable, host-validated actions for skipped contributed checks
 0.9.0  — clearer skipped-check guidance and scan-scope actions
 0.9.1  — bounded large-diff support and actionable Git output errors
+0.9.2  — configuration hardening, safe starters, and MCP connection guidance and policy fixes
 1.0.0  — Mewra Drift integration, automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX
 ```
 
@@ -95,6 +96,17 @@ only detects route declarations in changed files.
 
 ## 8. Changelog
 
+### v0.9.2
+
+- Includes runtime config validation, per-check settings, CLI output limits, dependency scheduling, accurate rename/untracked handling, and module-aware test pairing.
+- Fixes patch-header parsing, anchored ignore/manual globs, and stale MCP snapshot re-runs; manual-check authority revocations take effect immediately.
+- Validated with 201 tests across 24 test files, type checking, formatting, and production build.
+- Provides minimal starter configuration and documented targeted ignore examples.
+- Adds an explicit credential-warning command to copy a local MCP connection for Codex, Claude Code, Cursor, VS Code/Copilot, or another HTTP MCP client.
+- Enforces disabled MCP configuration and empty tool allowlists on existing connections.
+- Corrects MCP result encoding for array and null values, rejects null JSON-RPC requests, and adds HTTP smoke coverage.
+- Uses the dashboard repository's MCP policy rather than always the first workspace folder.
+
 ### v0.9.1
 
 **Reliable large-diff checks**
@@ -103,7 +115,6 @@ only detects route declarations in changed files.
 - Stops with an actionable error above the safety limit; never checks a partial patch.
 - Propagates buffer-limit failures without changing the branch comparison scope.
 - Adds regression coverage for branch, staged, and working-tree diffs.
-- Validation: 151 tests, TypeScript, formatting, and production build pass.
 
 ### v0.9.0
 

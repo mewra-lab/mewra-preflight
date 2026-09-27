@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { WorkspaceConfigSchema } from "./config-schema.js";
 import type {
   PreFlightConfig,
   PreFlightConfigFile,
@@ -8,9 +9,30 @@ import type {
 // MARK: - Helpers
 
 function stripJsonComments(input: string): string {
-  return input
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/(^|[^\\:])\/\/.*$/gm, "$1");
+  let output = "";
+  let quoted = false;
+  let escaped = false;
+  for (let i = 0; i < input.length; i++) {
+    const char = input[i]!;
+    if (quoted) {
+      output += char;
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === '"') quoted = false;
+    } else if (char === '"') {
+      quoted = true;
+      output += char;
+    } else if (char === "/" && input[i + 1] === "/") {
+      while (i < input.length && input[i] !== "\n") i++;
+      output += "\n";
+    } else if (char === "/" && input[i + 1] === "*") {
+      const end = input.indexOf("*/", i + 2);
+      if (end < 0) throw new Error("Unclosed configuration comment.");
+      output += " ";
+      i = end + 1;
+    } else output += char;
+  }
+  return output;
 }
 
 // MARK: - Loader
@@ -22,13 +44,24 @@ export async function loadWorkspaceConfig(
   try {
     const raw = await readFile(configPath, "utf-8");
     const stripped = stripJsonComments(raw);
-    const parsed = JSON.parse(stripped) as unknown;
-    if (typeof parsed === "object" && parsed !== null) {
-      return parsed as PreFlightConfigFile;
+    const parsed = WorkspaceConfigSchema.safeParse(JSON.parse(stripped));
+    if (!parsed.success) {
+      throw new Error(
+        `Invalid configuration: ${parsed.error.issues.map((issue) => `${issue.path.join(".") || "root"}: ${issue.code === "unrecognized_keys" ? `unknown field(s) ${issue.keys.join(", ")}` : issue.message}`).join("; ")}. Open configuration and use its schema suggestions to correct these fields.`,
+      );
     }
-    return null;
-  } catch {
-    return null;
+    return parsed.data as PreFlightConfigFile;
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "ENOENT"
+    )
+      return null;
+    throw new Error(
+      `Cannot load .mewra-preflight.json: ${error instanceof SyntaxError ? "Invalid JSON syntax." : error instanceof Error ? error.message : "Read failed."}`,
+    );
   }
 }
 

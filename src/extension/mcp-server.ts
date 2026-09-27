@@ -52,7 +52,7 @@ function isTool(value: unknown): value is McpTool {
 
 function exposedTools(config: McpConfig | undefined): McpTool[] {
   const configured = config?.exposedTools?.filter(isTool);
-  return configured?.length ? configured : DEFAULT_TOOLS;
+  return configured ?? DEFAULT_TOOLS;
 }
 
 function toolDefinition(name: McpTool): Record<string, unknown> {
@@ -113,7 +113,7 @@ function toolDefinition(name: McpTool): Record<string, unknown> {
 function textResult(value: unknown, isError = false): Record<string, unknown> {
   return {
     content: [{ type: "text", text: JSON.stringify(value) }],
-    structuredContent: value,
+    ...(object(value) ? { structuredContent: value } : {}),
     ...(isError ? { isError: true } : {}),
   };
 }
@@ -201,7 +201,12 @@ export class PreFlightMcpServer implements vscode.Disposable {
 
     let body: JsonRpcRequest;
     try {
-      body = JSON.parse(await requestBody(request)) as JsonRpcRequest;
+      const parsed: unknown = JSON.parse(await requestBody(request));
+      if (!object(parsed)) {
+        this._write(res, error(-32600, "Invalid JSON-RPC request.", null));
+        return;
+      }
+      body = parsed as JsonRpcRequest;
     } catch {
       this._write(res, error(-32700, "Invalid JSON-RPC request.", null));
       return;
@@ -235,6 +240,8 @@ export class PreFlightMcpServer implements vscode.Disposable {
 
   private async _dispatch(method: string, params: unknown): Promise<unknown> {
     const config = await this._getConfig();
+    if (config?.enabled === false)
+      throw new Error("PreFlight MCP is disabled in workspace configuration.");
     const tools = exposedTools(config);
     if (method === "initialize") {
       return {

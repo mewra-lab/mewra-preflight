@@ -1,5 +1,5 @@
 import { access } from "node:fs/promises";
-import { resolve, basename, extname } from "node:path";
+import { resolve, extname } from "node:path";
 import type { CheckRunner, PreFlightContext } from "../../check-contract.js";
 import type {
   GitDiff,
@@ -9,8 +9,10 @@ import type {
 
 // MARK: - Constants
 
-const SOURCE_RE = /^src\/.+\.(ts|tsx|js|jsx|vue|svelte)$/;
-const EXCLUDE_RE = /(\.d\.ts|\.test\.|\.spec\.|index\.(ts|tsx|js|jsx))$/;
+const SOURCE_RE =
+  /^(?:src\/|(?:apps|packages)\/[^/]+\/src\/).+\.(ts|tsx|js|jsx|vue|svelte)$/;
+const EXCLUDE_RE =
+  /(\.d\.ts|\.(?:test|spec)\.(?:ts|tsx|js|jsx)|(?:^|\/)index\.(ts|tsx|js|jsx))$/;
 
 // MARK: - Helpers
 
@@ -53,18 +55,25 @@ export const testPairingCheck: CheckRunner = {
 
     for (const source of addedSourceFiles) {
       const ext = extname(source.path);
-      const base = basename(source.path, ext);
-      const testNames = [
-        `${base}.test.ts`,
-        `${base}.test.tsx`,
-        `${base}.spec.ts`,
-        `${base}.spec.tsx`,
-        `${base}.test.js`,
-        `${base}.spec.js`,
+      const stem = source.path.slice(0, -ext.length);
+      const sourceRoot = /^(.*?)(?:src\/)/.exec(stem)?.[1] ?? "";
+      const moduleStem = stem.slice(sourceRoot.length).replace(/^src\//, "");
+      const stems = [
+        stem,
+        `${sourceRoot}tests/${moduleStem}`,
+        `${sourceRoot}tests/unit/${moduleStem}`,
       ];
-
-      const matchedInDiff = Array.from(diffPaths).some((p) =>
-        testNames.some((t) => p.endsWith(t)),
+      const candidates = stems.flatMap((base) =>
+        ["ts", "tsx", "js", "jsx"].flatMap((extension) =>
+          ["test", "spec"].map((kind) => `${base}.${kind}.${extension}`),
+        ),
+      );
+      const matchedInDiff = candidates.some(
+        (path) =>
+          diffPaths.has(path) &&
+          !diff.changedFiles.some(
+            (file) => file.path === path && file.status === "deleted",
+          ),
       );
 
       if (matchedInDiff) {
@@ -72,13 +81,14 @@ export const testPairingCheck: CheckRunner = {
       }
 
       let foundOnDisk = false;
-      const diskCandidates = [
-        resolve(context.workspaceRoot, "tests", "unit", `${base}.test.ts`),
-        resolve(context.workspaceRoot, "tests", "unit", `${base}.spec.ts`),
-        resolve(context.workspaceRoot, "tests", `${base}.test.ts`),
-        resolve(context.workspaceRoot, "tests", `${base}.spec.ts`),
-        resolve(context.workspaceRoot, source.path.replace(ext, `.test${ext}`)),
-      ];
+      const diskCandidates = candidates
+        .filter(
+          (path) =>
+            !diff.changedFiles.some(
+              (file) => file.path === path && file.status === "deleted",
+            ),
+        )
+        .map((path) => resolve(context.workspaceRoot, path));
 
       for (const cand of diskCandidates) {
         if (await existsOnDisk(cand)) {
