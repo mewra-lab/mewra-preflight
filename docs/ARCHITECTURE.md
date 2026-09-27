@@ -2,6 +2,11 @@
 
 ## 1. Architectural goals
 
+Git subprocess output is bounded to 32 MiB per stdout/stderr stream. A buffer
+overflow aborts diff computation with an actionable error; partial patches must
+never reach checks. Branch comparison fallbacks must propagate this resource
+limit rather than silently switch the comparison scope.
+
 Mewra PreFlight must remain:
 
 - deterministic and local-first (no AI or background network calls);

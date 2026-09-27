@@ -6,11 +6,21 @@ import type { GitDiff, ChangedFile, DiffScope } from "../../shared/types.js";
 
 // MARK: - Types
 
-type ExecError = { code?: number; stderr?: string };
+type ExecError = { code?: number | string; stderr?: string };
 
 // MARK: - Helpers
 
 const execFileAsync = promisify(execFile);
+const GIT_OUTPUT_LIMIT_BYTES = 32 * 1024 * 1024;
+
+class GitOutputLimitError extends Error {
+  constructor() {
+    super(
+      "Git output exceeds the 32 MiB safety limit. No checks were run on a partial diff. Reduce the selected diff (for example, stage a smaller batch) and re-run PreFlight.",
+    );
+    this.name = "GitOutputLimitError";
+  }
+}
 
 function isExecError(e: unknown): e is ExecError {
   return typeof e === "object" && e !== null && "code" in e;
@@ -27,12 +37,18 @@ function gitErrorSummary(stderr: string | undefined): string {
 
 async function runGit(cwd: string, args: readonly string[]): Promise<string> {
   try {
-    const { stdout } = await execFileAsync("git", [...args], { cwd });
+    const { stdout } = await execFileAsync("git", [...args], {
+      cwd,
+      maxBuffer: GIT_OUTPUT_LIMIT_BYTES,
+    });
     return stdout.trim();
   } catch (e) {
     if (isExecError(e) && e.code !== undefined) {
+      if (e.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER") {
+        throw new GitOutputLimitError();
+      }
       throw new Error(
-        `Git ${args[0]} failed (exit code ${e.code}): ${gitErrorSummary(e.stderr)}`,
+        `Git ${args[0]} failed (${typeof e.code === "number" ? "exit code" : "error code"} ${e.code}): ${gitErrorSummary(e.stderr)}`,
       );
     }
     throw e;
@@ -294,7 +310,8 @@ export async function computeGitDiff(
         runGit(workspaceRoot, ["diff", "--name-status", resolvedBase]),
         runGit(workspaceRoot, ["diff", resolvedBase]),
       ]);
-    } catch {
+    } catch (error) {
+      if (error instanceof GitOutputLimitError) throw error;
       try {
         [nameStatus, rawPatch] = await Promise.all([
           runGit(workspaceRoot, [
@@ -304,7 +321,8 @@ export async function computeGitDiff(
           ]),
           runGit(workspaceRoot, ["diff", `${resolvedBase}...HEAD`]),
         ]);
-      } catch {
+      } catch (error) {
+        if (error instanceof GitOutputLimitError) throw error;
         [nameStatus, rawPatch] = await Promise.all([
           runGit(workspaceRoot, ["diff", "--name-status", "HEAD"]),
           runGit(workspaceRoot, ["diff", "HEAD"]),
@@ -324,7 +342,9 @@ export async function computeGitDiff(
           runGit(workspaceRoot, ["diff", "--name-status", "HEAD~1..HEAD"]),
           runGit(workspaceRoot, ["diff", "HEAD~1..HEAD"]),
         ]);
-      } catch {}
+      } catch (error) {
+        if (error instanceof GitOutputLimitError) throw error;
+      }
     }
   }
 

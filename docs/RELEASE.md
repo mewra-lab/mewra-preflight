@@ -21,6 +21,7 @@ Semantic Versioning:
 0.7.1  — release workflow shell-conditional fix
 0.8.0  — discoverable, host-validated actions for skipped contributed checks
 0.9.0  — clearer skipped-check guidance and scan-scope actions
+0.9.1  — bounded large-diff support and actionable Git output errors
 1.0.0  — Mewra Drift integration, automated git pre-push hook installer, production-stable release across VS Code Marketplace & Open VSX
 ```
 
@@ -93,6 +94,16 @@ notes, and validation status. Do not claim route tracing when the Pounce pack
 only detects route declarations in changed files.
 
 ## 8. Changelog
+
+### v0.9.1
+
+**Reliable large-diff checks**
+
+- Supports Git output up to 32 MiB per stream instead of the default 1 MiB.
+- Stops with an actionable error above the safety limit; never checks a partial patch.
+- Propagates buffer-limit failures without changing the branch comparison scope.
+- Adds regression coverage for branch, staged, and working-tree diffs.
+- Validation: 151 tests, TypeScript, formatting, and production build pass.
 
 ### v0.9.0
 

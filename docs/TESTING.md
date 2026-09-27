@@ -19,6 +19,8 @@ Testing must protect:
 Pure modules testable without VS Code:
 
 - `git-diff.ts` — name-status parsing logic;
+- Large-diff integration tests — complete patches above 1 MiB in branch, staged,
+  and working scopes; rejection above the 32 MiB output limit without partial results.
 - `runner.ts` — execution lifecycle, parallel scheduling, error recovery;
 - `detect-ecosystem.ts` — file presence detection;
 - `pr-launcher.ts` — remote URL → HTTPS conversion, PR URL construction, and fixed-argument GitHub/GitLab CLI PR/MR creation;
